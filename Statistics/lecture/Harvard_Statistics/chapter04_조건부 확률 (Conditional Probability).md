@@ -94,7 +94,7 @@
   * 따라서 다음의 두 가지 직관적 해석을 기억해보자  
 
 ##### (1) 조약돌 세계(Pebble world)  
-![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/%EC%A1%B0%EC%95%BD%EB%8F%8C%EC%84%B8%EA%B3%84.JPG)  
+![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/%EC%A1%B0%EC%95%BD%EB%8F%8C%EC%84%B8%EA%B3%84.JPG)  
 
 
 * S : 표본공간  
@@ -126,7 +126,7 @@
 * 예를 들어 1000번을 던졌을 때, 앞면이 512번이 나온다면 확률을 512 / 1000으로 보겠다는 의미  
 * 쉬운 예제로 유한한 이진 데이터를 만들어 낸다고 생각해보자  
 
-![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/%EC%9D%B4%EC%A7%84%EB%8D%B0%EC%9D%B4%ED%84%B0.JPG)  
+![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/%EC%9D%B4%EC%A7%84%EB%8D%B0%EC%9D%B4%ED%84%B0.JPG)  
 
 * 다음과 같은 이진 데이터가 있다고 할 때, B의 사건 중, 사건 A 또한 발생한 것의 비율은 ?  
 * 이도 마찬가지로, 조건부 확률 P(A|B) 인 것을 알 수 있고, 또한 위의 조약돌 예시와 일맥상통하는 면이 있다는 점!  

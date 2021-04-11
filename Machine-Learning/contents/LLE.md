@@ -7,7 +7,7 @@
 - 사이킷런의 `LocallyLinearEmbedding`을 사용해 스위스 롤을 펼침
 - 아래 그림처럼 펼칠 수 있음
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/LLE.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/LLE.JPG)
 
 - 그림에서 볼 수 있듯이 스위스 롤이 완전히 펼쳐졌고 지역적으로는 샘플 간 거리가 잘 보존되어 있음
 - 그러나 크게 보면 샘플 간 거리가 잘 유지되지 않음

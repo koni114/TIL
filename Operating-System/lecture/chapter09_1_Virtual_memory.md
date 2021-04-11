@@ -17,7 +17,7 @@
     - 프로그램의 시작 주소를 0으로 가정한 주소
 - Relocation(재배치)
   - 메모리 할당 후, 할당된 주소(allocation address)에 따라 상대 주소들을 조정하는 작업
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_87.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_87.JPG)
 
 - Non-continous allocation
   - Virtual address(가상주소) = relative address
@@ -32,7 +32,7 @@
     - 결국 Address mapping은 virtual address에서 real address로 매핑해 주는 행위다! 라고 기억  
     - Virtual address -> real address  
 - 아래 그림은 앞서 설명한 address mapping을 그림으로 설명한 것     
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_88.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_88.JPG)
 - 결과적으로 사용자/프로세스는 실행 프로그램 전체가 메모리에 연속적으로 적재되었다고 가정하고 실행할 수 있음
 
 ## Block Mapping
@@ -44,16 +44,16 @@
   - b = block number
   - d = displacement(offset) in a block  
     block number와 virtual address와의 차이  
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_89.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_89.JPG)
 - Block map table(BMT)
   - Address mapping 정보 관리
     - kernel 공간에 <b>프로세스마다 하나의 BMT를 가짐</b>
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_90.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_90.JPG)
 - residence bit : 해당 블록이 메모리에 올라가 있느냐? 여부  
   1 --> 메모리에 올라감
 - real address : 메모리에 올라 갔다면, 실제 어디에 올라갔느냐? 
 - 아래 그림은 실제 어떻게 주소를 찾아가는지에 대한 설명
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_91.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_91.JPG)
 - block number b는 BMT에서 행의 주소를 매핑해서 찾아감
 - 올라가 있다면(residence == 1), 어디 올라가 있는지(real address)를 확인
 - a + d(offset)의 위치로 실제 원하는 real address를 찾아갈 수 있게 됨
@@ -78,7 +78,7 @@
   - Page frame  
     - 메모리의 분할 영역(페이지를 넣는 틀)
     - Page와 같은 크기로 분할됨 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_92.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_92.JPG)
 - swap device에 page 단위로 분할된 program이 존재(오른쪽 그림)
 - 이러한 paged와 mapping된 page frame들이 존재
 - paging system 특징
@@ -106,7 +106,7 @@
     - TLB(Translation Look-aside Buffer)
   - Hybrid direct/associative mapping       
 - Page Map Table
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_93.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_93.JPG)
 - residence bit : 메모리 올라가 있는지 여부
 - secondary storage address : page들은 swap device에 저장이 되어 있는데, 그 위치 주소를 말함
 
@@ -132,7 +132,7 @@
   - 실제 주소 r로 주기억장치에 접근  
   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_94.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_94.JPG)
 - 문제점
   - 메모리 접근 횟수가 2배
     - 원하는 데이터에 접근하기 위해서 메모리에 2번 접근함  
@@ -154,7 +154,7 @@
 - Expensive hardware
   - 큰 PMT를 다루기 어려움 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_96.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_96.JPG)
 
 ### Hybrid Direct/Associative Mapping
 - 두 기법을 혼합하여 사용
@@ -170,4 +170,4 @@
     - Direct mapping으로 page frame 번호 확인
     - 해당 PMT entry를 TLB에 적재함   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_97.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_97.JPG)

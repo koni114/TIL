@@ -17,7 +17,7 @@
 
 * A는 i 달러, B는 N-i 달러를 가지고 게임을 시작 할 때, A를 기준으로 보면 다음과 같음  
 
-![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/%EB%8F%84%EB%B0%95%EA%BE%BC%ED%8C%8C%EC%82%B0.JPG)    
+![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/%EB%8F%84%EB%B0%95%EA%BE%BC%ED%8C%8C%EC%82%B0.JPG)    
 
 * p의 확률로 A가 1달러를 얻고, q의 확률로 1달러를 잃음  
 * 0과 N은 흡수 상태(absorbing state)라고 하며, 게임 종료를 나타냄  

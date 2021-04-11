@@ -160,7 +160,7 @@ git commit -a
  - index 과 최신 commit의 tree가 가리키고 있는 값이 다르다면, add는 되었고, commit 대기 상태라는 것을 알 수 있음
 
 - 이미지 참고  
- ![img](https://github.com/koni114/git-from-the-hell/blob/master/img/workspace_repository.png)
+ ![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/workspace_repository.png)
 - workspace (add) index (commit) local repository (push) remote repositoy
 - working directory - index, staging area, cache - repository
 

@@ -131,7 +131,7 @@
     - Traverse the file system 
 - Mounting
   - 현재 FS에 다른 FS을 붙이는 것
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_122.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_122.JPG)
 
 ## Directory Structure
 - Directoery 구조는 다음과 같이 생각해 볼 수 있음
@@ -150,7 +150,7 @@
   - File protection
   - File management
   - 다중 사용자 환경에서 문제가 더욱 커짐   
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_123.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_123.JPG)
 
 ### 2-Level Directory Structure
 - 사용자 마다 하나의 directory 배정
@@ -162,7 +162,7 @@
     - File naming issue
   - 사용자간 파일 공유 불가     
   - 보안에 대한 이슈도 존재. 디렉토리가 하나기 때문에 하나의 파일을 오픈하기 위해 내가 가지고 있는 모든 파일을 오픈 해야 함
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_124.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_124.JPG)
 
 ### Hierarchical Directory Structure
 - Tree 형태의 계층적 directory 사용 가능
@@ -173,7 +173,7 @@
     - Home directory, Current directory
     - Absolute pathname, Relative pathname
   - 대부분의 OS가 사용  
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_125.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_125.JPG)
 
 ### Acyclic Graph Directory Structure
 - Hierarchical directory structure 확장
@@ -184,7 +184,7 @@
   - E.g., Unix system의 symbolic link
   - 결과적으로 하위 디렉토리에서 상위 디렉토리로 link를 통해 이동할 수 있다는 개념
   - 하지만 Acyclic 이므로, cycle을 형성할 수는 없음
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_126.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_126.JPG)
 - 위의 그림에서 하위 노드에서 특정 노드로 연결하여 갈 수 있다는 점이 있음
 - 중요한 것은 Acyclic Graph이기 때문에 cycle이 생성되지 않음
 
@@ -226,7 +226,7 @@
     - 같은 권한을 가지는 그룹(사용자, 프로세스)
   - Access right
     - <object-name, rights-set>      
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_127.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_127.JPG)
 - Implementation
   - Global table
   - Access list
@@ -239,7 +239,7 @@
    - <domain-name, object-name, right-set> 
 - 단점
   - Large table size
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_128.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_128.JPG)
 
 ### Access List
 - Access matrix의 열(column)을 list로 표현
@@ -337,7 +337,7 @@
   - 각 block의 시작 부분에 다음 블록의 번호를 기록하는 방법
 - MS-DOS, Windows 등에 사용 됨    
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_129.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_129.JPG)
 
 ### Indexed Allocation
 - File이 저장된 block의 정보(pointer)를 Index block에 모아 둠
@@ -360,19 +360,19 @@
 - Simple and efficient
 - Bit vector 전체를 메모리에 보관해야 함
   - 대형 시스템에 부적합. disk가 커질수록 bitmap 자체도 커져야 하기 때문
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_130.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_130.JPG)
 
 
 ### Linked list
 - 빈 block을 linked list로 연결
 - link라는 공간도 필요하고, 탐색하려면 link를 따라가야 하므로, 비효율적
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_131.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_131.JPG)
 
 ### Grouping
 - n개의 빈 block을 그룹으로 묶고, 그룹 단위로 linked list로 연결
 - Linkedlist보다 link를 여러번 타야하는 문제는 해결할 수 있음
 - 연속된 빈 block을 쉽게 찾을 수 있음
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_132.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_132.JPG)
 
 
 ### Counting

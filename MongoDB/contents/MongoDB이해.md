@@ -26,7 +26,7 @@
 - 스키마 프리는 테이블의 컬럼 수준에만 적용되는데, 사용할 컬럼을 미리 정의하지 않고 언제든지 동적으로 필요한 시점에 데이터를 저장할 수 있다는 것을 의미
 
 ## MongoDB vs RDBMS
-![img](https://github.com/koni114/Data-engineering/blob/master/img/mongo_01.JPG)
+![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongo_01.JPG)
 - MongoDB는 쿼리의 결과로 커서를 반환하는데, 응용 프로그램이나 MongoDB 클라이언트 프로그램에서 커서를 통해 반복적으로 실제 도큐먼트를 가져올 수 있음
 
 ## MongoDB 특징
@@ -67,7 +67,7 @@
 - 이 디스크 쓰기 작업은 OS에 의해서 이루어짐
 - OS에 의해서 제공되는 가상 메모리를 사용하게 되는데 , 물리 메모리 양이 작더라도 가상 메모리는 훨씬 큰 공간을 가질 수 있음
 - 가상 메모리는 Page라는 블럭 단위로 나뉘어 지고, 이 블럭들은 디스크 블럭에 매핑되고 이 블럭들의 집합이 하나의 데이터 파일이 됨
-![img](https://github.com/koni114/Data-engineering/blob/master/img/mongo_02.JPG)
+![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongo_02.JPG)
 - 메모리에 저장되는 내용은 실제 데이터 블록과, 인덱스 자체가 저장됨
 - MongoDB에서 인덱스를 남용하지 말라는 이야기가 있는데, 이는 인덱스를 생성 및 업데이트하는데 자원이 들어갈 뿐더러, 인덱스가 메모리에 상주하고 있어야 제대로 된 성능을 낼 수 있기 때문이기도 함
 - 만약 물리 메모리에 해당 데이터 블록이 없다면, page fault가 발생하게 되고, 디스크에서 그 데이터 블록을 로드하게 됨

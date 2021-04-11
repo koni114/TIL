@@ -23,7 +23,7 @@
 - <b>부트스트래핑은 각 예측기가 학습하는 서브셋에 다양성을 증가시키므로, 배깅이 페이스팅보다 편향이 좀 더 높고, 분산이 적어 더 선호됨</b>
 - 시간과 여유가 있다면 교차 검증으로 둘 다 비교하는 것이 좋음
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/bagging_ensemble.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/bagging_ensemble.JPG)
 
 ### oob 평가
 - 배깅을 사용하면 어떤 샘플은 선택되고, 어떤 샘플은 선택되지 않을 수 있음
@@ -61,7 +61,7 @@
 
 - 아래 그림은 moons 데이터셋에 훈련시킨 다섯 개의 연속된 예측기의 결정 경계
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/adaBoost_1.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/adaBoost_1.JPG)
 
 - 이런 연속된 학습 기법은 경사 하강법과 비슷한 측면이 있음  
   경사 하강법은 비용 함수를 최소화하기 위해 한 예측기의 모델 파라미터를 조정해가는 반면 에이다부스트는 점차 더 좋아지도록 앙상블에 예측기를 추가함

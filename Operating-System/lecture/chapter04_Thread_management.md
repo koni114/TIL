@@ -17,7 +17,7 @@ v               |
 - <b>하나의 프로세스 안에 여러개의 thread가 있을 수 있음</b>
 
 ## 스레드(thread)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_7.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_7.JPG)
 
 ### Resource
 - Resource에는 코드, 전역 데이터, Heap 등이 있을 수 있음
@@ -33,7 +33,7 @@ v               |
 - <b>process 안에는 여러개의 thread이고 자원을 공유한다라는 개념을 꼭 기억하자</b>
 
 ## thread의 메모리 관점
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_8.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_8.JPG)
 
 - 위의 그림은 process의 메모리 공간
 - 같은 프로세스의 스레드들은 동일한 주소 공간을 공유함
@@ -83,7 +83,7 @@ v               |
 - 커널은 프로세스 단위로 자원 할당
   - 하나의 스레드가 block 상태가되면 모든 스레드가 대기상태로 들어감
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_9.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_9.JPG)
 
 ### 커널 수준 스레드
 - OS(kernel)가 직접 관리
@@ -93,7 +93,7 @@ v               |
   - 프로세스 내 스레드들이 병행 수행 가능
     - 하나의 스레드가 block 상태가 되어도, 다른 스레드는 계속 작업 수행 가능
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_10.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_10.JPG)
 
 ### Multi-threading Model
 - 사용자 수준 스레드 + 커널 수준 스레드를 복합적으로 사용하는 모델
@@ -103,7 +103,7 @@ v               |
   - 커널 스레드는 자신에게 할당된 하나의 사용자 스레드가 block 상태가 되어도, 다른 스레드 수행 가능
 - 효율적이면서도 유연함
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_11.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_11.JPG)
 
 
 

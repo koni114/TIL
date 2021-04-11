@@ -15,7 +15,7 @@
   - 사용자가 불법적인 형태로 사용하려고 할 때 보호하고자 하는 역할
 
 ## 컴퓨터 시스템의 구성
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_1.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_1.JPG)
 
 - 운영체제의 핵심은 kernel
 - kernel 위에는 system call interface가 있음  
@@ -108,7 +108,7 @@
   - UI등 서비스 프로그램'
 
 ### 운영체제 구조 : 단일 구조
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_2.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_2.JPG)
 
 - 커널에 단일로 모아둔 것
 - 예를들어 main 안에 모든 것들이 들어가 있는 것

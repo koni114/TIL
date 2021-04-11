@@ -12,7 +12,7 @@
     - 시스템이 deadlock 상태에 있음
 - Deadlock vs Starvation  
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_48.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_48.JPG)
 - deadlock은 asleep 상태에 있는데, event가 발생할 일이 없는 경우
 - starvation은 ready state에서 cpu를 기다리고 있는 상태! 발생할 수는 있는데 운이 없어서 발생 안하고 있는 상태
 - 즉 기다리고 있는 자원도 차이가 있음
@@ -77,7 +77,7 @@
   - deadlock이 발생할 수 있지만, 너무 복잡하여 이번 시간에는 제외하기로 하자
 
 ## Deadlock 발생의 예
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_49.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_49.JPG)
 
 - 3번 상태는 deadlock 상태는 아님. 만약 P2가 R1을 반납한다면 정상적인 프로세스 수행 가능
 - 4번 상태에서는 P2가 P1이 가지고 있는 자원을 요청함으로써 절대 일어날 수 없는 event 상태가 됐으므로, deadlock 상태가 됨
@@ -93,7 +93,7 @@
   - Rj -> Pi : 자원 Rj 이 프로세스 Pi에 할당 됨
   - Pi -> Rj : 프로세스 Pi가 자원 Rj을 요청(대기 중)  
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_50.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_50.JPG)
 - 앞에 했던 deadlock 예제를 그림으로 표현한 것임
 - cycle이 상태를 deadlock임을 확인할 수 있음
 
@@ -102,9 +102,9 @@
   - 2개의 프로세스와 A type의 자원 2개(unit) 존재(Ra 2개)
   - 프로세스는 한번에 자원 하나만 요청/반납 가능
 - State는 총 5가지 경우의 수를 가짐
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_51.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_51.JPG)
 - 만약 프로세스가 2개라면 5x5 --> 25가지의 state를 가질 수 있음
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_52.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_52.JPG)
 - 상태가 변하는 것을 edge로 표현
 - deadlock이 S33에서 발견됨. 둘 다 하나를 잡고 하나를 요청하게 되면 deadlock임을 알 수 있음
 
@@ -183,7 +183,7 @@
   - 한 종류(resource type)의 자원이 여러 개(unit)
 - 시스템을 항상 safe state로 유지   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_53.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_53.JPG)
 - 한 개의 타입의 소스, 총 10개의 소스가 있으며 3개의 프로세스가 있다고 가정
 - Max.Claim : 최대 자원 필요 개수. Cur.Alloc : 현재 할당 개수. Additional Need : 앞으로 필요한 개수.
 - 내가 10만원을 가지고 있을 때, 1,2,3번이 나한테 돈을 빌려달라고 함  
@@ -198,7 +198,7 @@
   - 실행 종료 순서 : P1 -> P3 -> P2(Safe seqeunce)
   - 현재 상태에서 안전 순서가 하나이상 존재하면 안전 상태임
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_54.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_54.JPG)
 - State-2에서는 내가 가지고 있는 남은 자원을 가지고 그 누구도 만족시키지 못함 --> unsafe state
 - Available resource units : 3
 - No Safe sequnce
@@ -206,11 +206,11 @@
 - 임의의 순간에 세 프로세스들이 모두 세 개 이상의 단위 자원을 요청하는 경우 시스템은 교착상태에 놓이게 됨
 - 그렇다면 banker's algorithm은 무엇일까? 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_53.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_53.JPG)
 - P1이 자원을 1개 더 요청. 그러면 빌려 줄지 말지 정해야 함
 - 알고리즘은 줬다고 가정하고 시뮬레이션을 돌려보는 것임. 시뮬레이션을 돌려보면 다음 처럼 됨
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_54.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_54.JPG)
 - P1의 Cur.Alloc을 2로 만들어봄
 - 그런 다음 safe-state가 가능한지 확인 해보는 것임. --> 내 자원이 1인 상태에서 P1 -> P3 -> P2하면 됨
 - 반대로 P2가 자원을 하나 빌려달라고 한 경우에는 safe sequence가 없음
@@ -223,12 +223,12 @@
   - Multiple resource units for each resource type
 - 시스템을 항상 safe state로 유지  
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_55.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_55.JPG)
 - 3 types of resources : Ra, Rb, Rc
 - Number of resource units for each type : (10, 5, 7)
 - 5 processes
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_56.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_56.JPG)
 - Available resource units : (3, 3, 2) 
 - Safe sequence : P2 -> P4 -> P1 -> P3 -> P5
 - Safe state because there exist a safe sequnce
@@ -253,29 +253,29 @@
 - Resource Allocation Graph(RAG) 사용    
 
 ### Resource Allocation Graph(RAG)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_58.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_58.JPG)
 - Deadlock 검출을 위하여 사용
 - Directed, bipartite Graph(process와 자원의 이분그래프)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_59.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_59.JPG)
 - Directed graph G = (N, E)
   - N = {Np, Nr} where
     - Np is the set of processes = {P1, P2, ... , Pn}
     - and Nr is the set of resources = {R1, R2, ..., Rm}   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_60.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_60.JPG)
 - Resource Allocation Graph(RAG)
   - Edge는 Np와 Nr 사이에만 존재
     - e = (Pi, Rj) : 자원 요청
     - e = (Rj, Pi) : 자원 할당   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_61.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_61.JPG)
 - Rk : k type의 자원
 - tk : Rk의 단위 자원 수(Rk에 속하는 자원 개수)
 - |(a,b)| : (a,b) edge의 수 
 
 ### RAG example
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_62.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_62.JPG)
 - 위 그림의 상태는 deadlock인가? 
 - 쉽게 deadlock 여부를 판단할 수 있는 algorithm이 존재 --> Graph reduction
 
@@ -291,7 +291,7 @@
   - Unblocked process
     - unblocked process에 연결된 edge를 다 지움 
     - 필요한 자원을 모두 할당 받을 수 있는 프로세스  
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_63.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_63.JPG)
 - Pi가 요청하는 모든 자원에 대해(LHS)  
 - 각각의 자원들의 자원 수에서 해당 자원이 할당한 수를 뺀 값(RHS)보다 작으면 unblocked process 
 
@@ -306,10 +306,10 @@
       - 현재 deadlock이 존재     
 
 - Graph Reduction(example 1)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_64.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_64.JPG)
 
 - Graph Reduction(example 2)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_65.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_65.JPG)
 
 - Graph Reduction
   - High overhead
@@ -378,4 +378,4 @@
   - Rollback을 위해 사용
     - 프로세스 강제 종료 후, 가장 최근의 checkpoint에서 재시작  
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_66.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_66.JPG)

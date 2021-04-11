@@ -74,7 +74,7 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 이 두 사실로부터 경사 하강법이 전역 최솟값에 가깝게 접근할 수 있음을 보장함
 - 사실 비용 함수는 그릇 모양을 하고 있지만 <b>특성들의 스케일이 매우 다르면 길쭉한 모양일 수 있음</b>
 
-![img](LM_scaling_versus.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/LM_scaling_versus.JPG)
 
 - 위의 그림에서 보면, 왼쪽 그림은 scaling 처리가 되어 최솟값으로 곧장 진행하고 있어 빠르게 도달하는 반면, 오른쪽 그래프는 시간이 오래걸림
 - <b>즉 스케일이 다르면 전역 최솟값에 도달하는 시간이 더 오래걸리므로, scale을 조정해 주어야 함</b>
@@ -135,7 +135,7 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 미니배치를 어느정도 크게하면 덜 불규칙적이게 수렴
 - 선형회귀가 아니라면 지역 최솟값에서 벗어나기 힘들지도 모름
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/Linear_Regression.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/Linear_Regression.JPG)
 
 ## 다항 회귀
 - 비선형 데이터를 학습하는 데 선형 모델을 사용할 수 있음
@@ -157,7 +157,7 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 
 
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/underFitting_LearningCurve.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/underFitting_LearningCurve.JPG)
 
 - 위의 학습 곡선은 과소 적합 되었을 때의 특징이 나타나는 학습 곡선  
   - 훈련 세트의 그래프와 검증 세트의 그래프의 오차가 거의 나지 않음 
@@ -165,7 +165,7 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 모델이 훈련 데이터에 과소 적합 되어 있다면 데이터를 더 추가하더라도 소용이 없음  
   더 복잡한 모델을 사용하거나 더 나은 특성을 사용해야 함  
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/overFitting_LearningCurve.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/overFitting_LearningCurve.JPG)
 
 - 다음은 10차 다항회귀 곡선
   - 훈련 데이터의 오차가 선형 회귀 모델보다 훨씬 낮음

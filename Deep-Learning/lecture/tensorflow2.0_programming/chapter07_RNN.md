@@ -11,13 +11,13 @@
 - 즉 RNN 네트워크는 처음 X1을 입력으로 받고 그 다음에는 X2와 이전 단계의 출력인 Y1, 그 다음에는 X3와 이전 단계의 출력은 Y2를 입력으로 받음
 - 이 과정에서 RNN 네트워크는 동일하게 사용됨
 
-![img](RNN.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/RNN.JPG)
 
 - 순환 신경망은 입력과 출력의 길이에 제한이 없다는 특징이 있음  
   따라서 아래 그림과 같은 다양한 형태의 아키텍처 설계가 가능함
 - 예를 들어 이미지에 대한 설명을 생성하는 설명 생성(Image Captioning), 문장의 긍정/부정을 판단하는 감성 분석(Sentimental Classification), 하나의 언어를 다른 언어로 번역하는 기계 번역(Machine Learning) 등이 있음
 
-![img](various_RNN.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/various_RNN.JPG)
 
 ## 7.2 주요 레이어 정리
 - 순환 신경망의 가장 기초적인 레이어는 SimpleRNN 레이어
@@ -25,7 +25,7 @@
 - 자연어 처리를 위해서 꼭 알아둬야 할 임베딩(Embedding) 레이어도 알아보자
 
 ### 7.2.1 SimpleRNN 레이어
-![img](simpleRNN.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/simpleRNN.JPG)
 
 - SimpleRNN 레이어는 가장 간단한 형태의 RNN 레이어
 - 위의 그림은 각 단계에서 입력이 변할 때의 계산의 흐름을 보여줌
@@ -121,13 +121,13 @@ print(model.predict(np.array([[[-0.1], [0.0], [0.1], [0.2]]])))
 - LSTM은 RNN에 비해서 복잡한 구조를 가지고 있는데, 가장 큰 특징은 출력 외에 LSTM 셀 사이에서만 공유되는 셀 상태(cell state)를 가지고 있다는 점
 - simpleRNN은 cell 상태로 나타내면 다음과 같음
 
-![img](simpleRNN_cell.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/simpleRNN_cell.JPG)
 
 
 - 이에 비해 LSTM을 셀의 형태로 나타내면 아래와 같음. 꽤 복잡한 모양을 띔  
   여기서 c(t-1)과 c(t)가 바로 셀 상태를 나타내는 기호
 
-![img](simpleRNN_cell2.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/simpleRNN_cell2.JPG)
 
 - SimpleRNN 셀에서 타임스텝의 방향으로 h(t)만 전달되고 있는 데 비해 LSTM 셀에서는 셀 상태가 c(t)인 평행선을 그리며 함께 전달되고 있음
 - <b>이처럼 타임스텝을 가로지르며 셀 상태가 보존되기 때문에 장기의존성 문제를 해결할 수 있다는 것이 LSTM의 핵심 아이디어</b>
@@ -154,7 +154,7 @@ print(model.predict(np.array([[[-0.1], [0.0], [0.1], [0.2]]])))
 - LSTM의 학습 능력을 확인하기 위해 살펴볼 예제 코드는 LSTM을 처음 제안한 논문에 나온 실험 여섯개 중 다섯 번째인 곱셈 문제(Multipliction problem)임 
 - 이 문제는 말 그대로 실수에 대해 곱셈을 하는 문제인데, 고려해야 할 실수의 범위가 100개이고 그중에서 마킹된 두 개의 숫자만 곱해야 한다는 특이한 문제
 
-![img](multiplication_problem.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/multiplication_problem.JPG)
 
 - 위의 문제를 먼저 SimpleRNN에서 풀어보고, LSTM 레이어를 사용해보자
 - 3000개의 데이터를 만들고, 2560개르 훈련 데이터, 나머지 440개를 테스트 데이터로 사용해보자
@@ -187,7 +187,7 @@ model.summary()
 - RNN 레이어를 겹치기 위해 첫 번째 SimpleRNN 레이어에서 `return_Sequences = True`로 설정된 것을 확인할 수 있음
 - `return_sequences`는 레이어의 출력을 다음 레이어로 그대로 넘겨주게 됨. 네트워크의 구조는 다음과 같음
 
-![img](simpleRNN_sequence.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/simpleRNN_sequence.JPG)
 
 - ho^{1} 이라고 돼 있는 부분에서 윗첨자에 해당하는 오른쪽 위의 숫자 1은 첫 번째 레이어를 의미함
 - 첫번째 SimpleRNN은 모든 출력을 다음 레이어로 넘기기 때문에 두 번째 SimpleRNN 레이어도 각 타임스텝에 대해 아래쪽과 옆에서 오는 양방향의 입력을 정상적이게 받음
@@ -246,7 +246,7 @@ plt.show()ㄴ
 - GRU 레이어는 LSTM 레이어와 비슷한 역할을 하지만 구조가 더 간단하기 때문에 계산상의 이점이 있고 어떤 문제에서는 LSTM 레이어보다 좋은 성능을 보이기도 함
 - 셀로 나타낸 GRU 레이어의 계산 흐름은 다음 그림과 같음
 
-![img](GRU_sequence.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/GRU_sequence.JPG)
 
 - LSTM과 가장 큰 차이점은 셀 상태가 보이지 않는다는 점
 - GRU 레이어는 셀 상태가 없는 대신 h(t)가 비슷한 역할을 함. GRU 레이어에는 LSTM 레이어보다 sigmoid 함수가 하나 적게 쓰였는데, 이것은 게이트의 수가 하나 줄어들었음을 의미함

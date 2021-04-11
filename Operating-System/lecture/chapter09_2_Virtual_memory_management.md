@@ -56,7 +56,7 @@
   - Update bits(modified bits, write bits, dirty bits)
     - 갱신 비트 --> page data가 갱신되었는가? 
 - 아래 그림은 bit vectors에 대한 설명 그림
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_98.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_98.JPG)
 - memory의 page frame 하나마다 update bit와 reference bit가 있다고 생각하자
 - bit를 PMT에다가 넣어두고 정보를 관리하겠다! 라는 것임
 
@@ -68,7 +68,7 @@
     - 주기적으로 만든 모든 reference bit를 0으로 초기화
   - Reference bit를 확인함으로서 최근에 참조된 page를 확인 가능   
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_99.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_99.JPG)
 - 특정 시점마다 계속 reset을 수행하고, 그 사이에 참조가 됐으면 reference bit를 1로 변경해줌
  
 ### Update bit vector
@@ -164,7 +164,7 @@
 - thrashing 현상 경험하기
   - Hwp -> 엔터를 5초이상 계속 눌러보면, 마우스 및 강의들이 버벅거리는 현상이 발생하기 시작함 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_100.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_100.JPG)
 - 성능 지표 중에 throughput(처리량)이 있음
 
 ## Replacement strategies - deeping
@@ -196,7 +196,7 @@ for <- 1 to n do
 endfor
 ~~~
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_101.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_101.JPG)
 ~~~c
 (R1) <- ONE            // 4, 9
 (R2) <- n              // 4, 9
@@ -242,10 +242,10 @@ branch 4002
 - 교체 기법의 성능 평가 도구로 사용 됨  
   해당 알고리즘은 구현 불가능하지만, 해당 알고리즘과 다른 알고리즘과 비교 했을 때 최적에 얼마나 근접한지 성능 평가 도구로 활용할 수 있음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_102.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_102.JPG)
 - MIN Algorithm에서는 y를 교체 대상으로 선정. 가장 오랫동안 참조하지 않기 때문
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_103.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_103.JPG)
 
 ### Random Algorithm
 - 무작위로 교체할 page 선택
@@ -261,14 +261,14 @@ branch 4002
 - 자주 사용되는 page가 교체될 가능성이 높음
   - Locality에 대한 고려가 없음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_104.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_104.JPG)
 - 결과적으로 z선택.
  
 #### FIFO anomoly(Belady's anomaly)
 - page fault를 줄이기 위해서 자원을 더 늘렸는데, 오히려 page fault가 늘어난 현상  
 - FIFO 알고리즘의 경우, 더 많은 page frame을 할당 받음에도 불구하고 page fault의 수가 증가하는 경우가 있음     
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_107.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_107.JPG)
 
 ### LRU(Least Recently Used) Algorithm
 - 가장 오랫동안 참조되지 않'은' page를 교체
@@ -277,7 +277,7 @@ branch 4002
 - MIN algorithm에 근접한 성능을 보여줌
 - 실제로 가장 많이 활용되는 기법
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_105.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_105.JPG)
 - 위의 그림에서는 언제 참조했는지는 알기 어려움.
 
 - 단점
@@ -290,7 +290,7 @@ branch 4002
     - 예) loop를 위한 |Ref.string| = 4 / 할당된 page frame 이 3개
     - Allocation 기법에서 해결 해야 함 --> page frame을 늘려주자      
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_106.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_106.JPG)
 
 ### LFU(Least Frequency Used) Algorithm
 - 가장 참조 횟수가 적은 Page를 교체
@@ -302,7 +302,7 @@ branch 4002
   - 최근 적재된 참조될 가능성인 높은 page가 교체될 가능성이 있음
   - 참조 횟수 누적 overhead     
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_107.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_107.JPG)
 
 ### NUR(Not Used Recently) Algorithm
 - LRU approximation scheme
@@ -317,7 +317,7 @@ branch 4002
   - (r, m) = (1, 0)
   - (r, m) = (1, 1) 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_108.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_108.JPG)
 
 ### Clock Algorithm
 - IBM VM/370 OS
@@ -327,7 +327,7 @@ branch 4002
 - 시침이 돌아가면서 가리키는 page가 교체 대상이 됨
 - 교체 대상은 reference bit가 0인 것들이 교체 대상
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_109.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_109.JPG)
 - Pointer를 돌리면서 교체 page 결정
   - 현재 가리키고 있는 page의 reference bit(r) 확인
   - r = 0인 경우, 교체 page로 결정
@@ -337,7 +337,7 @@ branch 4002
 - Reference bit을 사용하여 교체 페이지 결정
   - LRU(or NUR)과 유사     
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_110.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_110.JPG)
 
 ### Second Change Algorithm
 - Clock algorithm과 유사
@@ -351,7 +351,7 @@ branch 4002
     - (1,1) : -> (0,1) 후 이동 
 - 중요한 것은 reference bit를 update bit보다 먼저 바꿔야 함
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_111.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_111.JPG)
 - clock algorithm에서 update bit가 붙음
 
 ### Other Algorithms
@@ -398,20 +398,20 @@ branch 4002
 - window size와 working set size의 관계?
 - 초반에는 window size를 조금만 늘려도 확 늘어남. but 계속 증가할수록 증가율은 줄어듬  
   --> locality 때문!   
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_113.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_113.JPG)
 
 - working set transition 예시
   - loop-1 동안에는 p0, p1을 참조 
   - ㅣoop-2 동안에는 3개, loop-3은 2개!  
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_114.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_114.JPG)
 
 - loop-1 -> loop-2로 바뀔 때는 일시적으로 working-set이 증가하는 현상을 보임
 - 해당 루프에서 전환하는 딱 그 시점에 두 루프의 프로세스 모두가 필요할 것이므로,
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_115.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_115.JPG)
 
 - working-set은 window size안에 들어오는 Page의 개수가 계속 달라지는 것을 확인!
 - page fault는 5번 일어남. 이것이 좋은 성능일까? 알기가 어려움. 주는 자원의 수가 다르기 때문
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_116.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_116.JPG)
 
 - 성능 평가 
   - Page fault 수 외 다른 지표도 함께 봐야 함
@@ -432,7 +432,7 @@ branch 4002
   - Residence set(상주 집합)을 page fault가 없더라도, 지속적으로 관리해야 함   
 - Mean number of frames allocated vs page fault rate
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_119.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_119.JPG)
 - window size가 커지면, page의 메모리 유지 비용(lifetime)이 커짐
 - 반대로 window size가 커지면, page fault rate는 줄어듬
 - 즉 window size는 적당히!
@@ -490,7 +490,7 @@ branch 4002
   - 참조 된다면, page r을 유지
   - 참조 안 된다면, page r을 메모리에서 내림 
       
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_118.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_118.JPG)
 - 성능 평가
   - Page fault 수 외 다른 지표도 함께 봐야 함
   - Example
@@ -556,9 +556,9 @@ int main()
 ~~~  
 
 - Row-major order for array
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_120.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_120.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_121.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_121.JPG)
 
 - 가상 메모리 시스템의 특성에 맞도록 프로그램을 재구성
 - 사용자가 가상 메모리 관리 기법(예, paging system)에 대해 이해하고 있다면, 프로그램의 구조를 변경하여 성능을 높일 수 있음

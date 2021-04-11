@@ -99,7 +99,7 @@
   몇개의 계단을 만들어 구분해야 함
 - 이를 해결할 수 있는 방법 중 하나는 훈련 데이터를 더 좋은 방향으로 회전시키는 PCA 기법을 사용하는 것
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/decisionTree_rotation.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/decisionTree_rotation.JPG)
 
 - decisionTree의 주된 문제는 훈련 데이터에 있는 작은 변화에도 매우 민감하다는 것
 - 사이킷런에서 사용하는 의사결정트리 모형은 각 노드에서 평가할 후보 특성을 무작위로 선택하기 때문에 만들 때 마다 모형이 바뀔 수 있음 

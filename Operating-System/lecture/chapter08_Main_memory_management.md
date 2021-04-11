@@ -1,11 +1,11 @@
 # 메모리 관리(Main memory management)
 ## 메모리(기억장치)의 종류
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_67.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_67.JPG)
 - 레지스터와 캐시는 HW가 관리
 - 메인 메모리와 보조기억장치는 SW가 관리
 
 ## 메모리(기억장치) 계층구조
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_68.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_68.JPG)
 - Block 
   - 보조기억장치와 주기억장치 사이의 데이터 전송 단위
   - 보조기억장치에서 1bit만 읽으려고 해도 main memory는 최소 블록 단위로 전송됨
@@ -22,9 +22,9 @@
   - Compile time binding
   - Load time binding
   - Run time binding
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_69.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_69.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_70.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_70.JPG)
 - 어떤 프로그램을 짰을 때, 실제로 메모리에 실행되기 까지의 과정을 그려 놓은 것
 - Compiler가 수행하는 시점에 binding이 일어나면 compile binding
 - Load module --> exe를 생각하면 됨. 즉 load module을 만드는 작업을 linking이라고 함
@@ -42,7 +42,7 @@
   ex) u + 100, u - 100... 
 - 적재 시점(load time)에 시작 주소를 반영하여 사용자 코드 상의 주소를 재설정
 - 프로그램 전체가 메모리에 올라가야 함          
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_71.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_71.JPG)
 - 처음 program code에서 시작 주소가 0번이라고 가정하고 상대 주소 기반으로 수행. ex) 360으로 가라! 1204을 로딩해라! 등.
 - loading time에서 할당된 시작 주소가 400번이면, 상대적인 + 400만큼 이동. 이를 <b>relocation이라고 함</b>
 
@@ -54,7 +54,7 @@
   - MMU : Memory Management Unit
 - 대부분의 OS가 사용 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_72.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_72.JPG)
 
 ## Dynamic Loading
 - 앞서 address binding을 다룰 때는 우리 프로그램이 메모리에 통으로 올라간다고 가정하고 생각함. 하지만 그렇지 못할 경우도 있을 것임. 메모리에 프로그램 전체를 올릴 필요가 없음. 원하는 부분만 올리고 싶음 !  
@@ -70,7 +70,7 @@
 - 프로세서 할당이 끝나고 수행 완료 된 프로세스는 swap-device로 보내고(Swap-out)
 - 새롭게 시작하는 프로세스는 메모리에 적재(Swap-in)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_73.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_73.JPG)
 
 ## Memory allocation
 - 어떻게 메모리가 프로세스에게 자원을 할당해 주느냐?
@@ -114,9 +114,9 @@
     - 메모리에 현재 필요한 영역만 적재
     - 사용자가 프로그램의 흐름 및 자료구조를 모두 알고 있어야 짤라서 올리고 내려줄 수 있음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_74.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_74.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_75.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_75.JPG)
 
 - 문제점
   - 커널(kernel) 보호  
@@ -137,11 +137,11 @@
 - Partition의 수 = K
   - Multiprogramming degree = K 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_76.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_76.JPG)
 
 - 커널 및 사용자 영역 보호
 - 각 파티션의 경계마다 boundary address를 쓰면 됨
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_77.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_77.JPG)
 
 #### Fragmentation(단편화) ** 중요
 - Internal fragmentation
@@ -178,16 +178,16 @@
 - 프로세스 E(15MB)가 적재된 후
 - 프로세스 D가 주기억장치를 반납 한 후
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_78.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_78.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_79.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_79.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_80.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_80.JPG)
 
 - 차례 차례 동적으로 메모리를 할당하면 됨
 - 기억해야 할 것은, internal fragmentation이 일어나지 않음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_81.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_81.JPG)
 
 - 이번에는 해당 메모리가 Exit함. 이런식으로 exit가 일어나면, 자연스레 빈 공간이 생기게 됨
 
@@ -199,7 +199,7 @@
   - Simple and low overhead --> 할당할 수 있는 제일 처음을 선택하는 것이므로 간단하고 low overhead
   - 공간 활용률이 떨어질 수 있음 --> 프로세스가 12KB인데, 처음만난 공간이 13KB이면 사용할 확률이 낮아지는 등 누굴 만나느냐에 따라 공간활용률이 떨어질 수 있음  
      
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_82.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_82.JPG)
 
 - Best-fit(최적적합)
   - process가 들어갈 수 있는 partition중 <b>가장 작은 곳 선택</b>
@@ -209,7 +209,7 @@
   - 작은 크기의 partition이 많이 발생
     - 활용하기 너무 작아짐
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_83.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_83.JPG)
 
 - Worst-fit(최악 적합)
   - Process가 들어갈 수 있는 partition 중 가장 큰 곳 선택
@@ -219,7 +219,7 @@
   - 큰 크기의 partition 확보가 어려움
     - 큰 프로세스에게 필요한
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_84.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_84.JPG)
 
 - Next-fit(순차 최초 적합)
   - 프로세스를 할당한 위치의 다음부터 순차적으로 탐색하는 방법 
@@ -236,7 +236,7 @@
   - Low overhead 
 - 하나의 프로세스가 나가고 난 후 빈 공간의 memory를 합치는 것을 coalescing holes 라고 함
 - 공간을 합치는 것은 프로세스가 나가고 난 후 바로 합치면 됨(overhead가 적은 일)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_85.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_85.JPG)
 
 ## Storage Compaction(메모리 압축)
 - 공간이 비어있는데, 떨어져 있으면 빈 공간을 위로 쭉 올려서 공간을 만들어내는 것. 이를 공간 압축이라고 함
@@ -246,7 +246,7 @@
   - 모든 process 재배치(Process 중지) --> 전체 위치를 변경해야 하기 때문
   - 일정시간, 일정 기간 요청이 있을 때문 수행해야 함
   - 많은 시스템 자원을 소비 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_86.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_86.JPG)
 
 - 이런 것들을 왜 공부해야 할까?   
 실제로 메모리를 할당 받는 행위(new ~~)는 속도가 많이 느려지는 행위. 그렇다면 빠르게 하기 위한 방법으로

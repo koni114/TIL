@@ -23,7 +23,7 @@
 - Mutual exclusion(상호 배제) 
   - 둘 이상의 프로세스가 동시에 critical section에 진입하는 것을 막는 것
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_14.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_14.JPG)
 
 - 기계어 명령(machine instruction)의 특성
   - 실제로 processor가 실행하는 가장 작은 단위의 명령어
@@ -32,7 +32,7 @@
 
 - 다음의 그림에서는 크게 두 가지 경우에 따라 sdata의 결괏값이 달라질 수 있음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_15.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_15.JPG)
 
 - 위의 그림은 기본적인 기계어 표현법
 - 왼쪽 process-P(i)는 sdata의 값을 Register 값 R(j)에 블러오고, 해당 레지스터에 1을 더하고, 다시 sdata에  
@@ -65,14 +65,14 @@
   - 프로세스의 CS진입은 유한시간 내에 허용되어야 함
 
 ### ME primitives 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_17.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_17.JPG)
 
 - 최초의 턴은 0번 턴
 - P0가 while문 전에 죽어버림. 이렇게 되면 P1은 Progress 조건을 위배함  
 - P0이 수행하고 난 후에 다시 P0이 들어가려고 할 때 들어갈 수 없음. 즉 두 번 연속 진입 불가  
   progress 요건 위배
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_18.JPG) 
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_18.JPG) 
 
 - 위의 코드는 flag를 주자! 라는 아이디어에서 출발
 - 상대편의 깃발을 보고, 들려있다면 상대편이 들어가 있다라는 의미이므로, 기다려야 함
@@ -80,7 +80,7 @@
 - 이러한 코드는 위의 3가지 고려사항을 만족할까?   
   NO! while문을 통과하고 preemption이 발생하고 반대편에서 들어오면 ME에 위배됨
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_19.JPG) 
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_19.JPG) 
 
 - version 2와 다른 점은 먼저 내가 들어갈 것이다! 라고 flag를 주고 while문이 시작되는데,  
   이렇게 되면 Bounded waiting 문제에 위배
@@ -100,7 +100,7 @@
 
 ## SW solutions - Dekker's algorithm
 - Two process ME를 보장하는 알고리즘
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_20.JPG) 
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_20.JPG) 
 
 ~~~c
 flag[0] <- false;
@@ -165,7 +165,7 @@ flag[1] <- false;
 ~~~
 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_21.JPG) 
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_21.JPG) 
 
 
 ## SW solutions - N-preocess Mutual Exclusion
@@ -181,7 +181,7 @@ flag[1] <- false;
 - 들어가고 싶다고 의사를 밝힘. 1단계 : 내가 아니면 기다림. 현재 turn인 친구 idle이 끝날 때까지 기다림 
 - 2단계는 많이 걸러지고 들어올 것임
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_22.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_22.JPG)
 
 ~~~c
 /* 임계 지역 진입시도 1단계  */
@@ -232,7 +232,7 @@ boolean TestAndSet(boolean *target){
 - 위의 문장을 한 번에 수행(Machine instruction)
 
 ### ME with TAS Instruction
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_23.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_23.JPG)
 - 시작은 lock = false. TAS function에 들어가면, lock = True로 변경되며, false가 return되면서 while문을 빠져 나감
 - 이 때 새로운 녀석이 들어오면 process가 종료될 때까지 while문을 빠져나가지 못하므로, ME 성립
 - 3개 process 이상의 경우, Bounded waiting 조건에 위배  
@@ -292,7 +292,7 @@ V(S){
 }
 ~~~
 - 다음의 예시는 두 프로세스 간의 스핀락 예제(스레드가 아님을 유의)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_24.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_24.JPG)
 - `active` 라는 spinlock 변수가 있다고 생각
 - P, V는 preemption이 보장되기 때문에 ME가 쉽게 해결됨
 - 그러면, SW Solution으로 왜 이렇게 어렵게 푸느냐? 라고 할 수 있지만, 이러한 과정들이 있었기 때문에  
@@ -356,14 +356,14 @@ V(S){
 - 기타..
 
 ### Mutial exclusion 문제
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_25.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_25.JPG)
 
 - spinlock과 다른 점을 꼭 기억하자 --> ready queue
 
 ### Process-synchronization
 - process들의 실행 순서를 맞출 수 있음
   - 프로세스들은 병행적이며, 비동기적으로 수행   
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_26.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_26.JPG)
 
 - P(j)가 수행되고 난 후에 P(i)가 수행되어야 한다고 가정해보자  
   즉 p(j)의 V() 함수 수행 후, P(i)의 P() 함수 수행됨. 또한 lock 변수인 sync(물건이라고 생각하면 편함)  
@@ -377,14 +377,14 @@ V(S){
 - 소비자(Consumer) 프로세스
   - 메세지를 전달받는 프로세스 그룹
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_27.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_27.JPG)
 
 - producer process는 드라이버, 컴파일러, 어셈블러 등의 무언가의 데이터를 생산하려는 녀석들이고, Consumer process는 라인 프린터, 어셈블러, 로더처럼 실제 데이터를 소비하여 행동하는 녀석들임
 - 이 때 buffer에 producer가 생성한 녀석들을 담게 되는데, 물건을 놓는 동안에 가져가면 안되고, 물건을 두는 동안에 또 다른 녀석이 물건을 두는 행위가 일어나서는 안됨. 즉 동기화가 필요
 - 먼저 간단하게 single buffer 부터 풀어보자!
 
 ### sigle buffer Producer-consumer problem
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_28.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_28.JPG)
 - buffer가 single이라는 것은 buffer에 물건을 둘 때 가져가거나 또 둘 수 없고, 가져갈 때 두거나 또 다른 녀석이 가져가는 행위가 안된다는 것
 - consumed --> 소비되었다면 1, 소비되지 않았다면 0. 초기값은 1
 - produced --> 생산되었다면 1, 생산되지 않았다면 0. 초기값은 0
@@ -402,10 +402,10 @@ V(S){
 ### N-buffers Producer-consumer problem
 - circular queue를 이용하여 문제 해결 가능
 - 삽입 위치의 포인터(In), 제거 위치의 포인터(Out)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_29.JPG) 
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_29.JPG) 
 - circular queue를 사용하여 물건을 놓는 지점(in), 물건을 가져가는 지점(out)이 있음을 기억하자
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_30.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_30.JPG)
 - mutexP, mutexC --> 생산자, 소비자 process가 한번에 한명만 쓰라는 의미의 변수
 - CS는 Producer 같은 경우는 P(nrempty) - V(nrfull) 구간이 되며, Consumer는 P(nrfull) - V(nrempty)가 됨
 - nrfull --> buffer에 차 있는 수
@@ -470,7 +470,7 @@ V(mutexC);
 - 이번 예제는 reader preference solution 예제를 semaphore로 해결해보자
 
 ### Redaer-Writer problem(reader preference solution)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_47.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_47.JPG)
 
 - Writer Wj
   - writer는 한명만 쓸 수 있기 때문에 간단함
@@ -531,7 +531,7 @@ V(mutexC);
   - if(E < v) E에 연결된 Qe에 프로세스 전달(push) 및 CPU scheduler 호출  
 
 ### Mutual exclusion
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_31.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_31.JPG)
 
 - process 1이 도착
 - 번호표를 뽑음(ticket(S)). 뽑음과 동시에 sequence는 2로 증가
@@ -546,7 +546,7 @@ V(mutexC);
 - 이 방법은 queue의 순서에 따라서 차례로 수행됨
 
 ### Producer-Consumer problem
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_32.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_32.JPG)
 - Producer
   - producer는 await(In,t)과 advanced(In)을 짝지어 생각할 수 있음. 그 사이에 있는 코드문들은 CS
   - producer에서 t <- ticket(Pticket); await(In, t)는 P 연산과 동일, advanced(In)은 V 연산과 동일
@@ -581,7 +581,7 @@ V(mutexC);
 - 사용이 쉬움
 
 ## Monitor
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_40.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_40.JPG)
 - Critical Data와 Critical section을 모아둔 책방이라고 생각할 수 있음
 - 책방에는 한 번에 한명만 들어올 수 있음  
   Critical Data는 책, Critical sections는 책방에서 반납/빌리는 연산이라고 생각할 수 있음
@@ -605,49 +605,49 @@ V(mutexC);
   - signal() 명령을 실행한 프로세스가 임시 대기
 
 ### 자원 할당 문제
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_34.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_34.JPG)
 - R이라는 자원 1개가 있고, 한 번에 한명만 사용하게 해주는 문제
 - 자원을 요청하는 function이 하나 있고, 자원을 반납하는 function 하나 있음
 - Monitor 내부에는 공간이 존재하며, condition queue R_Free는 대기실과 같은 역할 수행
 - signaler queue는 아까 말한 전화 부스의 역할 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_35.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_35.JPG)
 - 다음과 같은 자원 할당 문제에서 releaseR(), requestR() function을 직관적으로 짤 수 있음
 - requestR --> 책을 빌릴 수 없으면 R_Free에서 대기. 아니면 대여해감
 - releaseR --> 책을 반납하고, R_Free에서 대기하고 있는 녀석들에게 signal
 
 ### 자원 할당 시나리오
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_36.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_36.JPG)
 - 자원 R 사용 가능. 자원은 monitor 바깥에 있음 --> Monitor 안에 프로세스 없음
 - R_Avaliable 은 T/F 역할로 자원 존재 여부
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_37.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_37.JPG)
 - 프로세스 Pj가 모니터 안에서 자원 R을 요청
 - requestR()이 비었으므로, Pj는 requestR로 들어감. 들어간 후에 자원 R을 사용하러 나감
 - 항상 생각해야 할 것은 monitor안에 최대 max 1명만 들어올 수 있다는 점
 - 이 때 Pk, Pm 이 도착함. monitor안에는 아무도 없으니 들어오는데 자원 R은 없으므로, queue R_free에 들어감
 - 다음 그림이 위의 process를 수행한 결과
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_38.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_38.JPG)
 - Pj는 할당된 자원을 가지고 일을 수행한 후, releaseR() queue에 들어가서 반납 준비
 - Monitor안에 아무도 없으므로, releaseR()에 들어가서 자원 반납
 - 그 다음 R_Free에 들어있던 Pm, Pk를 깨워야 하는데, signaler queue에 들어가 잠시 자리를 피해준 후  
   깨우러 가야함
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_39.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_39.JPG)
 - P(j)가 R 반환
 - R_Free.signal() 호출에 의해 Pk가 wakeup
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_40.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_40.JPG)
 - Pk가 자원을 빌려 나감
 - <b>Pj가 남은일을 처리하러 들어옴</b>
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_41.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_41.JPG)
 
 ### Producer-Consumer Problem
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_42.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_42.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_43.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_43.JPG)
 
 
 ### Reader-Writer problem
@@ -662,7 +662,7 @@ V(mutexC);
   - 프로시져 4개 
     - reader(writer) 프로세스가 읽기(쓰기)작업을 원할 경우에 호출, 읽기(쓰기) 작업을 마쳤을 때 호출 
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_44.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_44.JPG)
 
 ### Dining philosopher problem
 - 5명의 철학자
@@ -670,9 +670,9 @@ V(mutexC);
 - 공유 자원 : 스파게티, 포크
 - 스파게티를 먹기 위해서는 좌우 포크 2개 모두 들어야 함
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_45.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_45.JPG)
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_46.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_46.JPG)
 
 ### Monitor 장단점
 - 장점

@@ -17,7 +17,7 @@
 
 ### CDF의 그래프 특성  
 * discrete할 경우 CDF의 예시를 그려보자  
- ![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/CDF%EC%98%88%EC%8B%9C.png)  
+ ![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/CDF%EC%98%88%EC%8B%9C.png)  
 * 계단형을 가짐. 이번 예시는 0, 1, 2, 3으로 하지만 무한대 일 수 있음  
 * 1,2,3 일때 좌극한의 값은 취하지 않음. 1일 때 값이 커지기 때문  
 * 만약 CDF에서 PDF의 값을 알고 싶으면 jump size를 알아야 함  

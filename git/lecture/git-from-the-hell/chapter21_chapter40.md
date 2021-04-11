@@ -198,7 +198,7 @@ git checkout master # HEAD file에는 ref directory가 작성됨
 ## chapter29 - GIT_원리: working copy&index&repository
 - git reset 명령시 option은 여러가지가 있음
 - reset의 option(hard, mixed, soft)들은 어떤 의미를 가지는 것인지를 먼저 살펴보자
- ![img](https://github.com/koni114/git-from-the-hell/blob/master/img/reset.JPG)
+ ![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/reset.JPG)
   - git reset --soft : repository 에 있는 내용만 reset
   - git reset --index : repository, index에 있는 내용만 reset
   - git reset --hard : repository, index, working tree에 있는 내용 모두 reset
@@ -249,7 +249,7 @@ git mergetool # 충돌난 file에 대해서 merge tool을 이용해서 병합하
 
 ## chapter31 - GIT_원리: 3 way merge
 - 이미지 참고
-![img](https://github.com/koni114/git-from-the-hell/blob/master/img/3_way_merge.JPG)
+![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/3_way_merge.JPG)
 - merge방법에는 2-way merge 방법과 3-way merge 방법이 존재
   - 2-way : base를 제외한 Me와 Other만 비교
   - 3-way : base, Me, Other 3개를 비교

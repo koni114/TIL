@@ -45,7 +45,7 @@
 
 * 첫 번쨰로는 어떤 문에 자동차가 있는지, 그리고 몬티가 어떤 문을 열었는지를 가지고 수형도를 그려보자.
 
- ![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/MontyHall%EC%88%98%ED%98%95%EB%8F%84.JPG)  
+ ![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/MontyHall%EC%88%98%ED%98%95%EB%8F%84.JPG)  
 
 * 예를 들어 Monty Hall이 2번 문을 열었다고 가정(조건)해보자.
 * 동그라미 친 부분에 해당되고, 이 때 각각의 확률은 1/6, 1/3이 나오며,   

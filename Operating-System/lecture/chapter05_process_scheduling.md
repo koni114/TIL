@@ -30,7 +30,7 @@
 - 목적에 맞는 지표를 고려하여 스케줄링 기법을 선택해야 함
 
 ## 대기시간, 응답시간, 반환시간
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_12.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_12.JPG)
 
 ## 스케줄링 기준(Criteria)
 - 스케줄링 기법이 고려하는 항목들
@@ -85,7 +85,7 @@
 ## 스케줄링의 단계 (Level)
 - 저번 시간에 보았던 process state에서 다음과 같이 스케줄링의 단계를 추가해 줄 수 있음
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_13.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_13.JPG)
 
 
 ## 스케줄링 정책(Policy)

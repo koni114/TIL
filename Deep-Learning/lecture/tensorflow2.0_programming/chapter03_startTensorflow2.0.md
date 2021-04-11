@@ -305,14 +305,14 @@ model.summary()
 - `input_shape`는 시퀀셜 모델의 첫 번째 레이어에서만 정의하는데, 입력의 차원 수가 어떻게 되는지를 정의함
 - 이렇게 정의된 2-레이어 XOR 네트워크 구조를 그림으로 나타내면 다음과 같음
 
-![img](https://github.com/koni114/Deep_learning/blob/master/img/2_Layer_XORNetwork.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/2_Layer_XORNetwork.JPG)
 
 - 네트워크 구조에서 실선으로 그려지는 화살표는 가중치를 나타냄
 - 그런데 [OUT]에 표시된 콘솔 출력 결과에서 Param을 보면 첫 번째 레이어에서는 6개, 두 번째 레이어에서는 3개의 파라미터가 있다고 나옴
 - 이것은 바로 각 레이어가 기본적으로 편향을 포함하고 있기 때문 
 - 편향을 포함한 네트워크 구조를 다시 그리면 다음과 같음
 
-![img](https://github.com/koni114/Deep_learning/blob/master/img/biased_2_Layer_XORNetwork.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Deep-Learning/lecture/img/biased_2_Layer_XORNetwork.JPG)
 
 - 보통 Dense 레이어의 파라미터 수는 (입력측 뉴런의 수 + 1) x (출력측 뉴런의 수)의 식으로 구할 수 있음
 - 여기서 말하는 입력측은 Dense 레이어에 들어오는 입력을 입력측, Dense 레이어의 뉴런을 출력측이라고 함

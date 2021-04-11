@@ -101,7 +101,7 @@
 - 미니배치 k-평균 알고리즘이 기존 k-평균 알고리즘보다 이너셔 자체는 조금 더 나쁨  
   특히 클러스터의 개수가 증가할 때 그러함
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/kmeans_1.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/kmeans_1.JPG)
 
 - 위의 그림의 왼쪽 그래프를 보면 k가 증가함에 따라 두 곡선의 차이는 일정하게 유지되지만  
   이너셔의 값이 감소하므로 이 차이가 차지하는 비율은 점점 커짐
@@ -130,7 +130,7 @@
 - 한 클러스터의 샘플 대부분이 이 점수보다 낮은 계수를 가지만 다른 클러스터와 너무 가깝다는 것을 의미하므로, 나쁜 클러스터임
 - 좋은 k를 고르려면, 수직 파선보다 대부분 넘어가면서 실루엣 계수 값이 고르게 분포되어 있는 k를 고르는 것이 최적!
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/kmeans_2.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/kmeans_2.JPG)
 
 ### k-means의 한계
 - k-means는 장점이 많은데, 속도가 빠르고 확장이 용이함

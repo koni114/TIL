@@ -158,4 +158,4 @@
 - 이 알고리즘의 장점은 투영을 통해 가능한 한 클래스를 멀리 떨어지게 유지시키므로 SVM 분류기 같은 다른 분류 알고리즘을  
   적용하기 전에 차원 축소에 좋음
 
-![img](https://github.com/koni114/Machine-Learning/blob/master/img/dimensionality_reduction_1.JPG)
+![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/dimensionality_reduction_1.JPG)

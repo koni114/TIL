@@ -13,7 +13,7 @@
 - I/O system에서 프로세서가 메인 메모리에 데이터를 가져다 두면, 해당 데이터를 I/O device들이 사용하거나 하는 형태로 될 것임
 - 결국 필요한 데이터는 메인 메모리에 올라와야 한다는 것을 알 수 있음
 - 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_133.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_133.JPG)
 
 ## I/O Mechanisms
 - 입출력 모듈에서 입출력 장치에 데이터를 내보내고, 받아드리는 방식은 크게 2가지 방식이 있음
@@ -22,7 +22,7 @@
 - Processor controlled memory access
   - Polling(Programmed I/O)
   - Interrupt
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_134.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_134.JPG)
 - Direct Memory Access(DMA)
 
 ## Pooling(Programmed I/O)
@@ -53,12 +53,12 @@
     - High overhead for the processor
 - Direct Memory Access
   - I/O 장치와 memory 사이의 데이터 전송을 Processor 개입 없이 수행 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_135.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_135.JPG)
 - Processor는 데이터 전송의 시작/종료만 관여
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_136.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_136.JPG)
 
 ## I/O Services of OS
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_137.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_137.JPG)
 - I/O Scheduling
   - 입출력 요청에 대한 처리 순서 결정
     - 시스템 전반적 성능 향상
@@ -121,7 +121,7 @@
   - 총 256개의 cylinder로 구성  
   - Head의 시작 위치 : 100번 cylinder  
   - Access request queue(아래의 왼쪽에서 오른쪽 순서로 Job이 들어온다고 생각하자)
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_138.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_138.JPG)
 - 첫번째 순서가 160번 이므로, 처음 100번에 cylinder에 있는 위치를 60만큼 이동해서 160으로 이동
 - 그다음 200번으로 이동(40만큼 이동)
 - 그다음 90번으로 이동(110만큼 이동)
@@ -138,7 +138,7 @@
   - Predictability 낮음  
   - Starvation 현상 발생 가능  
 - <b>일괄처리 시스템에 적합</b>
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_139.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_139.JPG)
 - 90번을 가장 먼저 봄(10만 이동하면 됨)
 - 계속적으로 거리가 가까운 녀석들을 차례로 확인
 - 위에서 가장 왼쪽에 있는 20은 starvation 현상이 발생. 이를 해결하기 위하여 scan scheduling 수행 
@@ -152,7 +152,7 @@
   - Throughput 및 평균 응답시간 우수 
 - 단점
   - 진행 방향 반대쪽 끝의 요청들의 응답시간 증가
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_140.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_140.JPG)
 - 위의 그림은 왼쪽으로 쭉 진행했다가, 오른쪽으로 진행한다는 것을 알 수 있음
 
 ## C-Scan scheduling
@@ -161,7 +161,7 @@
   - 마지막 cylinder 도착 후, 시작 cylinder로 이동 후 재시작
 - 장점
   - Scan 대비 균등한 기회 제공   
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_141.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_141.JPG)
 
 ## Look Scheduling
 - Elevator algorithm
@@ -170,7 +170,7 @@
   -  Scan(C-Scan)의 실제 구현 방법
 - 장점
   - Scan의 불필요한 head 이동 제거     
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_142.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_142.JPG)
 - 위의 그림에서 보면 제일 마지막 20까지 도달 한 후 왼쪽 끝까지 가는 것이 아니라, 다시 오른쪽으로 진행 방향이 바뀐 것을 알 수 있음
 - 조금 더 효율적인 것을 알 수 있음
 
@@ -182,7 +182,7 @@
 - Sector queuing algorithm
   - 각 sector별 queue 유지
   - Head 아래 도착한 sector의 queue에 있는 요청을 먼저 처리 함     
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_143.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_143.JPG)
 - 각 sector마다 queue가 존재. 예를 들어 head가 돌면서 S4가 head에 도착하면, Q4에 있는 Job을 모두 수행 한 후 다음 stage 진행. 이렇게 되면 회전 수가 줄어듬
 - Moving head disk의 경우 
   - 같은 cylinder 또는 track에 여러 개의 요청 처리를 위해 사용 가능

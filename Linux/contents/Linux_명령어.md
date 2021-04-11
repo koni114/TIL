@@ -10,6 +10,10 @@
 ~~~
 $ defaults write com.apple.screencapture location
 ~~~
+- git 해당 디렉토리 밑에 특정 이름으로 된 파일 전부 삭제
+~~~
+$ find . -name .DS_Store -print0 | xargs -0 git rm --ignore-unmatch
+~~~
 
 ## find 명령어
 ~~~linux

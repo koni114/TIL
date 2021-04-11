@@ -52,7 +52,7 @@ X가 a와 b사이에 있을 확률은 해당 적분 값과 같다
 <p align = 'center'><a href="https://www.codecogs.com/eqnedit.php?latex=f(x)&space;\geq&space;0,&space;\&space;\int_{-&space;\infty&space;}^{\infty}&space;f(x)&space;dx&space;=&space;1" target="_blank"><img src="https://latex.codecogs.com/gif.latex?f(x)&space;\geq&space;0,&space;\&space;\int_{-&space;\infty&space;}^{\infty}&space;f(x)&space;dx&space;=&space;1" title="f(x) \geq 0, \ \int_{- \infty }^{\infty} f(x) dx = 1" /></a></p>
 
 ##### 확률 밀도 함수의 예시(중요)
-![img](https://github.com/koni114/Harvard_Statistics/blob/master/image/%ED%99%95%EB%A5%A0%EB%B0%80%EB%8F%84%ED%95%A8%EC%88%98.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Statistics/lecture/Harvard_Statistics/image/%ED%99%95%EB%A5%A0%EB%B0%80%EB%8F%84%ED%95%A8%EC%88%98.JPG)
 
 * 총넓이는 1. 꼬불꼬불 할 수도 있고, 음수가 아니고 합이 1이기만 하면 됨  
 

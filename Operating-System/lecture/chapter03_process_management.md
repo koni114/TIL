@@ -8,7 +8,7 @@
 - process는 컴퓨터 시스템(커널)에 등록된 작업
 - 시스템 성능 향상을 위해 프로세스는 커널에 의해 관리됨
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_3.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_3.JPG)
 
 - <b>프로그램이 메모리에 적재되면 프로세스가 됨</b>
 
@@ -78,11 +78,11 @@
 
 ## Process State transition diagram
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_4.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_4.JPG)
 
 ## process 상태 및 특성
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_5.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_5.JPG)
 
 ## 인터럽트(interrupt)
 - 예상치 못한, 외부에서 발생한 이벤트
@@ -98,7 +98,7 @@
 ## 인터럽트 처리 과정
 - 인터럽트 발생 -> 프로세스 중단(커널 개입) -> 인터럽트 처리(interrupt handling) -> 인터럽트 발생 장소, 원인 파악 -> 인터럽트 서비스 여부 결정 -> 인터럽트 서비스 루틴 호출
 
-![img](https://github.com/koni114/Operating-system/blob/master/img/os_6.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Operating-System/img/os_6.JPG)
 
 - Pi라는 프로세스가 수행하고 있음
 - 이 때 누군가가 인터럽트를 걸면, kernel이 개입해서 해당 프로세스를 중단시킴. 이 순간 Context Saving이 발생함(책의 책갈피 PCB에 저장)

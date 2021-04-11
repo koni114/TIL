@@ -118,7 +118,7 @@ git merge origin/master
 ### github 에서 git project 살펴보기
 - release : 사용자들에게 각각 의미있는 version별 프로그램 제공  
   버전별로 git을 다운로드 할 수 있음  
- ![img](https://github.com/koni114/git-from-the-hell/blob/master/img/release.JPG)
+ ![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/release.JPG)
 - release를 들어가보면, 버전 별로 commit id가 있는 것을 확인 가능
 - 즉, 해당 버전의 commit id는 변경되면 안된다는 의미
 
@@ -216,7 +216,7 @@ git tag -a 1.1.3 -m "bug fix"
 ## chapter45 - Git - Rebase 1/3
 - rebase는 merge와 비슷하나 좀 더 어렵다  
   초심자라면 merge를 쓰는 것을 추천!  
-![img](https://github.com/koni114/git-from-the-hell/blob/master/img/rebase.JPG)  
+![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/rebase.JPG)  
 - master branch에서 feature라는 branch를 생성    
   그 후에 각각 commit을 한 상태   
 - rebase vs merge 공통점  
@@ -302,7 +302,7 @@ git log --decorate --all --graph --oneline # 가지치기 없이 깔끔하게 �
 - git을 '잘' 사용하는 방법에 대한 가이드를 알아보자
 - 이것은 주관적이기 때문에 스스로 맥락적으로 채택할지, 하지 않을지 판단해라
 - 여러가지 모델중 git flow라는 모델을 소개  
-![img](https://github.com/koni114/git-from-the-hell/blob/master/img/git_flow.png)  
+![img](https://github.com/koni114/TIL/blob/master/git/lecture/git-from-the-hell/img/git_flow.png)  
 
 - 가장 중요한 branch가 master와 develop branch
 - 두 개의 역할 분담을 하고 있는 것이 가장 중요한 포인트

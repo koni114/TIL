@@ -5,7 +5,7 @@
   이를 프로그램이라고 함
   * 이 프로그램이 실행되면 메모리에 적재되고, 이를 CPU가 처리. 이때 메모리에 띄어져 있는 프로그램을 process라고 함  
 * Hardware에 대한 얘기를 해보자
-![img](C:/리눅스_생활코딩강좌/processor.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Linux/img/processor.JPG)
   * SSD, HDD 라고 하는 것들이 있는데, 이는 저장장치임 -> 스토리지라고 함
   * RAM 같은 것들은 memory라고 함
   * CPU는 processor라고 함
