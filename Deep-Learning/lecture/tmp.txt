@@ -1,0 +1,42 @@
+1 page
+[PROFILE]
+~~~ 특히 R, Python 기반 분석 컴포넌트 개발과 분산 환경 기반 pipeline 설계, 개발에 주력해 왔습니다.
+
+[EXPERIENCE]
+주요 직무
+- AI Platform[명칭: 분석Workbench] 운영/개발
+  - 분석 워크플로우 컴포넌트 유지보수/개발
+  - 모델 실행 API 개발
+- 분석 자동화 시스템 구축 및 pipeline 설계 및 개발
+
+[SKILLS]
+AI/Big Data Analysis
+- ML Pipeline 제거
+
+Framework & Library
+R : ~~ 
+Python : ~~ 
+Spark
+
+DataBase
+- 한 개씩 동그라미 줄이기
+PostgreSQL --> 4개 에서 3개
+Hadoop --> 3개에서 2개
+
+3 page
+POSCO MES3.0 품질불량 원인인자 추천 자동원인분석 시스템 구축
+
+[주요역할]
+- 혐의 인자 추천 알고리즘 분석 pipeline 설계, 개발
+- Spark Framework 기반 Data Auto Pipeline 개발
+
+[사용기술]
+- Framework & Library : Spark, dplyr, caret, ggplot 등
+
+[상세내용]
+- Spark Framework 기반 ETL Data pipeline 개발(Scala) 
+
+[결과 및 성과]
+- 혐의 인자 탐색 작업 시간 기존 평균 4시간 -> 30분 이내로 단축
+- 분산 환경 기반 자동 분석 시스템 성공적 구축 
+- 가장 우수한 프로젝트로 선정되어 포상 수여
