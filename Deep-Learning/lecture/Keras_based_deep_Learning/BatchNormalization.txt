@@ -1,0 +1,14 @@
+배치 정규화(Batch Normalization)
+기본적으로 Gradient Vanishing, Gradient Exploding이 일어나지 않도록 하는 아이디어 중 하나.
+배치 정규화 이론이 나오기 전에는 Activation 함수의 변화, Careful Initialization, small learning rate 등으로 해결하였는데,
+이런 간접적인 방법보다는 training하는 과정 자체를 전체적으로 안정화하여 학습 속도를 가속화 할 수 있는 방안을 찾는데서 유래.
+
+이러한 불안정화가 나타나는 이유를 'Internal Covariance Shift' 라고 주장.
+** Internal Covariance Shift
+Network의 각 층이나, Activation 마다 input의 distribution이 달라지는 것을 말함.
+
+이러한 Internal Covariance Shift를 해결하기 위해서 whitening 방법을 생각할 수 있음.
+이는 input 값 마다, 각각의 input feature들을 독립하게 만들고, 분산을 1로 만들어주는 작업. 
+
+whitening의 
+ 

@@ -1,0 +1,48 @@
+** L1, L2 정규화(L1 Norm, L2 Norm Regularization) 
+더 이상 학습 데이터를 추가할 수 없거나, 학습 데이터를 늘려도 과적합 문제가 해결 되지 않는 경우 사용
+
+* Norm 
+벡터의 길이나 크기를 측정하는 방법(함수)
+Norm이 측정한 벡터의 크기는 원점에서부터 좌표까지의 거리를 의미
+
+1. L1 Norm
+x = [1,2,3,4,5]
+||x|| = (|1| + |2| + |3| + |4| + |5|)
+ex) L1 regularization, computer vision
+
+2. L2 Norm
+L2 = sqrt(x1^2 + x2^2 + x3^2 ... )
+ex) L2 regularization, KNN 알고리즘, k-means 알고리즘
+
+** L1, L2 Norm regularization
+결국은 cost function 에 가중치의 절대값, 또는 제곱합의 평균 등을 더해줌으로써 "가중치의 크기"가 줄어들도록 하는 것.
+학습률로 조정(learning rate , lambda)
+L1 regularization 을 사용하는 regression model 경우, LASSO
+L2 regularization 을 사용하는 regression model 경우, Lidge
+
+* L1, L2 Regularization의 선택 기준
+Regularization을 다시 한 번 생각해보면, 결국 local noise를 덜 받도록 하는 것이고,
+Outlier의 영향을 덜 받게 한다는 의미.
+
+다음의 예시를 한 번 보자
+a = c(0.3, -0.3, 0.4)
+b = c(0.5, -0.5, 0)
+일 때
+
+L1
+||a|| = |0.3|+|0.3|+|0.4| = 1
+||b|| = |0.5| |0.5| |0|     = 1
+같은 값이 나옴
+
+L2 는 요소의 값이 다를때마다 다른 값이 나옴!
+
+즉, L1 Norm은 특정 요소의 값이 없어도 같은 결과 값을 가져올 수 있음
+-> L1 Norm feature selection이 가능하고, L1 Regularization 에 동일하게 적용 될 수 있는 것
+    Sparse Model에 적합. 이러한 특징으로 convex optimization에 유용하게 쓰임.
+but, 미분 불가능한 점이 있기 때문에, Gradient-base model에서는 주의할 필요가 있음.
+
+
+
+
+
+
