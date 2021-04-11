@@ -1,0 +1,183 @@
+- 사용자가 자연수 입력, -> 입력한 수의 Factorial 갓 계산 하여 출력
+- 0이외 다른 문자를 -> Input again, Please
+- 0 -> thank you for using this program
+
+1. stack
+a = [1,2,3,4,5]
+# push
+a.append(10)
+a.append(20)
+# pop
+a.pop()
+
+
+2. queue
+a = [1,2,3,4,5]
+a.append(10)
+a.append(20)
+a.pop(0)
+a.pop(0)
+
+* 튜플(tuple)
+- 값의 변경이 불가능한 리스트
+- 선언 시 "[]" 가 아닌 "()" 를 사용
+- 리스트의 연산, 인덱싱, 슬라이싱 등을 동일하게 사용
+- but 데이터를 바꿀수가 없음
+
+t = (1)
+type(t)  # type은 integer
+
+t = (1,)
+type(t)  # type은 tuple
+
+- 쓰는 이유, 사용자의 실수에 의해서 바뀌지 않도록 하기 위함
+
+* 집합(set)
+- 값을 순서 없이 저장. 중복을 불허
+- set 객체 선언을 이용하여 객체 생성
+- 수학에서 사용하는 다양한 연산 가능
+- set 내부적으로 list는 들어갈 수 없음
+
+s1 = set([1,2,3,4,5])
+s2 = set([3,4,5,6,7])
+
+- union, intersection 같은 약어 사용할때, list & set 혼용 가능
+tt  = s1.union(s2)
+tt2 = s1.intersection(s2)
+
+- &, - 같은 기호로 집합 계산할 때에는 set과 list 혼용 X
+tt3 = s1 & s2
+tt4 = s1.difference(s2)
+tt4 = s1 - s2
+
+** dictionary data structure
+- 데이터를 저장 할때는 구분 지을 수 있는 값을 함께 저장
+- 구분 지을 수 있는 "고유"의 값을 identifier OR Key라고 함
+- 다른 언어에서의 Hash Table 이라는 용어를 사용
+- value에 list, set 등 다양한 객체 가능
+
+# Command 에 사용자가 입력한 명령어
+# 어떤 사용자가 얼마나 많이 명령어를 입력하였을까 ?
+
+import csv
+from webbrowser import get
+
+
+def getKey(item):
+    return item[1]
+
+command_data = []
+with open("command_data.csv", "r", encoding = 'utf-8') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter= ',', quotechar='"')
+    for row in spamreader:
+        command_data.append(row)
+
+command_counter = {}
+for data in command_data:
+    if data[1] in command_counter.keys():
+        command_counter[data[1]] += 1
+    else:
+        command_counter[data[1]] = 1
+
+dictlist = []
+for key, value in command_counter.items():
+    temp = [key, value]
+    dictlist.append(temp)
+
+sorted_dict = sorted(dictlist, key = getKey, reverse = True)
+print(sorted_dict[:100])
+
+## collection module 
+# collections
+- List, Tuple, Dict에 대한 python Built-in 확장 자료 구조(모듈)
+- 편의성, 실행 효율 등을 사용자에게 제공함
+- 아래의 모듈이 존재함
+deque, Counter, OrderedDict, defaultdcit, namedtuple
+
+# deque
+- Stack 과 Queue 를 지원하는 모듈
+- List에 비해 효율적인 자료 저장 방식을 지원함
+- rotate, reverse 등 Linked List의 특성을 지원함
+- 기존 list 형태의 함수를 모두 지원
+- deque 는 기존 list 보다 효율적인 자료구조를 제공
+- 효율적 메모리 구조로 처리 속도 향상 -> list보다 2배 빠름
+
+
+# deque function
+# deque 선언
+deque_list = deque()
+deque_list.append()      오른쪽으로 붙임
+deque_list.appendleft()  왼쪽으로 붙임
+deque_list.rotate(2)      오른쪽 2칸씩 이동(오른쪽 1,2번 위치의 것들은 왼쪽으로 붙음)
+deque_list.extend([5,6,7])  오른쪽으로 차례로 5,6,7 이 붙음
+deque_list.extendleft([5,6,7]) 왼쪽으로 차례로 5,6,7 이 붙음
+
+# OrderedDict
+- Dict와 달리, 데이터를 입력한 순서대로 dict를 반환함
+- Dict type의 값을, value 또는 key 값으로 정렬할 때 사용
+for k, v in OrderedDict(sorted(d.items(), key=lambda t: t[0])).items():
+	print(k, v)
+
+for k, v in OrderedDict(sorted(d.items(), key=lambda t: t[1])).items():
+	print(k, v)
+
+# defaultdict
+- Dict type 의 값에 기본 값을 지정, 신규값 생성시 사용하는 방법
+d = defaultdict(lambda: 0) key value를 한번도 선언한 적이 없더라도, 초기값 0으로 됨
+기존의 dictionary 타입은 error 발생
+
+
+# Counter
+- Sequence type의 data element 들의 갯수를 dict 형태로 변환
+from collections import Counter
+c = Counter()
+c = Counter("gallahad")
+
+- Dict type, keyword parameter 등도 모두 처리 가능
+c = Counter(cats = 4, dogs = 8)
+print(c)
+print(list(c.elements()))
+
+Counter
+- Set의 연산들을 지원함
+c = Counter(a=4, b=2, c=0, d=-2)
+d = Counter(a=1, b=2, c=3, d=4)
+c.subtract(d)
+** 이 때, c 자체의 값이 바뀜
+
+print(c + d)
+print(c & d)  # 작은 값을 출력하는데, -인 값은 출력 X
+print(c | d)  # 둘 중에 큰 값을 출력..?
+
+- word counter의 기능도 손쉽게 제공함
+
+## nametuple
+- Tuple 형태로 Data 구조체를 저장하는 방법(Data 구조체 -> Pair(x,y) 같은 것)
+- 저장되는 data의 variable 을 사전에 지정해서 저장함
+
+from collections import namedtuple
+Point = namedtuple('Point' , ['x', 'y'])
+p = Point(11, y = 22)
+print(p[0], p[1])
+x, y = p
+print(x, y)
+print(p.x, p.y)
+print(Point(x=11, y=22))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,25 @@
+반복문
+정해진 동작을 반복적으로 수행하게 하는 명령문
+
+for looper in [1, 2, 3, 4, 5]
+
+for 문의 뒤에는 시퀀스형 자료형이 들어감
+ex) range, 리스트, str 
+
+for 문 특징
+- range 사용 가능 ex) range(1, 10) --> 1~ 9까지
+                        ex) range(10)
+                        ex) range(1, 10, 2), range(10, 1, -1)
+- list, str 도 사용 가능 ex) for i in 'abcdefg':
+                             ex) for i in ['ab', 'cd', 'ef']
+- continue, break 사용 가능
+
+
+초보자에게 흔히 생기는 문법 오류
+- indentationError
+- 코드 하이라이트 : 코딩을 할때 색깔을 변형시켜 주는 것
+- 파이썬에서 script = module
+
+python script 내에서 
+if __name__ == "__main__" 내부적으로 print를 썼을때, 이 스크립트를 import 를 했을때
+print 되지 않음. 

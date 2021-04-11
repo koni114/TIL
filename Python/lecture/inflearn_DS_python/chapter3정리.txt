@@ -1,0 +1,92 @@
+chatper3 : 화면 입출력과 리스트 다루기(console & List Data Type)
+화면 입출력 방법은 크게 GUI(graphic User interface)와 CLI(command Line Interface)
+방법으로 나눌 수 있음. 주로 cmi와 친해지는 것이 중요
+그래서 보통 리눅스나 Mac OS 를 사용하는 이유중에 하나가 됨
+
+- Command Line Interface(CLI)
+text를 사용하여 컴퓨터에 명령을 입력하는 인터페이스 체계
+window - CMD window
+Linux - Terminal
+
+* 용어 혼용 조심
+console = command = terminal
+input()
+- input 에 대한 결과는 무조건 string 형, 따라서 형 변환 필요시 해주어야 함 
+
+chapter3 :  format 다루기
+- 출력의 형식을 맞춰야 할 필요성이 있음.
+ex) 133.00, 133$ 등 ..
+
+formating 방법
+일반적으로 %-format 과 str.format() 함수를 이용
+"%datatype" %(variable)
+
+ex)
+print(1, 2, 3)
+print("%d %d %d" %(1, 2, 3))  # %를 이용한 방법 -> 좀 더 old한 방법
+print("{} {} {}".format(1,2,3))      #함수 format을 이용해서 하는 방법
+
+print("I eat %d apples. " % 3)
+print("I eat %s apples. " % "five")
+number = 3; day = "three"
+print("I ate %d apples. I was sick for $%s days." % (number, day))
+print("Product: %s, Price per unit: %f." % ("Apple", 5.243))
+
+%s : 문자열
+%c : 문자 1개
+%d : 정수
+%f  : 부동 소수점
+%o : 8진수
+%x : 16진수
+%% : Literal % (문자 % 자체)
+
+- %앞에 숫자를 입력하면 자리수를 format할 수 있음
+ex) print("Art: %5d,  Price per Unit: %8.2f % (453, 59.058))
+
+str.format()
+"~~~~~{datatype} ~~~~~".format(argument)
+age = 36,
+name = "Huh jae hun"
+print("My name is {0} and {1: .3f}.".format("Apple", 5.243))	
+
+print("Product: %-10s, ) -> 좌측 정렬
+- padding : 여유 공간을 지정하여 글자배열 + 소수점 자리수를 맞추기
+- {0:>10s} -> >: 우측 정렬, 빼면 좌측 정렬 수행
+ 
+print("Product: {name:>10s}, Price per unit: {price:10.5f}.".format(name = "Apple", price = 5.243))
+print("Product: %(name)5s, Price per unit: %(price)10.5f." % {name="Apple", price=5.243))
+
+chapter3 : List type
+
+List 또는 Array
+- 시퀀스 자료형, 여러 데이터들의 집합
+- Int, Float 같은 다양한 데이터 Type 포함 -> python의 강력한 특징 중 하나
+
+인덱싱(Indexing)
+list에 있는 값들은 전부 주소 값을 가짐
+주소를 사용해 할당된 값을 호출
+colors = ["Red", "blue", "green"]
+print(colors[0])
+
+슬라이싱(slicing)
+- list 의 값들을 잘라서 쓰는 것이 슬라이싱
+- 주소 값을 기반으로 부분 값을 반환
+- index 는 0부터 시작
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

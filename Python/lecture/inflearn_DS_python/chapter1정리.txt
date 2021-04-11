@@ -1,0 +1,19 @@
+chapter 1 : Lab: Atom 에디터 설치 on windows
+
+atom의 원할한 사용을 위한 설치 tool
+- autocomplete.python : Jedi -> local, kite -> cloud(인터넷 없이 불가)
+- script
+
+atom 실행 방법
+cmd -> atom . 
+
+일반적으로 프로그램을 실행 시킬 때, 따로 폴더를 만들어서 넣어주는 것이 좋다
+** cmd 창에서 atom 내부적으로 abc.py 라는 script 만들어 보기
+cmd창 켜고,
+- cd 명령어를 이용해 C:/ 로 이동
+- mkdir 명령어를 이용해 workspace 폴더 생성 : mkdir workspace 
+- 해당 폴더로 이동 : cd workspace
+- 폴더 내부 확인    : dir/w
+- atom을 실행시켜 abc.py 파일 생성 : atom abc.py
+- 해당 스크립트 실행 : python abc.py
+

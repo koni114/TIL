@@ -1,0 +1,20 @@
+Chapter 13: CSV와 로그관리 (Comma Separated Values and Logging)
+
+** Comma Seperate Value
+- CSV, 필드를 쉼표(,)로 구분한 텍스트 파일
+- 엑셀 양식의 데이터를 프로그램에 상관없이 쓰기 위한 데이터 형식이라고 생각하면 쉬움
+- 탭(TSV), 빈칸(SSV) 등으로 구분해서 만들기도 함
+ -> 이런 것들을 통칭하여 character-seperated-values (CSV) 부름
+- 엑셀에서는 "다른 이름 저장" 기능으로 사용 가능
+
+- atom 에서 tablr 라는 package를 설치하면, csv file을 table 형태로 확인 가능
+
+* CSV 파일 예제
+- 고객 정보 Data
+
+** CSV 객체 사용하기
+- open 명령어가 아닌, csv 객체를 이용해서 csv 처리하기
+- Text 파일 형태로 데이터 처리시 문장 내에 들어가 있는 "," 등에 대해
+  전처리 과정 필요
+- 파이썬에는 간단히 CSV 파일을 처리하기 위해 csv 객체를 제공
+- 

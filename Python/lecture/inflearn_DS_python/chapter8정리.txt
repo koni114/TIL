@@ -1,0 +1,76 @@
+chapter8 : 파이썬같은 코드 작성하기1
+# 1. split 함수
+items = "zero one two three'.split()
+print(items)
+
+example = 'python,jquery,javascript'
+example.split(',')
+a, b, c = example.split(",")
+
+# 2. Join 함수
+colors = [ 'red', 'blue', 'green', 'yellow' ]
+result = ' '.join(colors)  # 연결 시, 빈칸 1칸으로 연결
+print(result)
+
+# ** 매우 중요
+# List comprehensions
+- 기존의 List를 사용하여 간단히 다른 List를 만드는 기법
+- 포괄적인 List, 포함되는 리스트라는 의미로 사용됨
+- 파이썬에서 가장 많이 사용되는 기법 중 하나
+- 일반적으로 for + append 보다 속도가 빠름
+
+result = [i for i in range(10)]
+	
+- 2중 포문 같은 경우는, 오른쪽에 있는것이 nested for 문
+- one dimensional 같은 경우는 뒤에 오는 for문이 nested for문이고  
+  two dimensional 같은 경우는 [] 안에 들어오는 for문이 nested for문
+word_1 = "hello"
+word_2 = "world"
+[ i+j for i in word_1 for j in word_2 ]   # one dimensional
+[[i+j for i in word_1 ] for j in word_2 ] # two dimensional
+
+word_1 = ["A", "B", "C"]
+word_2 = ["B", "C", "A"] 
+[ i+j for i in word_1 for j in word_2 if(i == j)]  같은 것만 호출
+
+- 2차원 배열로 만들 수도 있음
+- 많은 연습 필요!
+
+words = 'The quick brown fox jumps over the lazy dog'.split()
+STUFF = [[w.upper(), w.lower(), len(w)] for w in words]
+
+for check in STUFF:
+print(check)
+
+- dict type으로도 생성 가능
+{ i:j for i in word1 for j in word2 }
+
+## Enumerate
+- List의 element를 추출할 때 번호를 붙여서 추출
+
+for i, j in enumerate(['tic', 'tac', 'toc']):
+    print(i, j)
+
+list(enumerate(mylist))
+
+{ i:j for i, j in enumerate('GachonUniversity is an academic institute located'.split())}
+
+## Zip
+- 두 list의 값을 병렬적으로 추출함
+
+list1 = [1,2,3]
+list2 = [2,3,4]
+for i,j in zip(list1, list2):
+    print(i,j)
+
+a, b, c = zip((1,2,3), (10,20,30), (100,200,300))
+
+a = [1,2,3]
+b = [10, 20, 30]
+c = [100, 200, 300]
+[sum(x) for x in zip(a,b,c)] 
+
+*** Tip
+여러 문자의 포함 여부를 확인하고 싶을때?
+set 과 intersection(&) 이용! -> 
+

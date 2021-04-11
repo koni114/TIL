@@ -1,0 +1,158 @@
+Chapter11 : 모듈과 패키지(Module & Packages)
+* 모듈과 패키지
+- 모듈 : 어떤 대상의 부분 혹은 조각
+	ex) 레고 블록, 벽돌, 자동차 부품들
+
+- 프로그램에서는 작은 프로그램 조각들,
+  모듈들을 모아서 하나의 큰 프로그램을 개발함
+
+- built-in module : 내장 되어 있는 라이브러리를 의미함
+import random
+random.randint(1, 1000)
+
+* 패키지
+- 모듈을 모아놓은 단위, 하나의 프로그램
+모듈 < 패키지 < 라이브러리
+
+* 모듈
+- 파이썬의 Module == .py 파일을 의미
+- 같은 폴더의 Module에 해당하는 .py 파일과 사용하는 .py을 저장한 후 import문을 사용해서 Module을 호출
+ex) fah_converter.py 라는 파일을 저장하고, 같은 폴더 내에 import fah_converter 를 넣고
+     fah.converter.xx 라고 사용할 수 있음
+
+* Namespace
+- 모듈을 호출할 때 범위 정하는 방법
+- 모듈 안에는 함수와 클래스, 변수 등이 존재 가능
+- 필요한 내용만 골라서 호출이 가능 ex) from , import 키워드 이용
+
+** Namespace 사용 예시
+- Alias 설정하기 - 모듈명을 별칭으로 써서 이용
+  import fah_converter as fah
+fah.xxxxxx 
+- 모듈에서 특정 함수 또는 클래스만 호출하기
+  from fah_converter import covert_c_to_f
+  covert_c_to_f
+- 모듈에서 모든 함수 또는 클래스를 호출
+  from fah_converter import *
+
+--> 어디서 가져왔는지 아는 것이 꽤 중요. 따라서 alias 방법을 선호 (교수님)
+
+# 난수
+import random
+print(random.randint(0, 100))
+print(random.random() * 100 % 5)
+
+# 시간
+import time
+print(time.localtime())
+
+# 웹
+import urllib.request
+
+### packages
+- 하나의 대형 프로젝트를 만드는 코드의 묶음
+- 다양한 모듈들의 합, 폴더로 연결됨
+- __init__, __main__ 등 키워드 파일명이 사용됨
+- 다양한 오픈소스들이 패키지로 관리됨
+
+- 여러개의 폴더로 구성되어 있을때는, .으로 연결하여 사용
+
+# Package 만들기
+- 폴더 별로 __init__.py 구성하기
+- 현재 폴더가 패키지임을 알리는 초기화 스크립트
+- 없을 경우 패키지로 간주하지 않음 (3.3+ 부터는 X)
+- 하위 폴더와 py 파일을 모두 포함함(하위 폴더까지 init.py 가 필요하다는 의미인듯)
+- import 와 all_keyword 사용
+
+# init file 만들기
+만약 game 폴더내에 graphic, play, sound 폴더가 있을 때, game 폴더에 init file을 만들고 싶다면,
+
+1. __init__.py 를 만든다
+2. game 폴더 내에 있는 하위 디렉토리 폴더를 import 명령어를 이용해 선언
+ex)
+import graphic
+import play
+import sound
+3. __all__ = [폴더명] 으로 선언해준다.
+ex) __all__ = ['graphic', 'play', 'sound']
+
+
+** 만약 game 폴더 하위 디렉토리인 play 폴더에 __init__.py 를 만들고 싶다면, 
+   -> 위의 game 폴더와 같은 원리로 만들어주면 됨
+from . import run
+from . import test
+__all__ = ['run', 'test']
+
+** __main__.py : 해당 폴더를 실행 파일로 만들고 싶을때, 추가적으로 넣어주어야 하는 .py 파일
+- 폴더를 실행시킬때, 부모 디렉토리 경로에서 실행시켜야 함
+
+** package namespace
+- Package 내에서 다른 폴더의 모듈을 부를 때 상대 참조로 호출하는 방법
+from game.graphic.render import render_test() 
+from .render import render_test()
+from ..sound.echo import echo_test()
+
+
+** 가상환경 사용하기
+- 진짜 프로젝트를 진행
+- 만약 2개의 프로젝트를 동시에 할 경우(ex) 웹과 데이터 분석)?
+  패키지 관리는 어떻게 해야하나? --> 가상환경 설정하기
+
+* 가상 환경(Virtual Environment)
+- 프로젝트 진행 시 필요한 패키지만 설치하는 환경
+- 기본 인터프리터 + 프로젝트 종류별 패키지 설치
+  ex) 웹 프로젝트, 데이터 분석 프로젝트 
+      각각 패키지 관리할 수 있는 기능
+- 다양한 패키지 관리 도구를 사용함
+
+* 가상 환경 도구
+- 대표적인 도구 virtualenv 와 conda 가 있음
+- virtualenv : 가장 대표적인 가상환경 관리 도구, 레퍼런스 + 패키지 개수
+- conda      : 상용 가상환경도구, miniconda 기본 도구
+                  설치의 용이성 Windows 에서 장점
+- Window 에서는 conda, linux, mac에서는 pip로!
+
+* Conda 가상환경 예시
+- matplotlib 활용한 그래프 표시
+- 대표적인 파이썬 그래프 관리 패키지
+- 엑셀과 같은 그래프들을 화면에 표시함
+- 다양한 데이터 분석 도구들과 함께 사용됨
+
+* (lab) 기타 사항
+- 문자열 count 하고 싶으면, .count("문자열") 바로 넣으면 나옴
+- txt에서 공백없이 길이 계산하고 싶을 때, len("".join(contents))
+
+** lab : 어떻게 하면 뉴스에서 비슷한 것들 끼리 뭉쳐서 보여줄 수 있을까? 
+- 컴퓨터는 문자를 그대로 이해하지 못함 : 문자 -> 숫자(첫번째 숙제) -> vector
+- 숫자로 유사하다는 것은 어떻게 표현할까? : 유사하다 = 가깝다
+
+* 문자를 Vector로 - One-hot Encoding
+- 하나의 단어를 Vector의 Index 로 인식, 단어 존재시 1, 없으면 0
+
+- 만약 문장 처럼 여러개의 단어가 들어가 있을 경우, :
+-> Bag of words : 단어별로 인덱스를 부여해서, 한 문장(또는 문서)의
+		단어의 개수를 Vector로 표현
+ex the dog is one the table
+    -> [0, 0, 1, 1, 0, 1, 1, 1]
+- 일반적으로 단어 사전을 만든다음에 인덱스를 부여하여, 
+  해당 문장에 들어가있는 단어의 인덱스를 집어 넣음
+
+* 그렇다면 유사성은?
+1. Distance measure
+- Euclidian distance: 피타고라스 정리, 두 점 사이의 거리
+- Cosine simularity : 두 점 사이의 각도를 이용하여 거리를 계산
+-> 일반적으로 text 분석에서는 cosine distance를 더 많이 사용. why ? Count < Direction
+ex) Love 가 딱 한 번만 나온 시
+     Love 가 5번 나온 시
+     Love Hate가 각각 5번 4번 나온 시
+    실제로 Love가 한번 나온 시와 Love 가 5번 나온 시가 서로 더 비슷하다고 할 수 있음
+    즉, distance(count, Euclidian) 보다 direction(Cosine) 이 더 text 분석에는 적합하다는 이론에 근거함
+- 꼭 그런 것은 아니다(역시)
+
+
+
+
+
+
+
+
