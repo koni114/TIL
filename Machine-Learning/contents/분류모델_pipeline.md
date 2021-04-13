@@ -24,20 +24,20 @@
 - 이 둘을 모두 얻을 수는 없음 --> <b>정밀도/재현율 트레이드오프</b>라고 함
 
 ### precision-recall curve
-![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/precision_recall_curve.jpg)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/precision_recall_curve.jpg)
 
 - 좋은 정밀도/재현율 트레이드오프를 선택하는 방법(적절한 임계값을 선택하는 방법)은 재현율에 대한 정밀도 곡선(X축: 임곗값, Y축: 정밀도, 재현율 곡선 2개)을 그리는 것 
 - 해당 곡선에서 정밀도 곡선은 울퉁불퉁하게 나타나는데, 그 이유는 임곗값이 높아질 때 정밀도가 반드시 좋아지는 것은 아님. 하지만 재현율은 반드시 좋아짐   
 
 
 ### PR curve
-![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/PR_Curve.jpg)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/PR_Curve.jpg)
 
 - 정밀도가 급격하게 떨어지는 지점이 보이는데, 이 지점을 정밀도/재현율 trade-off 지점으로 정하면 좋음
 - 이런 선택은 프로젝트의 성격에 따라서 달라짐
 
 ## ROC 커브
-![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/ROC_Curve.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/ROC_Curve.JPG)
 
 - receiver operating characteristic(ROC)
 - <b>ROC 커브는 threshold가 가장 큰 값에서 점점 작아지는 방향으로 진행</b>

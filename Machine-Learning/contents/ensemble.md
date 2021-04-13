@@ -61,7 +61,7 @@
 
 - 아래 그림은 moons 데이터셋에 훈련시킨 다섯 개의 연속된 예측기의 결정 경계
 
-![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/adaBoost_1.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/adaBoost_1.JPG)
 
 - 이런 연속된 학습 기법은 경사 하강법과 비슷한 측면이 있음  
   경사 하강법은 비용 함수를 최소화하기 위해 한 예측기의 모델 파라미터를 조정해가는 반면 에이다부스트는 점차 더 좋아지도록 앙상블에 예측기를 추가함
