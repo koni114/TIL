@@ -15,6 +15,17 @@ $ defaults write com.apple.screencapture location
 $ find . -name .DS_Store -print0 | xargs -0 git rm --ignore-unmatch
 ~~~
 
+
+## ls 명령어
+- 현재 위치의 파일목록 조회
+~~~
+$ ls -l   # 파일들의 상세정보 출력
+$ ls -a   # 숨어있는 파일들도 표시
+$ ls -t   # 파일들을 생성된 시간별로 표시
+$ ls -rt  # 파일들을 오래된 시간부터 표시
+$ ls -F   # 파일을 표시할 때 마지막에 유형을 나타내는 파일명을 끝에 표시
+~~~
+
 ## find 명령어
 ~~~linux
 $ find [PATH]             # PATH에 있는 파일 및 디렉토리 리스트 표시
@@ -103,3 +114,20 @@ $ su - Jaebig            #
 $ sudo passwd Jaebig     # 
 $ sudo usermod -a -G sudo Jaebig # Jaebig 계정에 sudo 명령을 줌 
 ~~~
+
+## 기타 명령어
+~~~linux
+$ touch example   #- example file 생성
+$ cat fileName    #- 파일 내용을 출력하는 명령어 --> 파일 내용이 길면 스크롤 생김
+$ more fileName   #- 파일 내용을 출력하는 명령어 --> 화면 단위로 내용 출력
+$ less fileName   #- more와 동일
+$ tail fileName   #- 파일 뒷부분 출력
+$ cp fileName1 fileName2 #- 파일 복사
+$ mv -i            #- 이동할 위치에 해당 파일이 있으면 덮어쓸 것인지 물어봄
+$ rm -i            #- 정말 삭제할 것인지 물어봄 
+~~~
+- more 명령어
+  - j : 한줄씩 다음 행으로 넘어감
+  - k : 한줄씩 이전 행으로 넘어감
+  - Space, Ctrl + f : 다음화면으로 넘어감
+  - Ctrl + b : 이전 화면으로 되돌아감 
