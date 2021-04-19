@@ -849,3 +849,233 @@ class SortManager:
     def begin_sort(self):
         self.sort_method.sort()
 ~~~
+
+## chapter13 디자인 패턴
+- 객체 지향 설계 패턴
+  - 객체 지향 프로그래밍 설계 경험을 통해 추천되는 설계 패턴을 기술한 것
+  - 실제 여러 프로그램을 설계해보면서 문제를 발견하고, 디자인 패턴을 적용해 보아야 이해할 수 있음
+  - 현 단계에서는 주요하고 그나마 간단한 패턴을 통해 디자인 패턴이 무엇인지를 이해해보도록 함
+- <b>디자인 패턴 적용시 주의할 점</b>
+  - 현업에서는 굉장히 디자인 패턴을 좋아하는 개발 조직과, 아예 디자인 패턴을 쓰지 말라고 하는 개발 조직도 있음
+  - 디자인 패턴을 쓰면, 코드를 이해하기 힘들어짐
+  - 코드는 단순하게 읽기 쉽게 쓰는 것이 유지보수도 더 쉽고, 개발이 쉬울 때가 많음
+  - 다만 디자인 패턴을 선호하는 조직에서는 반드시 철저하게 써야함 
+
+### Singleton 패턴
+- 클래스에 대한 객체가 단 하나만 생성되게 하는 방법
+- 예)
+  - 계산기 클래스를 만들고, 여러 파일에 있는 코드에서 필요할 때마다 해당 계산기 객체로 불러서 계산을 하려 함
+  - 매번 계산할 때마다 계산기 객체를 만들 필요가 없음
+  - 객체 생성시 시간과 메모리를 소비하므로, 불필요한 객체 생성 시간과 메모리 효율을 절약할 수 있음  
+- 어떤 객체는 하나만 만들면 되는 객체가 있음
+  - 예) 데이터베이스를 연결하고, 데이터베이스를 제어하는 인터페이스 객체
+  - 보통 프로그램은 여러 파일로 만드는데, 각 파일에서 해당 객체를 그대로 사용하려면 부득이 동일 클래스로 객체를 만들어야 함
+  - 각각 파일마다 객체를 별도로 생성하지 않고, 동일한 객체를 사용하고 싶을 때, 싱글톤이라는 기법으로 프로그램에서 한번 만들어진 동일 객체 사용할 수 있음 
+- 싱글톤 코드는 여러가지 방법으로 만들 수 있지만, 이 중 가장 많이 사용되는 코드를 기술
+~~~python
+class Singleton(type):  #- type 상속 받음
+    __instances = {}    #- 클래스의 인스턴스를 저장할 속성
+
+    def __call__(cls, *args, **kwargs):   #- 클래스로 인스턴스를 만들 때 호출되는 메서드
+        if cls not in cls.__instances:    #- 클래스로 인스턴스를 생성하지 않았는지 확인
+            cls.__instances[cls] = super().__call__(*args, **kwargs) #- 생성하지 않았으면 인스턴스를 생성하여 해당 클래스 사전에 저장
+
+        return cls.__instances[cls] #- class instance 반환
+
+
+class PrintObject(metaclass=Singleton):
+    def __init__(self):
+        print("This is called by super().__call__")
+
+#- 결과를 확인해보면 주소값이 같은 인스턴스 임을 확인
+object1 = PrintObject()
+object2 = PrintObject()
+print(object1)
+print(object2)
+~~~
+- 다음과 같이 `__init__`, `__new__`를 이용하여 싱글톤 객체를 생성할 수 있음
+~~~python
+class Singleton(object):
+    def __new__(cls, *args, **kwargs):
+        if not hasattr(cls, "_instance"):
+            print("__new__ is called\n")
+            cls._instance = super().__new__(cls)
+
+        return cls._instance
+
+    def __init__(self, data):
+        cls = type(self)
+        if not hasattr(cls, "_init"):
+            print("__init__ is called\n")
+            self.data = data
+            cls._init = True
+
+# 결과는 3, 3이 나옴
+s1 = Singleton(3)
+s2 = Singleton(4)
+print(s1.data)
+print(s2.data)
+~~~
+
+## Observer 패턴
+- 객체의 상태 변경시, 관련된 다른 객체들에게 상태 변경을 통보하는 디자인 패턴
+- 관찰자(관련된 다른 객체)들에게 비관찰자(해당 객체)의 특정 이벤트 발생을 자동으로 모두 전달하는 패턴
+~~~python
+class Observer:
+    def __init__(self):
+        self.observers = list()
+        self.msg = str()
+
+    def notify(self, event_data):       #- 핵심은 요기
+        for observer in self.observers:
+            observer.notify(event_data)
+
+    def register(self, observer):
+        self.observers.append(observer)
+
+    def unregister(self, observer):
+        self.observers.remove(observer)
+
+
+class SNSNotifier:
+    def notify(self, event_data):
+        print(event_data, 'received..')
+        print('send sms')
+
+
+class EmailNotifier:
+    def notify(self, event_data):
+        print(event_data, 'received..')
+        print('send email')
+
+
+class PushNotifier:
+    def notify(self, event_data):
+        print(event_data, 'received..')
+        print('send push notification')
+
+
+notifier = Observer()
+
+sms_notifier = SNSNotifier()
+email_notifier = EmailNotifier()
+push_notifier = PushNotifier()
+
+notifier.register(sms_notifier)
+notifier.register(email_notifier)
+notifier.register(push_notifier)
+
+notifier.notify('user activation event')
+~~~
+
+### Builder pattern
+- 생성하는 객체가 하위 객체들을 포함하고 있어 복잡하거나, 구성을 정교하게 할 필요성이 있을 때, 빌더 패턴을 사용해  
+  복잡한 유형을 단순화 할 수 있음
+- 빌더 패턴을 사용하는 목적은 두 가지로 분리
+  - 결합도 분리 --> 생성자에 파라미터를 전달해야 하는 부분이 바뀔 경우
+  - 생성자에 전달하는 인수에 의미 부여 --> 생성자를 통한 객체 생성시 어떤 인스턴스를 생성할 것인지 의미부여
+- 다른 언어에서는 어렵지만, 파이썬은 간단히 언어 자체에서 해결됨
+- 생성자에 들어갈 매개 변수가 복잡하여 가독성이 떨어지고, 어떤 변수가 어떤 값인지 알기 어려움
+  - 예) `student('aaron', 20, 180, 180, 'cs', ['data structures', 'artificial intelligence'])` 
+- 전체 변수 중 일부 값만 설정하는 경우
+  - 예) `Student('aaron', --, 180, 180, ???, ???)` 
+- 일반적으로 우리가 설정하는 방법으로 간단히 해결 가능
+
+
+### Factory pattern
+- 객체를 생성하는 팩토리 클래스를 정의하고, 어떤 객체를 만들지는 팩토리 객체에서 결정하여 객체를 만들도록 하는 패턴
+- 예) 모바일 플랫폼별 스마트폰 객체 만들기 구현해보기
+~~~python
+## Factory pattern
+class AndroidSmartPhone:
+    def send(self, message):
+        print("send a message via Android platform")
+
+
+class WindowsSmartphone:
+    def send(self, message):
+        print("send a message via Widnow Mobile platform")
+
+
+class iOSSmartphone:
+    def send(self, message):
+        print("send a message via iOS platform")
+
+
+class SmartphoneFactory(object):
+    def __init__(self):
+        pass
+
+    def create_smartphone(self, device_type):
+        if device_type == 'android':
+            smartphone = AndroidSmartPhone()
+        elif device_type == 'window':
+            smartphone = WindowsSmartphone()
+        else:
+            smartphone = iOSSmartphone()
+
+        return smartphone
+
+
+smartphone_factory = SmartphoneFactory()
+message_sender1 = smartphone_factory.create_smartphone('android')
+message_sender1.send('hi')
+
+message_sender2 = smartphone_factory.create_smartphone('window')
+message_sender2.send('hi')
+
+message_sender3 = smartphone_factory.create_smartphone('ios')
+message_sender3.send('hi')
+~~~
+
+## chapter14 - 특별한 파이썬 클래스 작성법(namedtuple)
+### collections.namedtuple
+- 클래스없이 객체를 생성할 수 있는 방법 - 클래스에 attribute만 있는 경우에 해당
+  - tuple 클래스 활용
+  - attribute만 있는 클래스의 경우만 해당  
+~~~python
+import collections
+
+Employee = collections.namedtuple('Person', ['name', 'id'])
+employee1 = Employee('Dave', '4011')
+print(employee1)
+print(type(employee1))
+
+Employee = collections.namedtuple('Person', 'name, id')
+employee1 = Employee('Dave', '4011')
+print(employee1)
+print(type(employee1))
+~~~
+- Person과 Employee 관계
+  - Employee = Person 의미, Employee가 Person이라는 실제 클래스를 참조
+  - 헷깔리는 부분으로 보통은 다음과 같이 동일한 클래스 이름을 사용
+    - `Employee = collections.namedtuple('Employee', ['name', 'id'])`  
+~~~python
+Employee = collections.namedtuple('Employee', ['name', 'id'])
+employee1 = Employee('Dave', '4011')
+print(employee1)
+print(type(employee1))
+~~~
+- 다음과 같이 명시적으로 속성명을 적을 수도 있음
+~~~python
+Employee = collections.namedtuple('Employee', ['name', 'id'])
+employee1 = Employee(name='Dave', id='4011')
+print(employee1)
+print(type(employee1))
+~~~
+- 일반적인 튜플처럼 속성 접근(권장하지는 않음. 추후 일반 클래스로 바꾼다면 관련 코드를 모두 변경해야함)
+
+### typing.NamedTuple
+- 파이썬 3.6에서 추가된 클래스(collections namedtuple의 개선 방식)
+- 파고들면 끝이 없긴 하지만, 가벼운 마음으로 참고
+- 가독성이 조금 나아졌다고 함
+~~~python
+from typing import NamedTuple
+class Employee(NamedTuple):
+    name: str
+    id: int = 3 #- default 값 선언 가능
+
+employee1 = Employee('Guido', 2)
+print(employee1)
+print(employee1.name, employee1.id)
+~~~
