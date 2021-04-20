@@ -131,7 +131,7 @@ class AreaCalculator(object):
         total = 0
         for shape in self.shapes:
             total += shape.area()
-        return total
+        return total;
 
 
 shapes = [Rectangle(2, 3), Rectangle(1, 6), Circle(5), Circle(7)]
