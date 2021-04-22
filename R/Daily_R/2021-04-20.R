@@ -58,18 +58,42 @@ getHandler('basic.stdout')[['level']]
 #- logger는 계층적인 디렉토리 구조와 유사하여, logger에 추가된 handler들이 부모 logger에 전달됨
 #- 부모-자식간의 관계는 '.'로 알수 있음
 
+#- logReset후에 다시 살펴보면, heo.jaehun의 계층적 하위 logger들은
+#- 부모 logger에 영향을 받아 log가 출력됨을 알 수 있지만 하위 계층의
+#- logger가 아닌 경우에는(ex) good ) 출력이 안됨
+
 logReset()
-basicConfig(level='FINEST')
 addHandler(writeToConsole, logger = "heo.jaehun")
 getLogger("heo.jaehun")[['handlers']] 
-loginfo('Ma cos\'è questo amore?', logger='heo.jaehun.hello')
+
+loginfo('Ma cos\'è questo amore?', logger='heo.jaehun')
 logerror('talking to an unrelated logger', logger='good')
 
+#- logger object
+#- getLogger()를 통해서 return된 object는 reference classes임
+#- 즉 이 자체로 environment임
+#- 다음을 통해 정확히 확인해보자
+
+class(getLogger())          #- logger class
+is.environment(getLogger()) #- environment object
+
+#- 즉 RefClass임을 활용하여 다음과 같이 코드를 짜면
+#- log출력 함수를 사용할 때마다 logger name을 지정하지 않아도 됨
+logReset()
+getLogger('heo.jaehun')$addHandler(writeToConsole)
+lrc <- getLogger('heo.jaehun.good')
+lrc$info('My name is Jaehun heo')
+lrc$info('goood!')
+
+logerror('talking to an unrelated logger', logger='rivista.cucina')
+
 #- file에 로깅하기
-#- addhandler시, writeToFile과 함께 level을 지정하면, root.logger의 level에는 영향을 주지 않음
+#- writeToFile이라는 handler를 통해 특정 file에 logging을 할 수 있음.
+#- 이때 handler에게 level를 지정할 수 있는데, 이 level보다 높은 것들만 file에 logging 하게 됩니다.
+#- 콘솔에는 전부 Logging되도록 하며, file에 writing할 log는 INFO 이상으로 지정해 봅시다
 logReset()
 basicConfig(level='FINEST')
-addHandler(writeToFile, file="~/testing.log", level='DEBUG')
+addHandler(writeToFile, file="~/testing.log", level='INFO')
 with(getLogger(), names(handlers))
 
 loginfo('test %d', 1)

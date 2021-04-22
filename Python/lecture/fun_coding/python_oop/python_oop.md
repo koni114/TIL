@@ -424,7 +424,7 @@ class Person(object):
         print("I am a person")
 
 
-class Student(object):
+class Student(Person):
     def __init__(self):
         Person.__init__(self)
         print('I am a student')
@@ -694,7 +694,7 @@ class CourseManager(object):
 - 예) 캐릭터 클래스를 만들 때, 캐릭터마다 행동이 다르다면, 행동 구현은 캐릭터 클래스의 자식 클래스에서 재정의
   - 이경우, 캐릭터 클래스는 수정할 필요 없고(변경에 닫혀 있음)
   - 자식 클래스에서 재정의하면 됨(확장에 대해서 개방됨)
-~~~
+~~~python
 # 나쁜예
 # Circle에 대한 면적 계산은 AreaCaculator에서 수용 불가능
 class Rectangle(object):
@@ -723,7 +723,7 @@ shapes = [Rectangle(2, 3), Rectangle(1, 6)]
 calculator = AreaCalculator(shapes)
 print("The total Area is : ", calculator.total_area())
 ~~~
-~~~
+~~~python
 # 좋은 예
 class Rectangle(object):
     def __init__(self, width, height):
@@ -798,7 +798,7 @@ class Character(object, metaclass=ABCMeta):
 
 ### ISP - 인터페이스 분리 법칙
 - 클래스에서 사용하지 않는 메서드는 분리해야 함  
-  인터페이스에서 선언해서 클래스에서 선언해야하는 경우는 인터페이스에서 선언을 하지 않아야 함
+  해당 기능이 필요 없는데도, 인터페이스에서 선언해서 클래스에서 선언해야하는 경우는 인터페이스에서 선언을 하지 않아야 함
 - metaclass란?
   - 클래스를 만들기 위해 파이썬에서는 기본 metaclass가 사용
   - 즉, 클래스를 만들기 위해서는 metaclass라는 것이 필요
@@ -872,6 +872,59 @@ class SortManager:
   - 보통 프로그램은 여러 파일로 만드는데, 각 파일에서 해당 객체를 그대로 사용하려면 부득이 동일 클래스로 객체를 만들어야 함
   - 각각 파일마다 객체를 별도로 생성하지 않고, 동일한 객체를 사용하고 싶을 때, 싱글톤이라는 기법으로 프로그램에서 한번 만들어진 동일 객체 사용할 수 있음 
 - 싱글톤 코드는 여러가지 방법으로 만들 수 있지만, 이 중 가장 많이 사용되는 코드를 기술
+
+#### __call__ 메소드
+- 클래스를 호출가능한 객체로 만들어주는 함수
+- 정확하게, <b>인스턴스를 객체로서 호출시켜주는 함수</b>
+~~~python
+a = Myclass()
+a()            #- 다음을 같이 인스턴스 객체를 호출할 수 있도록 해줌    
+~~~
+
+- 일반적으로 우리는 함수를 호출할 때, `function()`으로 호출하는데, 이처럼  
+  클래스의 객체도 호출할 수 있도록(`class()`) 해주는 매직 메소드
+- 다음의 예제를 참고  
+  기존의 인스턴스 메소드를 통해서 랜덤한 숫자의 리스트를 리턴하는 코드에서 `__call__`을 추가해 클래스 객체를 통해서도 랜덤한 숫자의 리스트틀 호출하게끔 하는 코드임
+~~~python
+#- 단순 객체의 메소드를 이용하여 구현
+import random
+class RandomPick:
+
+    def __init__(self):
+        self._numbers = [n for n in range(1, 101)]
+
+    def pick(self):
+        return sorted([random.choice(self._numbers) for _ in range(10)])
+
+obj = RandomPick()
+obj.pick()
+
+#- __call__를 이용하여 클래스 객체를 호출할 수 있도록 overriding
+import random
+class RandomPick:
+
+    def __init__(self):
+        self._numbers = [n for n in range(1, 101)]
+
+    def pick(self):
+        return sorted([random.choice(self._numbers) for _ in range(10)])
+
+    def __call__(self):
+        return self.pick()
+
+a = RandomPick()
+a()                 #- [1, 2, 7, 8, 4, 3..]
+
+#- callable : 객체가 호출가능한지 확인
+callable(a)   #- True
+callable(obj) #- False
+~~~
+
+#### __new__ 메소드
+- 새로운 인스턴스를 만들기 위해 가장 먼저 호출되는 메서드
+- `__new__`에서 인스턴스를 반환하지 않는다면 `__init__`은 실행되지 않음
+- 
+- 
 ~~~python
 class Singleton(type):  #- type 상속 받음
     __instances = {}    #- 클래스의 인스턴스를 저장할 속성
