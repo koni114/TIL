@@ -1,50 +1,19 @@
-class Singleton(type):
-    __instances = {}
+# quiz: 초간단 연습
+# type checker 데코레이터 만들기(인자 유효성 검사)
+# digit1, digit2를 곱한 값을 출력하는 함수 만들기
+# type_checker 데코레이터로 digit1, digit2가 정수가 아니면 only integer support 출력하고 끝냄
+# if(type(digit1) != int) or if(type(digit2) != int)
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls.__instances:
-            cls.__instances[cls] = super().__call__(*args, **kwargs)
+def checker(func):
+    def inner_func(digit1, digit2):
+        if (type(digit1) != int) or (type(digit2) != int):
+            print("only integer support")
+        else:
+            func(digit1, digit2)
 
-        return cls.__instances[cls]
+    return inner_func
 
+@checker
+def multiply(digit1, digit2):
+    return digit1 * digit2
 
-class MyClass(metaclass=Singleton):
-    def __init__(self):
-        print("This is called by super().__call__")
-
-
-object1 = MyClass()
-object2 = MyClass()
-
-#- 단순 객체의 메소드를 이용하여 구현
-import random
-class RandomPick:
-
-    def __init__(self):
-        self._numbers = [n for n in range(1, 101)]
-
-    def pick(self):
-        return sorted([random.choice(self._numbers) for _ in range(10)])
-
-obj = RandomPick()
-obj.pick()
-
-#- __call__를 이용하여 클래스 객체를 호출할 수 있도록 overriding
-import random
-class RandomPick:
-
-    def __init__(self):
-        self._numbers = [n for n in range(1, 101)]
-
-    def pick(self):
-        return sorted([random.choice(self._numbers) for _ in range(10)])
-
-    def __call__(self):
-        return self.pick()
-
-a = RandomPick()
-a()                 #- [1, 2, 7, 8, 4, 3..]
-
-#- callable : 객체가 호출가능한지 확인
-callable(a)   #- True
-callable(obj) #- False

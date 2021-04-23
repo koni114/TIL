@@ -923,18 +923,19 @@ callable(obj) #- False
 #### __new__ 메소드
 - 새로운 인스턴스를 만들기 위해 가장 먼저 호출되는 메서드
 - `__new__`에서 인스턴스를 반환하지 않는다면 `__init__`은 실행되지 않음
-- 
-- 
+
 ~~~python
+#- check -> 보통 클래스를 통하여 인스턴스를 생성할 때, type metaclass 의 __call__함수를 통해 생성함
 class Singleton(type):  #- type 상속 받음
     __instances = {}    #- 클래스의 인스턴스를 저장할 속성
 
     def __call__(cls, *args, **kwargs):   #- 클래스로 인스턴스를 만들 때 호출되는 메서드
         if cls not in cls.__instances:    #- 클래스로 인스턴스를 생성하지 않았는지 확인
             cls.__instances[cls] = super().__call__(*args, **kwargs) #- 생성하지 않았으면 인스턴스를 생성하여 해당 클래스 사전에 저장
+            
 
         return cls.__instances[cls] #- class instance 반환
-
+
 
 class PrintObject(metaclass=Singleton):
     def __init__(self):
@@ -947,6 +948,11 @@ print(object1)
 print(object2)
 ~~~
 - 다음과 같이 `__init__`, `__new__`를 이용하여 싱글톤 객체를 생성할 수 있음
+- `__new__`는 클래스에 정의되어 있지 않으면 알아서 object 클래스의 `__new__`가 호출되어 객체가 생성됨
+- `__new__`를 통해 생성된객체의 preperty를 정의할 때 `__init__` 을 사용
+- 사용자가 어떤 목적으로 클래스의 생성 과정에 관여하고 싶을 때, 직접 `__new__` 메서드를 클래스에 추가
+- <b>사용자가 클래스의 __new__를 재 정의 할 때는 사용자가 직접 object 클래스의 __new__ 메서드를 호출해서 객체를 생성하고 생성된 객체를 리턴하는 코드를 구현해야 함</b>
+
 ~~~python
 class Singleton(object):
     def __new__(cls, *args, **kwargs):
@@ -956,6 +962,7 @@ class Singleton(object):
 
         return cls._instance
 
+    #- __init__을 여러번 호출하지 않게 하기 위하여, __init__도 hasattr 통해 check
     def __init__(self, data):
         cls = type(self)
         if not hasattr(cls, "_init"):

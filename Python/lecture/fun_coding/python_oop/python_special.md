@@ -38,6 +38,11 @@ print(fn())
 ~~~
 
 ## chapter02 - First-class function
+- First-class object
+  - 해당 언어 내에서 일반적으로 다른 모든 개체에 통용가능한 동작(operation)이 지원되는 개체를 의미
+  - 이동작은 주로 함수의 인자로 전달되거나, 함수의 return값이 되거나, 수정되고 할당되는 것들을 전제로 함
+  - 예를들어 list, str, int 등의 자료형들은 모두 first-class object임
+  - <b>파이썬에서는 함수도 일급 객체!</b>
 - First-class function
   - First-class 함수: 함수 자체를 인자로 다른 함수에 전달
   - 다른 함수의 결과값으로 리턴, 함수를 변수에 할당할 수 있는 함수 
@@ -60,7 +65,7 @@ func1(2)
 # calc_square와 마찬가지로 인자도 넣어서 결과도 얻을 수 있음
 # 완전 calc_square와 동일
 print(func1)  #- 주소값 동일
-func1(2)     #- 결과 4
+func1(2)      #- 결과 4
 
 class MyClass:
     def my_class(self):
@@ -258,7 +263,6 @@ log_func()
 - 파라미터가 있는 함수에 데코레이터 적용하기
   - 중첩함수에 꾸미고자 하는 함수와 동일하게 파라미터를 가져가면 됨  
 ~~~python
-d
 # 파라미터가 있는 함수에 Decorator 적용
 def outer_func(function):
     def inner_func(digit1, digit2):
@@ -298,8 +302,8 @@ divide(1, 1)
 ~~~
 
 ### 파라미터에 관계없이 모든 함수에 적용 가능한 Decorator 만들기
-- 파라미터는 어떤 형태이든 결국 (args, **kwargs)로 표현 가능
-- 데코레이터의 내부 함수 파라미터를 (args, **kwargs)로 작성하면 어떤 함수이든 데코레이터 적용 가능
+- 파라미터는 어떤 형태이든 결국 (*args, **kwargs)로 표현 가능
+- 데코레이터의 내부 함수 파라미터를 (*args, **kwargs)로 작성하면 어떤 함수이든 데코레이터 적용 가능
 ~~~python
 def general_decorator(function):
     def wrapper(*args, **kwargs):
