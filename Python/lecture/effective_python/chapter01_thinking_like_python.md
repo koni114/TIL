@@ -38,8 +38,8 @@ import foo          #- 나쁜 예
 
 ### bytes와 str 차이 알아두기
 - 파이썬에서는 문자열 데이터의 시퀀스를 표현하는 두가지 방식이 있음
-  - `bytes`와 `str`
-- bytes 타입의 인스턴스에는 부호가 없는 8바이트 데이터가 그대로 들어감  
+  - <b>`bytes`와 `str`</b>
+- bytes 타입의 인스턴스에는 부호가 없는 8바이트 데이터가 그대로 들어감(종종 아스키 인코딩을 사용해 내부 문자를 표시)  
 ~~~python
 a = b'h\x65llo'
 print(list(a))
@@ -212,3 +212,4 @@ if count := fresh_fruit.get('레몬', 0):
 else:
     out_of_stuck(count)
 ~~~
+
