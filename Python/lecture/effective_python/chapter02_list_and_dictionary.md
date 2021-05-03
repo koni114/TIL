@@ -475,5 +475,100 @@ counters[key] = count + 1
 - `collections` 내장 모듈에 있는 defaultdict 클래스는 키가 없을 때 자동으로 값을 저장해서 간단히 처리할 수 있도록 해줌
 - 키가 없을 때 default 값을 만들기 위해 호출할 함수를 제공해야 함
 ~~~python
+from collections import defaultdict
 
+
+class Visits:
+    def __init__(self):
+        self.data = defaultdict(set)
+
+    def add(self, country, city):
+        self.data[country].add(city)
+
+
+visits = Visits()
+visits.add('영국', '바스')
+visits.add('영국', '런던')
+print(visits.data)
 ~~~
+- `add` 코드는 data 딕셔너리에 있는 키에 접근하면 항상 기존 set 인스턴스가 반환된다고 가정
+- `add` 메서드가 아주 많이 호출되면 집합 생성에 따른 비용도 커지는데, 이 구현에서 불필요한 set이 만들어지는 경우는 없음 
+- 키로 어떤 값이 들어올지 모르는 딕셔너리를 관리할 때, collections 내장 모듈에 있는 defaultdict 인스턴스가 상황에 맞다면 defaultdict를 사용해라
+
+### 18- __missing__을 사용해 키에 따라 다른 디폴트 값을 생성하는 방법을 알아두라
+- 앞서 setdefaultdict과 defaultdict 타입이 필요한 처리를 못하는 경우가 있음
+- 예를 들어 파일 시스템에 있는 SNS 프로필 사진을 관리하는 프로그램을 작성한다고 가정해보자
+- 필요할 때 파일을 읽고 쓰기 위해 프로필 사진의 경로와 열린 파일 핸들을 연관시켜주는 딕셔너리가 필요
+- 다음 코드에서는 일반 dict 인스턴스를 사용하고 get 메서드와 대입식을 통해 키가 딕셔너리에 있는지 검사함
+~~~python
+pictures = {}
+path = 'profile_1234.png'
+
+handle = pictures.get(path)
+if handle is None:
+    try:
+        handle = open(path, 'a+b')
+    except OSError:
+        print(f'경로를 알 수 없습니다 : {path}')
+        raise
+    else:
+        pictures[path] = handle
+
+handle.seek(0)
+image_data = handle.read()
+~~~
+- 위의 코드는 내포되는 블록 깊이가 깊어지고, 딕셔너리를 많이 읽는 단점이 있음
+- 따라서 다음 코드와 같이 setdefault를 이용해 작성할 수 있다
+~~~python
+try:
+    handle = pictures.setdefault(path, open(path, 'a+b'))
+except OSError:
+    print(f'경로를 열 수 없습니다: {path}')
+    raise
+else:
+    handle.seek(0)
+    image_data = handle.read()
+~~~
+- 위의 코드는 문제가 많다. 파일 핸들을 만드는 내장 함수인 open이 딕셔너리에 경로가 있는지 여부와 관계없이  
+  항상 호출됨
+- 이로 인해 같은 프로그램상에 존재하던 열린 파일 핸들과 혼동될 수 있는 새로운 파일 핸들이 생길 수 있음 
+- 또한 open이 예외를 발생시킬 때, 같은 줄에 있는 setdefault가 던지는 예외와 구분하지 못할 수도 있음
+- 그래서 다음코드는 defaultdict를 활용하여 함수를 작성해 보았다
+~~~python
+from collections import defaultdict
+
+path = 'file_1234.png'
+
+def open_picture(profile_path):
+    try:
+        return open(profile_path, 'a+b')
+    except OSError:
+        print(f'경로를 열 수 없습니다: {profile_path}')
+        raise
+
+
+pictures = defaultdict(open_picture)
+handle = pictures[path]
+handle.seek(0)
+image_data = handle.read()
+
+>>>
+TypeError: open_picture() missing 1 required positional argument: 'profile_path'
+~~~
+- 문제는 <b>defaultdict 생성자에 전달한 함수는 인자를 받을 수 없다</b> 이로 인해 파일 경로를 사용해 open을 호출할 방법이 없음
+- 이런 상황에서는 setdefault와 defaultdict 모두 필요한 기능을 제공하지 못함 
+- 이런 상황이 흔히 발생하기 때문에 파이썬은 다른 해법을 내장해 제공함. <b>dict 타입의 하위 클래스를 만들고 `__missing__` 특별 메서드를 구현하면 키가 없는 경우를 처리하는 로직을 커스텀화 할 수 있음</b>
+~~~python
+class Pictures(dict):
+    def __missing__(self, key):
+        value = open_picture(key)
+        self[key] = value
+        return value
+
+
+pictures = Pictures()
+handle = pictures[path]
+handle.seek(0)
+image_data = handle.read()
+~~~
+- `path`가 딕셔너리에 없으면 `__missing__` 메서드가 호출됨. 해당 메소드는 키에 해당하는 디폴트 값을 호출해 딕셔너리에 넣어준 다음에 호출한 쪽에서 그 값을 반환해야 함
