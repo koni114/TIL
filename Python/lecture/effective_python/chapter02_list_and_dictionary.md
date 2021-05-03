@@ -269,3 +269,211 @@ a = MyClass()
 for key, value in a.__dict__.items():
     print(f'{key} = {value}')
 ~~~
+- collection 내장 모듈에는 삽입 순서를 유지해주는 OrderedDict라는 클래스가 있었음  
+  클래스의 동작이 표준 dict의 동작과 비슷하기는 하지만, `OrderedDict`의 성능 특성은 dict와 많이 다름
+- <b>키 삽입과 popitem 호출을 자주 처리해야 한다면, 표준 파이썬에서 제공하는 dict보다 OrderedDict가 더 나음</b>
+- 하지만 딕셔너리를 처리할 때 삽입 순서 관련 동작이 항상 성립한다고 생각해서는 안됨
+- 파이썬에서는 프로그래머가 list, dict등의 표준 프로토콜(protocol)을 흉내 내는 커스텀 컨테이너 타입을 쉽게 정의할 수 있음  
+- 파이썬은 정적 타입 지정 언어가 아니기 때문에 대부분의 경우 코드는 엄격한 클래스 계층보다는 객체의 동작이 객체의 실질적인 타입을 결정하는 <b>덕 타이핑</b>에 의존하며, 이로 인해 가끔 어려운 함정에 빠질 수 있음
+- 다음의 코드를 보면서 실제로 확인해보자
+- 다음은 특정 콘테스트에서 득표를 가장 많이 받은 득표자를 확인하는 코드다
+~~~python
+votes = {
+    'otter': 1281,
+    'polar bear': 587,
+    'fox': 863
+}
+
+
+def populate_ranks(votes, ranks):
+    names = list(votes.keys())
+    names.sort(key=votes.get, reverse=True)
+    for i, name in enumerate(names, 1):
+        ranks[name] = i
+
+
+def get_winner(ranks):
+    return next(iter(ranks))
+
+
+ranks = {}
+populate_ranks(votes, ranks)
+print(ranks)
+winner = get_winner(ranks)
+print(winner)
+
+>>>
+{'otter': 1, 'fox': 2, 'polar bear': 3}
+otter
+~~~
+- 이 때 요구사항이 변경되어, 결과를 보여줄 떄 등수가 아닌 알파벳순으로 표시해야 한다고 생각해보자  
+  `collections.abc` 모듈을 사용해 딕셔너리와 비슷하지만 내용을 알파벳 순서대로 이터레이션 해주는 클래스를 새로 정의할 수 있음
+~~~python
+from collections.abc import MutableMapping
+
+
+class SortedDict(MutableMapping):
+    def __init__(self):
+        self.data = {}
+
+    def __getitem__(self, key):
+        return self.data[key]
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
+
+    def __delitem__(self, key):
+        del self.data[key]
+
+    def __iter__(self):
+        keys = list(self.data.keys())
+        keys.sort()
+        for key in keys:
+            yield key
+
+    def __len__(self):
+        return len(self.data)
+
+
+sorted_ranks = SortedDict()
+populate_ranks(votes, sorted_ranks)
+print(sorted_ranks.data)
+winner = get_winner(sorted_ranks)
+print(winner)
+
+>>>
+{'otter': 1, 'fox': 2, 'polar bear': 3}
+fox
+~~~
+- SortedDict class는 표준 딕셔너리의 프로토콜을 지키므로, 오류가 발생하지 않지만 실행 결과는 요구사항과 맞지 않는다
+- 그 이유는 `get_winner`함수의 구현이 `populate_ranks`의 삽입 순서에 맞게 딕셔너리를 이터레이션 한다고 가정하는데 있음
+- 이 코드는 `dict` 대신 `SortedDict`를 사용하므로 이 가정은 더이상 성립하지 않음
+- 이 문제를 해결하기 위한 세 가지 방법이 있음
+
+- 해결방안1 : ranks 딕셔너리가 어떤 특정 순서로 이터레이션된다고 가정하지 않고 `get_winner`함수를 구현하는 것
+~~~python
+def get_winner(ranks):
+    for name, rank in ranks.items():
+        if rank == 1:
+            return name
+~~~
+- 해결방안2 : 함수 맨 앞에 ranks의 타입이 우리가 원하는 타입인지 검사하는 것. 그렇지 않으면 예외를 던짐
+~~~python
+def get_winner(ranks):
+    if not isinstance(ranks, dict):
+        raise TypeError('dict instance가 필요합니다.')
+    return next(iter(ranks))
+~~~
+- 해결방안3 : type annotation을 사용해서 `get_winner`에 전달되는 값이 딕셔너리와 비슷한 동작을 하는 Mutable Mapping 인스턴스가 아니라 dict 인스턴스가 되도록 강제하는 것
+~~~python
+def get_winner(ranks):
+    if not isinstance(ranks, dict):
+        raise TypeError('dict instance가 필요합니다.')
+    return next(iter(ranks))
+
+from typing import Dict, MutableMapping
+
+def populate_ranks(votes: Dict[str, int],
+                   ranks: Dict[str, int]) -> None:
+    names = list(votes.keys())
+    names.sort(key=votes.get, reverse=True)
+    for i, name in enumerate(names, 1):
+        ranks[name] = i
+
+def get_winner(ranks: Dict[str, int]) -> str:
+    return next(iter(ranks))
+
+class SortedDict(MutableMapping[str, int]):
+~~~
+
+### 16-in을 사용하고 딕셔너리 키가 없을 때 KeyError를 처리하기 보다는 get을 사용해라
+- dict안에 key가 없을 수 있는데, 이 때 keyError가 발생한다. 이 때 `get` 함수를 사용하면 훨씬 간결하게 처리할 수 있음
+~~~python
+counters = {
+    '폼퍼니켈':2,
+    '샤워도우':1
+}
+
+key = '밀'
+#- 가독성이 떨어지는 코드
+if key in counters:
+    count = counters[key]
+else:
+    count = 0
+
+counters[key] = count + 1
+
+#- 가독성이 높은 코드
+counters[key] = counters.get(key, 0) + 1
+~~~
+- 만약 딕셔너리에 저장된 값이 리스트처럼 더 복잡한 값이라면 어떻게 해야 할까? 
+- 예를 들어 득표수만 세는 것이 아니라, 어떤 사람이 어떤 유형의 빵에 투표했는지도 알고 싶은 경우다
+~~~python
+votes = {
+    '바게트': ['철수', '순이'],
+    '치아바타': ['하니', '유리']
+}
+key = '브리오슈'
+who = '단이'
+
+if key in votes:
+    names = votes[key]
+else:
+    votes[key] = names = []
+names.append(who)
+print(votes)
+~~~
+- 위의 예제는 `votes[key] = names = []`를 한줄로 처리하고, 디폴트 값으로 빈 리스트를 딕셔너리에 넣고  
+  나면 참조를 통해 리스트 내용을 변경할 수 있으므로, `append`를 호출한 다음 리스트를 다시 딕셔너리에 대입할 필요는 없음 
+- 다음과 같이 keyError 예외가 발생한다는 것을 이용할 수도 있음
+~~~python
+try:
+    names = votes[key]
+except KeyError:
+    votes[key] = names = []
+names.append(who)
+~~~
+- 이 방법은 키가 있을 때는 한번만 읽으면 되고, 키가 없을 때는 키를 한 번 읽고 한번 대입하면 되므로 조금 더 효율적임 
+- 다음은 `get`과 왈러스 연선자를 이용하여 조금 더 간결하게 만든 코드문
+~~~python
+if (name := votes.get(key)) is None:
+    votes[key] = names = []
+names.append(who)
+~~~
+- dict 타입은 이 패턴을 더 간단히 사용하게 해주는 `setdefault` 메서드를 제공함
+- `get`과 다른 점은 키가 없으면 제공받은 디폴트 값을 키에 입력하고, 입력된 값을 반환
+- 즉 이 값은 새로 저장된 디폴트 값일 수도 있고, 이미 딕셔너리에 있던 키에 해당하는 값일 수도 있음
+~~~python
+names = votes.setdefault(key, [])
+names.append(who)
+~~~
+- 위의 코드는 확실히 짧지만 가독성이 떨어짐. 특히 `setdefault`라는 말의 의미가 이상하다. 값을 얻는 함수인데 왜 setdefault일까?
+- <b>또한 키가 없으면 setdefault에 전달된 디폴트 값이 별도로 복사되지 않고 딕셔너리에 직접 대입됨</b>
+- 다음 코드는 값이 리스트인 경우 이런 동작으로 인해 벌어지는 상황을 보여줌
+~~~python
+data = {}
+key = 'foo'
+value = []
+data.setdefault(key, value)
+print('이전 : ', data)
+value.append('hello')
+print('이후 : '. data)
+~~~
+- <b>이는 키에 해당하는 디폴트 값을 setdefault에 전달할 때마다 그 값을 새로 만들어야 한다는 것</b>
+- 즉 호출할 때마다 리스트를 새로 만들어야 하므로 성능이 크게 저하될 수 있음
+- 만약 가독성과 효율성을 향상시키고자 디폴트 값에 사용하는 객체를 재활용한다면 이상한 동작을 하게되고 버그가 발생할 것임
+- 다음의 최초 예제에서 왜 `setdefault`를 사용하지 않았을까?
+~~~python
+count = counters.setdefault(key, 0)
+counters[key] = count + 1
+~~~
+- 이유는, `count` 값을 증가시키고 나면 다시 딕셔너리에 저장해야 하므로, setdefault가 수행하는 디폴트 값 대입은 불필요함
+- 즉 setdefault는 키를 한 번 읽고, 대입을 두 번하므로, 불 필요함
+- 결과적으로 setdefault를 사용하는 것이 딕셔너리 키를 처리하는 지름길인 경우는 드물다
+
+### 17-내부 상태에서 원소가 없는 경우를 처리할 때는 setdefault보다 defaultdict를 사용해라
+- `collections` 내장 모듈에 있는 defaultdict 클래스는 키가 없을 때 자동으로 값을 저장해서 간단히 처리할 수 있도록 해줌
+- 키가 없을 때 default 값을 만들기 위해 호출할 함수를 제공해야 함
+~~~python
+
+~~~
