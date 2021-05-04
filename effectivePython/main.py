@@ -1,15 +1,48 @@
-def sort_priority(values, group):
-    def helper(x):
-        if x in group:
-            return 0, x
-        else:
-            return 1, x
-    values.sort(key=helper)
+from functools import wraps
 
-numbers = [8, 3, 1, 2, 5, 4, 7, 6]
-group = [2, 3, 5, 7]
-sort_priority(numbers, group)
-print(numbers)
 
->>>
-[2, 3, 5, 7, 1, 4, 6, 8]
+def trace(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}({kwargs!r})"
+              f"-> {result!r}")
+        return result
+    return wrapper
+from functools import wraps
+
+
+def trace(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__}({kwargs!r})"
+              f"-> {result!r}")
+        return result
+    return wrapper
+
+@trace
+def fibonacci(n):
+    """n번쨰 피보나치 수를 반환한다."""
+    if n in (0, 1):
+        return n
+    return (fibonacci(n-2) + fibonacci(n-1))
+
+fibonacci = trace(fibonacci)
+print(fibonacci)
+
+
+
+
+@trace
+def fibonacci(n):
+    """n번쨰 피보나치 수를 반환한다."""
+    if n in (0, 1):
+        return n
+    return (fibonacci(n-2) + fibonacci(n-1))
+
+fibonacci = trace(fibonacci)
+print(fibonacci)
+
+
+
