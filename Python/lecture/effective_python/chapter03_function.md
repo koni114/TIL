@@ -502,6 +502,111 @@ def log_typed(message: str, when: Optional[datetime]=None) -> None:
   그리고 함수의 독스트링에 실제 동적인 디폴트 인자가 어떻게 동작하는지 문서화 해두자
 - 타입 애너테이션을 사용할 때도 None을 사용해 키워드 인자의 디폴트 값을 표현하는 방식을 적용할 수 있음
 
+### 25-위치로만 인자를 지정하게 하거나 키워드로만 인자를 지정하게 하여 함수 호출을 명확하게 만들라
+- 다음 코드문을 보자
+~~~python
+def safe_division(number, divisor, ignore_overflow, ignore_zero_division):
+    try:
+        return number / divisor
+    except ZeroDivisionError:
+        if ignore_zero_division:
+            return float('inf')
+        else:
+            raise
+    except OverflowError:
+        if ignore_overflow:
+            return 0
+        else:
+            raise
+
+result = safe_division(1.0, 10**500, True, False)
+print(result)
+
+result = safe_division(1.0, 0, False, True)
+print(result)
+~~~
+- 문제는 어떤 예외를 무시할지 결정하는 두 bool 변수의 위치를 혼동하기 쉽다는 점
+- 가독성을 향상시키는 법은 키워드 인자를 사용하는 것. 다음처럼 키워드 인자를 사용할 수 있음
+~~~python
+def safe_division(number, divisor, ignore_overflow=False, ignore_zero_division=False):
+    try:
+        return number / divisor
+    except ZeroDivisionError:
+        if ignore_zero_division:
+            return float('inf')
+        else:
+            raise
+    except OverflowError:
+        if ignore_overflow:
+            return 0
+        else:
+            raise
+
+result = safe_division(1.0, 10**500, ignore_overflow=True)
+print(result)
+
+result = safe_division(1.0, 0, ignore_zero_division=True)
+print(result)
+~~~
+- 문제는 이런 식으로 키워드 인자를 사용하는 것이 선택사항이므로, 호출하는 쪽에서 명확성을 위해 키워드 인자를 꼭 쓰도록 강요할 수 없다는 데 있음
+- 새로 정의한 `safe_division` 함수에서도 여전히 위치 인자를 통해 예전 방식으로 함수를 호출할 수 있음
+~~~python
+assert safe_division(1.0, 10**500, True, False) == 0
+~~~
+- 이와 같이 복잡한 함수의 경우, 호출자가 키워드만 사용하는 인자를 통해 의도를 명확히 하는 것이 좋음
+- `*` 기호를 사용하여 위치 인자의 마지막과 키워드만 사용하는 인자의 시작을 구분해 줌
+~~~python
+def safe_division_c(number, divisor, *, ignore_overflow = False, ignore_zero_division=False):
+    try:
+        return number / divisor
+    except ZeroDivisionError:
+        if ignore_zero_division:
+            return float('inf')
+        else:
+            raise
+    except OverflowError:
+        if ignore_overflow:
+            return 0
+        else:
+            raise
+
+safe_division_c(1.0, 10*500, True, False)
+
+>>> 
+TypeError: safe_division_c() takes 2 positional arguments but 4 were given
+~~~ 
+- 다음 `safe_divison` 함수는 처음 두 필수 인자를 위치로만 지정하는 인자로 지정
+- 인자 목록의 `/` 기호는 위치로만 지정하는 인자의 끝을 표시
+- <b>python 3.7 버전 이하에서는 '/' 기호는 지원하지 않음</b>
+~~~python
+def safe_division_d(numerator, denominator, /, *, ignore_overflow=False, ignore_zero_division=False):
+    try:
+        return numerator / denominator
+    except ZeroDivisionError:
+        if ignore_zero_division:
+            return float('inf')
+        else:
+            raise
+    except OverflowError:
+        if ignore_overflow:
+            return 0
+        else:
+            raise
+~~~
+- 다음과 같이 위치 인자만 사용했을 때 잘 동작하는지 확인 가능
+~~~python
+assert safe_division_d(2, 5) == 0.4
+~~~
+- 중요한 것은 파라미터 이름을 다시 바꿔도 아무 변화가 일어나지 않음. 오로지 위치로만 판단함
+- <b>인자 목록에서 /와 * 기호 사이에 있는 모든 파라미터는 위치를 사용해 전달할 수도 있고, 이름을 키워드로 사용해 전달할 수도 있음</b>
+
+#### 기억해야 할 내용
+- 키워드로만 지정해야 하는 인자를 사용하면 호출하는 쪽에서 특정 인자를 반드시 키워드를 사용해 호출하도록 강제할 수 있음  
+  이로 인해 함수 호출의 의도를 명확히 할 수 있음. 키워드로만 지정해야 하는 인자는 인자 목록에서 * 다음에 위치
+- 위치로만 지정해야 하는 인자를 사용하면 호출하는 쪽에서 키워드를 사용해 인자를 지정하지 못하게 만들 수 있고, 이에 따라 함수 구현과 함수 호출 지점 사이의 결함을 줄일 수 있음. 위치로만 지정해야 하는 인자는 인자 목록에서 / 앞에 위치
+- 인자 목록에서 *와 / 사이에 있는 파라미터는 키워드를 사용해 전달해도 되고 위치를 기반으로 전달해도 됨
+
+
 ### 26-functions.wrap을 사용해 함수 데코레이터를 정의해라
 - 파이썬은 함수에 적용할 수 있는 데코레이터(decorator)를 정의하느 특수한 구문을 제공함
 - 데코레이터는 자신이 감싸고 있는 함수가 호출되기 전과 후에 코드를 추가로 실행해 줌
@@ -591,7 +696,6 @@ print(fibonacci)
 - 파이썬 데코레이터는 실행 시점에 함수가 다른 함수를 변경할 수 있게 해주는 구문
 - 데코레이터를 사용하면 디버거 등 인트로스펙션을 사용하는 도구가 잘못 작동할 수 있음
 - 직접 데코레이터를 구현할 때 인트로스펙션에서 문제가 생기지 않길 바란다면 wraps 데코레이터 사용하기
-
 
 
 ### 용어 정리
