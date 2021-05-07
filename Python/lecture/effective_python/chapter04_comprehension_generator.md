@@ -402,3 +402,441 @@ print(f"{reduction:.1%} 시간이 적게 듬")
 - 직접 내포된 제너레이터를 이터레이션하면서 각 제너레이터의 출력을 내보내는 것보다 yield from을 사용하는 것이 성능면에서 더 좋음
 
 ### 34-send로 제너레이터에 데이터를 주입하지 말라
+- 앞서 제너레이터 함수를 통해 이터레이션이 가능한 출력 값을 만들어 낼 수 있음을 확인했는데, 이러한 데이터 채널은 단방향임
+- 제너레이터가 데이터를 내보내면서 다른 데이터를 받아들일 때 직접 쓸 수 있는 방법이 없는 것처럼 보임
+- 다음은 소프트웨어 라디오를 사용해 신호를 내보낸다고 하자. 다음 코드는 주어진 간격과 진폭에 따른 sine wave 값을 생성
+~~~python
+import math
+
+
+def wave(amplitude, steps):
+    step_size = 2 * math.pi / steps
+    for step in range(steps):
+        radians = step * step_size
+        fraction = math.sin(radians)
+        output = amplitude * fraction
+        yield output
+
+
+def transmit(output):
+    if output is None:
+        print(f"출력 None")
+    else:
+        print(f"출력: {output:>5.1f}")
+
+
+def run(it):
+    for output in it:
+        transmit(output)
+
+
+run(wave(3.0, 8)) 
+~~~
+- 위의 코드는 잘 작동하는데, 하지만 별도의 입력을 사용해 진폭을 지속적으로 변경해야 한다면 이 코드는 쓸모가 없음
+- 제너레이터를 이터레이션 할 때마다 진폭을 변조할 수 있는 방법이 필요
+- 파이썬 제너레이터는 `send` 메서드를 지원함. 이 메서드는 `yield` 식을 양방향 채널로 격상시켜 줌
+- send 메서드를 사용하면 입력을 제너레이터에 스트리밍하는 동시에 출력을 내보낼 수 있음
+- 일반적으로 제너레이터를 이터레이션할 때 `yield` 식이 반환하는 값은 None임
+~~~python
+def my_generator():
+    received = yield 1
+    print(f"받은 값 = {received}")
+
+
+it = iter(my_generator())
+output = next(it)           #- 첫번째 제너레이터 출력을 얻음
+print(f"출력값 = {output}")
+
+try:
+    next(it)                #- 종료될 때까지 제너레이터를 실행함
+except StopIteration:
+    pass
+~~~
+- for 루프나 next 내장 함수로 제너레이터를 이터레이션하지 않고 send 메서드를 호출하면, 제너레이터가 재개될 떄 yield가 send에 전달된 파라미터 값을 반환함
+- 하지만 방금 시작한 제너레이터는 아직 yield 식에 도달하지 못했기 때문에 최초로 send를 호출할 때 인자로 전달할 수 있는 유일한 값은 None뿐임
+~~~python
+it = iter(my_generator())
+output = it.send(None)
+print(f"출력값 : {output}")
+
+try:
+    it.send('안녕!')
+except StopIteration:
+    pass
+~~~
+- 이런 동작을 활용해 입력 시그널을 바탕으로 사인 파의 진폭을 변조할 수 있음
+- 먼저 Yield 식이 반환한 진폭 값을 amplitude에 저장하고, 다음 Yield 출력 시 이 진폭 값을 활용하도록 wave 제너레이터를 변경해야 함
+~~~python
+def wave_moduling(steps):
+    step_size = 2 * math.pi / steps
+    amplitude = yield
+    for step in range(steps):
+        radians = step * step_size
+        fraction = math.sin(radians)
+        output = radians * fraction
+        amplitude = yield output
+~~~
+- 다음으로는 run 함수를 수정해서 매 이터레이션마다 wave_modulating 제너레이터에게 스트리밍하도록 만듬
+- 아직 제너레이터가 yield 식에 도달하지 못했으므로 send에 보내는 첫 번째 입력은 None이어야 함
+~~~python
+def run_modulating(it):
+    amplitudes = [None, 7, 7, 7, 2, 2, 2, 2, 10, 10, 10, 10]
+    for amplitude in amplitudes:
+        output = it.send(amplitude)
+        transmit(output)
+
+run_modulating(wave_moduling(12))
+~~~
+- 위의 코드는 정상적이게 잘 작동함. 제너레이터가 첫 번째 yield 식에 도달할 때까지는 amplitude 값을 받지 못하므로, 예상대로 첫 번째 출력은 None임
+- 해당 코드의 문제점은 이해하기 어렵고, 대입문의 오른쪽에 yield를 사용하는 것은 직관적이지 않음
+- 또한 제너레이터 고급 기능을 잘 모를 경우는 send와 yield 사이의 연결을 알아보기 어려움
+- 또한 프로그램의 요구 사항이 복잡해져, 여러 신호의 시퀀스로 이루어진 복잡한 파형을 사용해야 한다고 하자
+- 한가지 방법은 `yield from` 식을 이용해 여러 제너레이터를 합성하는 것
+- 기존 wave 함수에 `yield from` 을 이용한 것과 `wave_modulating`은 결과적으로 차이가 남
+~~~python
+def complex_wave():
+    yield from wave(7.0, 3)
+    yield from wave(2.0, 4)
+    yield from wave(10.0, 5)
+
+run(complex_wave())
+
+>>>
+출력:   0.0
+출력:   6.1
+출력:  -6.1
+출력:   0.0
+출력:   2.0
+출력:   0.0
+출력:  -2.0
+출력:   0.0
+출력:   9.5
+출력:   5.9
+출력:  -5.9
+출력:  -9.5
+
+
+def complex_wave_modulating():
+    yield from wave_moduling(3)
+    yield from wave_moduling(4)
+    yield from wave_moduling(5)
+
+run_modulating(complex_wave_modulating())
+
+>>>
+출력: None
+출력:   0.0
+출력:   1.8
+출력:  -3.6
+출력: None
+출력:   0.0
+출력:   1.6
+출력:   0.0
+출력:  -4.7
+출력: None
+출력:   0.0
+출력:   1.2
+~~~
+- 출력에 None이 여럿 보이는데, 내포된 제너레이터에 대한 yield from 식이 끝날 때마다  다음 yield from 식이 실행됨
+- 각각의 내포된 제너레이터는 send 메서드 호출로부터 값을 받기 위해 아무런 값도 만들어내지 않는 단순한 yield 식으로 시작함
+- 이로 인해 부모 제너레이터가 자식 제너레이터를 옮겨갈 때마다 None이 출력됨
+- <b>이는 yield from과 send를 따로 사용할 때는 제대로 작용하던 특성이 같이 사용할 때는 깨짐</b>
+- 결과적으로 해결할 방법은 있지만, 그정도의 노력을 기울일 만한 가치는 없음. `send` 메서드를 아예 쓰지 않고 단순한 접근 방법을 사용할 것을 권장함
+- 가장 쉬운 해결책은 wave 함수에 이터레이터를 전달하는 것
+~~~python
+def wave_cascading(amplitude_it, steps):
+    step_size = 2 * math.pi / steps
+    for step in range(steps):
+        radians = step * step_size
+        fraction = math.sin(radians)
+        amplitude = next(amplitude_it)
+        output = amplitude * fraction
+        yield output
+
+
+def complex_wave_cascading(amplitude_it):
+    yield from wave_cascading(amplitude_it, 3)
+    yield from wave_cascading(amplitude_it, 4)
+    yield from wave_cascading(amplitude_it, 5)
+
+
+def run_cascading():
+    amplitudes = [7, 7, 7, 2, 2, 2, 2, 10, 10, 10, 10, 10]
+    it = complex_wave_cascading(iter(amplitudes))
+    for _ in amplitudes:
+        output = next(it)
+        transmit(output)
+~~~
+
+#### 기억해야 할 내용
+- send 메서드를 사용해 데이터를 제너레이터에 주입할 수 있음
+- 제너레이터는 send로 주입된 값을 yield 식이 변환하는 값을 통해 받으며, 이 값을 변수에 저장해 활용할 수 있음
+- send와 yield from 식을 함께 사용하면 제너레이터의 출력에 None이 불쑥불쑥 나타내는 의외의 결과를 얻을 수 있음
+- 합성할 제너레이터들의 입력으로 이터레이터를 전달하는 방식이 send를 사용하는 방식보다 더 낫다. send는 가급적 사용하지 말라
+
+### 제너레이터 안에서 throw로 상태를 변화시키지 말라
+- 제너레이터의 고급 기능으로 yield from 식과 send 메서드 외에, 제너레이터 안에서 Exception을 다시 던질 수 있는 throw 메서드가 있음
+- `throw` 는 어떤 제너레이터에 대해 throw가 호출되면 이 제너레이터는 값을 내놓은 `yield`로부터 평소처럼 제너레이터 실행을 계속하는 대신, throw가 제공한 Exception을 다시 던짐
+- 다음 코드는 이런 동작 방식을 보여줌
+~~~python
+class MyError(Exception):
+    pass
+
+def my_generator():
+    yield 1
+    yield 2
+    yield 3
+
+
+it = my_generator()
+print(next(it))
+print(next(it))
+print(it.throw(MyError('test error')))
+
+>>>
+1
+2
+Traceback (most recent call last):
+  File "<input>", line 13, in <module>
+  File "<input>", line 6, in my_generator
+MyError: test error
+~~~
+- throw를 호출해 제너레이터에 예외를 주입해도, 제너레이터는 try/except 복합문을 사용해 마지막으로 실행된 yield 문을 둘러쌈으로써 이 예외를 잡아낼 수 있음
+~~~python
+def my_generator():
+    yield 1
+
+    try:
+        yield 2
+    except MyError:
+        print("MyError 발생")
+    else:
+        yield 3
+
+    yield 4
+
+
+it = my_generator()
+print(next(it))
+print(next(it))
+print(it.throw(MyError('test error')))
+
+>>>
+1
+2
+MyError 발생
+4
+~~~
+- (위의 식에서 다시 한 번 `next(it)`을 하면 `StopIteration`이 발생함 -> 확인 필요)
+- 이 기능은 제너레이터와 제너레이터를 호출하는 쪽 사이에 양방향 통신 수단을 제공함
+- 경우에 따라서는 이 양방향 통신 수단이 유용할 수도 있음. 예를 들어 작성하는 프로그램에 간헐적으로 재설정할 수 있는 타이머가 필요하다고 해보자
+
+#### Timer 예제
+- 다음은 throw 메서드에 의존하는 제너레이터를 통해 타이머를 구현하는 코드임
+- yield 식에서 Reset 예외가 발생할 때마다 period로 재설정됨
+- 매 초 한 번 풀링(polling)되는 외부 입력과 이 재설정 이벤트를 연결할 수도 있음(`check_for_reset()`)
+- 그 후에는 timer를 구동시키는 run 함수를 정의할 수 있음
+- run 함수는 throw를 사용해 타이머를 재설정하는 예외를 주입하거나, 제너레이터를 출력에 대해 announce 함수를 호출
+~~~python
+def announce(remaining):
+    print(f"{remaining} 틱 남음")
+
+
+def run():
+    it = timer(4)
+    while True:
+        try:
+            if check_for_reset():
+                current = it.throw(Reset())
+            else:
+                current = next(it)
+        except StopIteration:
+            break
+        else:
+            announce(current)
+
+run()
+~~~
+- 위의 코드는 잘 실행되지만, 필요 이상으로 읽기 어려움. 각 내포 단계마다 StopIteration 예외를 잡아내거나 throw를 할지, next나 announce를 호출할지 결정하는데, 이로 인해 코드에 잡음이 많음
+- 이 기능을 구현하는데 더 단순한 방법은 <b>이터러블 컨테이너 객체를 사용해 상태가 있는 클로저를 정의하는 것</b>
+- 다음의 코드는 꼭 기억하자
+~~~python
+class Timer:
+    def __init__(self, period):
+        self.current = period
+        self.period = period
+
+    def reset(self):
+        self.current = self.period
+
+    def __iter__(self):           #- iter 메소드를 제너레이터로 정의함
+        while self.current:       
+            self.current -= 1
+            yield self.current
+
+
+def run():
+    timer = Timer(4)
+    for current in timer:
+        if check_for_reset():
+            timer.reset()
+        else:
+            announce(current)
+
+
+run()
+~~~
+- 결과적으로 출력은 throw를 사용하던 예전 버전과 똑같지만, 훨씬 더 이해하기 쉽게 구현됨
+- 따라서 예외적인 경우를 처리해야 한다면 throw를 전혀 사용하지 말고 iterable class를 사용할 것을 권장!
+
+#### 기억해야 할 내용
+- throw 메서드를 사용하면 제너레이터가 마지막으로 실행한 yield 식의 위치에서 예외를 발생시킬 수 있음
+- throw를 사용하면 가독성이 나빠짐. 예외를 잡아내고 다시 발생시키는 데 준비 코드가 필요하며, 내포 단꼐가 깊어짐
+- <b>제너레이터에서 예외적인 동작을 제공하는 더 나은 방법은 `__iter__` 메서드를 구현하는 클래스를 사용하면서 예외적인 경우에 상태를 전이시키는 것</b> 
+
+### 36 이터레이터나 제너레이터를 다룰 때는 itertools를 사용해라
+- `itertools` 내장 모듈에는 이터레이터를 구조화하거나 사용할 때 쓸모 있는 여러 함수가 있음
+- 3가지 범주로 나눠서 itertools 내장모듈 함수에 대해서 알아보자
+
+#### 여러 이터레이터 연결하기
+~~~python
+import itertools
+
+#- chain : 여러개의 이터레이터를 하나로 합칠 때
+it = itertools.chain([1, 2, 3], [4, 5, 6])
+print(list(it))
+
+#- repeat: 한 값을 계속 반복하고 싶을 때
+it = itertools.repeat('Hi', 3)
+print(list(it))
+
+#- cycle: 특정 이터레이터를 게속 반복하고 싶을 때
+it = itertools.cycle([1,2])
+result = [next(it) for _ in range(10)]
+print(result)
+
+#- tee : 한 이터레이터를 병렬적으로 두 번째 인자로 지정된 개수
+#-       의 이터레이터로 만들고 싶을 때
+it1, it2, it3 = itertools.tee(['하나', '둘'], 3)
+print(list(it1))
+print(list(it2))
+print(list(it3))
+
+#- zip_logest
+#- 여러 이터레이터 중 짧은 쪽 이터레이터를 fillvalue로 채워 return
+
+keys = ['하나', '둘', '셋']
+values = [1,2]
+
+normal = list(zip(keys, values))
+print('zip:', normal)
+
+it = itertools.zip_longest(keys, values, fillvalue='None')
+longest = list(it)
+print(longest)
+print("zip longest : ", longest)
+~~~
+
+#### 이터레이터에서 원소 거르기
+~~~python
+#- islice
+# 이터레이터를 복사하지 않으면서 slicing하고 싶을 때 사용
+# 동작은 리스트의 시퀀스 슬라이싱과 스트라이딩과 비슷
+import itertools
+
+
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+first_five = itertools.islice(values, 5)
+print(list(first_five))
+
+middle_odds = itertools.islice(values, 2, 8, 2)
+print("중간의 홀수들 : ", list(middle_odds))
+
+#- takewhile
+#- False가 반환될 때까지의 원소를 돌려줌
+values = list(range(10))
+less_than_seven = lambda x: x < 7
+it = itertools.takewhile(less_than_seven, values)
+print(list(it))
+
+#- dropwhile
+#- takewhile의 반대
+values = list(range(10))
+less_than_seven = lambda x : x < 7
+it = itertools.dropwhile(less_than_seven, values)
+print(list(it))
+
+#- filterfalse
+#- filterfalse는 filter 내장 함수의 반대
+#- 즉, 이터레이터에서 false에 해당하는 모든 원소를 돌려줌
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+evens = lambda x: x % 2 == 0
+filter_result = filter(evens, values)
+print("Filter: ", list(filter_result))
+
+filter_false_result = itertools.filterfalse(evens, values)
+print("Filter false:", list(filter_false_result))
+~~~
+
+#### 이터레이터에서 원소의 조합 만들어내기
+~~~python
+#- accumulate
+#- 파라미터를 두 개 받는 함수를 반복 적용하면서 이터레이터 원소 값 하나를 줄여줌
+#- 함수가 돌려주는 이터레이터는 원본 이터레이터의 각 원소에 대해 누적된 결과를 내놓음
+
+import itertools
+
+values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+sum_reduce = itertools.accumulate(values)
+print("합계 :", list(sum_reduce))
+
+def sum_modulo_20(first, second):
+    output = first + second
+    return output % 20
+
+
+modulo_reduce = itertools.accumulate(values, sum_modulo_20)
+print('20으로 나눈 나머지의 합계:', list(modulo_reduce))
+
+
+#- product
+#- 하나 이상의 이터레이터에 들어 있는 데카르트 곱을 반환
+single = itertools.product([1,2], repeat=2)
+print("리스트 한 개:", list(single))
+
+multiple = itertools.product([1,2], ['a', 'b'])
+print("리스트 두 개:", list(multiple))
+
+#- permutations
+#- 이터레이터가 내놓은 원소들로부터 만들어낸 길이 N인 순열을 돌려줌
+it = itertools.permutations([1,2,3,4] ,2)
+print(list(it))
+
+
+#- combinations
+#- combinations는 이터레이터가 내놓은 원소들로부터 만들어낸 길이 N인 조합을 돌려줌
+it = itertools.combinations([1,2,3,4], 2)
+print(list(it))
+
+
+#- combinations_with_replacement
+#- combinations와 같지만 원소의 반복을 허용함
+it = itertools.combinations_with_replacement([1,2,3,4], 2)
+print(list(it))
+~~~
+
+#### 기억해야 할 내용
+- `itertools.chain`
+- `itertools.repeat`
+- `itertools.cycle`
+- `itertools.tee`
+- `itertools.zip_longest`
+- `itertools.islice`
+- `itertools.takewhile`
+- `itertools.dropwhile`
+- `itertools.filterfalse`
+- `itertools.accumulate`
+- `itertools.product`
+- `itertools.permutations`
+- `itertools.combinations`
+- `itertools.combinations_with_replacement`
