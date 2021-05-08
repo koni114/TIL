@@ -249,6 +249,7 @@ log_func()
 outer_func(log_func)()
 
 #- 결과
+logging
 decoration added
 logging
 ~~~

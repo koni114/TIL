@@ -340,7 +340,7 @@ for key, amount in increments:
 assert counter.added == 2
 ~~~
 - <b>__call__ 메서드는 함수가 인자로 쓰일 수 있는 부분에 이 클래스의 인스턴스를 사용할 수 있는 사실을 나타냄</b>
-- 코드를 처음 보는 사람도 이 클래스의 동작을 알아보기 위한 시작점이 `__call__` 이라는 사실을 쉽게 알 수 있음
+- 코드를 처음 보는 사람도 이 클래스의 동작을 알아보기 위한 g시작점이 `__call__` 이라는 사실을 쉽게 알 수 있음
 - 이 클래스를 만든 목적이 상태를 저장하는 클로저 역할임을 잘 알 수 있음
 - 파이썬은 단순한 함수 인터페이스를 만족시킬 수 있는 여러 가지 방법을 제공함!
 
@@ -350,9 +350,186 @@ assert counter.added == 2
 - `__call__` 특별 메서드를 사용하면 클래스의 인스턴스인 객체를 일반 파이썬 함수처럼 호출할 수 있음
 - 상태를 유지하기 위한 함수가 필요한 경우에는 상태가 있는 클로저를 정의하는 대신 `__call__` 메서드가 있는 클래스를 정의할지 고려해보자
 
+### 39-객체를 제너릭하게 구성하려면 @classmethod를 통한 다형성을 활용하라
+- 파이썬은 객체뿐 아니라 클래스도 다형성을 지원함
+- 클래스가 다형성을 지원하면 좋은 이유는 계층을 이루는 여러 클래스가 자신에게 맞는 유일한 메소드 버전을 구현할 수 있음
+- 예를 들어 맵리듀스 구현을 하나 작성하고 있는데, 입력 데이터를 표현할 수 있는 공통 클래스가 필요하다고 하자
+- 다음 코드는 하위 클래스에서 다시 정의해야만 하는 read 메서드가 들어 있는 공통 클래스
+~~~python
+class InputData:
+    def read(self):
+        raise NotImplementedError #- 아직 구현하지 않았다는 의미
+~~~
+~~~python
+class PathInputData(InputData):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def read(self):
+        with open(self.path) as f:
+            return f.read()
+~~~
+- `PathInputData`와 같이 InputData의 하위 클래스를 만들 수 있음
+- 각 하위 클래스는 처리할 데이터를 돌려주는 공통 read 인터페이스를 구현해야 함
+- 비슷한 방법으로, 입력 데이터를 소비하는 공통 방법을 제공하는 맴리듀스 작업자(worker)로 쓸 수 있는 추상 인터페이스를 정의하고 싶음
+~~~python
+class Worker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+
+    def map(self):
+        raise NotImplementedError
+
+
+    def reduce(self, other):
+        raise NotImplementedError
+~~~
+- 다음 코드는 원하는 맵리듀스 기능(새줄 문자의 개수를 셈)을 구현하는 Worker의 구체적인 하위 클래스
+~~~python
+class LineCountWorker(Worker):
+    def map(self):
+        data = self.input_data.read()
+        self.result = data.count('\n')
+
+
+    def reduce(self, other):
+        self.result += other.result
+~~~
+- 위의 클래스를 기반으로 각 객체를 만들고 맵리듀스를 조화롭게 실행하는 책임은 누가 져야 하나?
+- 가장 간단한 접근 방법은 도우미 함수를 활용해 객체를 직접 만들고 연결하는 것
+- 다음 코드는 디렉터리의 목록을 얻어서 그 안에 들어 있는 파일마다 PathIuputData 인스턴스를 만듬
+~~~python
+import os
+
+def generate_inputs(data_dir):
+    for name in os.listdir(data_dir):
+        yield PathInputData(os.path.join(data_dir, name))
+~~~
+- 다음으로 방금 generate_inputs을 통해 만든 InputData 인스턴스들을 사용하는 LineCountWorker 인스턴스를 만듬
+~~~python
+def create_workers(input_list):
+    workers = []
+    for input_data in input_list:
+        workers.append(LineCountWorker(input_data))
+    return workers
+~~~
+- 이 Worker 인스턴스의 map 단계를 여러 스레드에 공급해서 실행할 수 있음
+- 그 후 reduce를 반복적으로 호출해서 결과를 최종 값으로 합칠 수 있음
+~~~python
+def execute(workers):
+    threads = [Thread(target=w.map) for w in workers]
+    for thread in threads: thread.start()
+    for thread in threads: thread.join()
+
+    # - first worker를 기준으로 reduce 연산 수행
+    first, * rest = workers
+    for worker in rest:
+        first.reduce(worker)
+    return first.result
+~~~
+- 마지막으로 지금까지 만든 모든 조각을 한 함수 안에서 합쳐서 각 단계를 실행
+~~~python
+def mapreduce(data_dir):
+    inputs = generate_inputs(data_dir)
+    workers = create_workers(inputs)
+    return execute(workers)
+~~~
+- 몇 가지 입력 파일을 대상으로 이 함수를 실행해보면 아주 훌륭하게 작동함
+~~~python
+def write_test_files(tmpdir):
+    os.makedirs(tmpdir)
+    for i in range(100):
+        with open(os.path.join(tmpdir, str(i)), 'w') as f:
+            f.write('\n' * random.randint(0, 100))
+
+tmpdir = 'test_inputs'
+write_test_files(tmpdir)
+
+result = mapreduce(tmpdir)
+print(f"총 {result} 줄이 있습니다.")
+~~~
+- 결과적으로 위의 코드는 제너릭하지 못하다는 문제가 있음
+- 다른 InputData나 Worker 하위 클래스를 사용하고 싶다면 각 하위 클래스에 맞게 generate_inputs, create_workers, mapreduce를 재작성해야 함
+- 이 문제의 핵심은 객체를 구성할 수 있는 제너릭한 방법이 필요하다는 것
+- 파이썬에서는 생성자 메서드가 __init__ 밖에 없다는 것이 문제인데, InputData의 모든 하위 클래스가 똑같은 생성자만 제공해야 한다는 것은 불합리함
+- 이 문제를 해결하는 가장 좋은 방법은 클래스 메서드(Class method) 다형성을 사용하는 것
+- 클래스 메서드라는 아이디어를 맵리듀스에 사용했던 클래스에 적용해보자. 다음 코드는 InputData에 제너릭 @classmethod를 적용한 모습임. @classmethod가 적용된 클래스 메서드는 공통 인터페이스를 통해 새로운 InputData 인스턴스를 생성
+~~~python
+class GenericInputData:
+    def read(self):
+        raise NotImplementedError
+
+    @classmethod
+    def generate_inputs(cls, config):
+        raise NotImplementedError
+~~~
+- generate_inputs는 GenericInputData의 구체적인 하위 클래스가 객체를 생성하는 방법을 알려주는 설정 정보가 들어 있는 딕셔너리를 파라미터로 받음
+- 다음 코드는 입력 파일이 들어있는 디렉터리를 찾기 위해 config를 사용
+~~~Python
+class PathInputData(GenericInputData):
+
+    def read(self):
+        with open(self.path) as f:
+            return f.read()
+
+
+    @classmethod
+    def generate_inputs(cls, config):
+        data_dir = config['data_dir']
+        for name in os.listdir(data_dir):
+
+            yield cls(os.path.join(data_dir, name))
+~~~
+- 비슷한 방식으로 GenericWorker 클래스 안에 create_workers 도우미 메서드를 추가할 수 있음
+- 이 도우미 메서드는 GenericInputData 하위 타입이어야 하는 input_class를 파라미터로 받음
+- input_class는 필요한 입력을 생성해줌. GenericWorker의 구체적인 하위 타입의 인스턴스를 만들 때는(클래스 메서드인 create_workers가 첫 번재 파라미터로 받은) cls()를 제너릭 생성자로 사용
+~~~python
+class GenericWorker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+    def map(self):
+        raise NotImplementedError
+
+    def reduce(self, other):
+        raise NotImplementedError
+
+    @classmethod
+    def create_workers(cls, input_class, config):
+        workers = []
+        for input_data in input_class.generate_inputs(config):
+            workers.append(cls(input_data))
+
+        return workers
+~~~
+- 이 코드에서 input_class.generate_inputs 호출이 바로 여기서 보여주려는 클래스 다형성의 예
+- create_workers가 __init__ 메서드를 직접 호출하지 않고 cls()를 호출함으로써 다른 방법으로 GenericWorker객체를 만들 수 있다는 것도 알 수 있음
+- 이런 변경이 구체적인 GenericWorker 하위 클래스에 미치는 영향은 부모 클래스를 바꾸는 것뿐
+- 마지막으로 mapreduce 함수가 create_workers를 호출하게 변경해서 mapreduce를 완전한 제너릭 함수로 만들 수 있음
+~~~python
+def mapreduce(worker_class, input_class, config):
+    workers = worker_class.create_workers(input_class, config)
+    return execute(workers)
+~~~
+- 똑같은 테스트 파일 집합에 대해 새로운 직업자를 실행하면 이전의 구현과 똑같은 결과를 얻을 수 있음
+- 유일한 차이점은 제너릭하게 작동해야 하므로 mapreduce 함수에 더 많은 파라미터를 넘겨야 한다는 것 뿐
+~~~python
+tmpdir = 'test_dir'
+config = {'data_dir': tmpdir}
+result = mapreduce(LineCountWorker, PathInputData, config)
+print(f"총{result} 줄이 있음")
+~~~
+
 
 ## 용어 정리
 - refactoring이란?
   - 외부 동작을 바꾸지 않으면서 내부 구조를 개선하는 일
   - 코드가 작성된 후에 디자인을 개선하는 방법
   - 모든 것을 미리 생각하기보다는 개발하면서 지속적으로 좋은 디자인을 찾음 
+- 제너릭 함수
+  - 어떤 하나의 함수가 여러 타입의 인자를 받고, 인자의 타입에 따라 적절한 동작을 하는 함수
+  - 클래스 내부에서 사용할 데이터 타입을 외부에서 지정하는 기법 
