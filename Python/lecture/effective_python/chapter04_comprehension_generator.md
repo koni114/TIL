@@ -245,7 +245,7 @@ def normalize_defensive(numbers):
     return result
 
 #- 방법2
-#- collection.abc 내장 모듈 isinstance 를 사용해 검사
+#- collection.abc 내장 모듈 Iterator인지 isinstance를 사용해 검사
 def normalize_defensive(numbers):
     if isinstance(numbers, Iterator):   #- <<-- 
         raise TypeError("컨테이너를 제공해야 합니다.")
@@ -627,7 +627,6 @@ print(it.throw(MyError('test error')))
 MyError 발생
 4
 ~~~
-- (위의 식에서 다시 한 번 `next(it)`을 하면 `StopIteration`이 발생함 -> 확인 필요)
 - 이 기능은 제너레이터와 제너레이터를 호출하는 쪽 사이에 양방향 통신 수단을 제공함
 - 경우에 따라서는 이 양방향 통신 수단이 유용할 수도 있음. 예를 들어 작성하는 프로그램에 간헐적으로 재설정할 수 있는 타이머가 필요하다고 해보자
 
@@ -691,7 +690,7 @@ run()
 
 #### 기억해야 할 내용
 - throw 메서드를 사용하면 제너레이터가 마지막으로 실행한 yield 식의 위치에서 예외를 발생시킬 수 있음
-- throw를 사용하면 가독성이 나빠짐. 예외를 잡아내고 다시 발생시키는 데 준비 코드가 필요하며, 내포 단꼐가 깊어짐
+- throw를 사용하면 가독성이 나빠짐. 예외를 잡아내고 다시 발생시키는 데 준비 코드가 필요하며, 내포 단계가 깊어짐
 - <b>제너레이터에서 예외적인 동작을 제공하는 더 나은 방법은 `__iter__` 메서드를 구현하는 클래스를 사용하면서 예외적인 경우에 상태를 전이시키는 것</b> 
 
 ### 36 이터레이터나 제너레이터를 다룰 때는 itertools를 사용해라

@@ -286,7 +286,7 @@ votes = {
 
 
 def populate_ranks(votes, ranks):
-    names = list(votes.keys())
+    names = list(votes.keys())                   
     names.sort(key=votes.get, reverse=True)
     for i, name in enumerate(names, 1):
         ranks[name] = i
@@ -366,11 +366,6 @@ def get_winner(ranks):
 ~~~
 - 해결방안3 : type annotation을 사용해서 `get_winner`에 전달되는 값이 딕셔너리와 비슷한 동작을 하는 Mutable Mapping 인스턴스가 아니라 dict 인스턴스가 되도록 강제하는 것
 ~~~python
-def get_winner(ranks):
-    if not isinstance(ranks, dict):
-        raise TypeError('dict instance가 필요합니다.')
-    return next(iter(ranks))
-
 from typing import Dict, MutableMapping
 
 def populate_ranks(votes: Dict[str, int],
@@ -496,7 +491,7 @@ print(visits.data)
 - 키로 어떤 값이 들어올지 모르는 딕셔너리를 관리할 때, collections 내장 모듈에 있는 defaultdict 인스턴스가 상황에 맞다면 defaultdict를 사용해라
 
 ### 18- __missing__을 사용해 키에 따라 다른 디폴트 값을 생성하는 방법을 알아두라
-- 앞서 setdefaultdict과 defaultdict 타입이 필요한 처리를 못하는 경우가 있음
+- 앞서 setdefault와 defaultdict 타입이 필요한 처리를 못하는 경우가 있음
 - 예를 들어 파일 시스템에 있는 SNS 프로필 사진을 관리하는 프로그램을 작성한다고 가정해보자
 - 필요할 때 파일을 읽고 쓰기 위해 프로필 사진의 경로와 열린 파일 핸들을 연관시켜주는 딕셔너리가 필요
 - 다음 코드에서는 일반 dict 인스턴스를 사용하고 get 메서드와 대입식을 통해 키가 딕셔너리에 있는지 검사함

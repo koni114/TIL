@@ -78,8 +78,14 @@ x, y = 1, 0
 result = careful_divide(x, y)
 if not result:
     print('잘못된 입력')
+    
+#- 다음의 경우도 잘못된 입력을 출력한다
+x, y = 0, 1
+result = careful_divide(x, y)
+if not result:
+    print('잘못된 입력')
 ~~~
-- 즉 None이라는 값은 반드시 false 를 return 하여 다음과 같이 코드문을 작성했지만, 0인 경우에도 if 로직에서 0을 만들어 내므로, 실수를 발생시켰다
+- None은 False이라서 `if not result` 라는 검증 로직을 추가했지만, 이는 result가 0일 때도 False이므로, 실수를 발생시킴
 - 첫 번째 해결방안은 반환 값을 2-튜플로 분리하는 것이다
 ~~~python
 def careful_divide(a, b):
@@ -131,6 +137,7 @@ def careful_divide(a: float, b: float) -> float:
 - 숫자로 이루어진 list를 정렬하는데, 정렬한 리스트의 앞쪽에는 우선순위를 부여한 몇몇 숫자를 위치시켜야 한다고 가정하자
 - 이 패턴은 사용자 인터페이스를 표시하면서 중요한 메세지나 예외적인 이벤트를 다른 것보다 우선해 표시하고 싶을 때 사용
 - 이 경우 해결하는 일반적인 방법은 `sort` 메서드에 `key` 인자로 help function을 전달하는 것 
+- 다음의 코드는 `group`에 속하면 우선순위를 부여하고, 아닌 것들은 뒤로 보내는 코드
 ~~~python
 def sort_priority(values, group):
     def helper(x):
@@ -228,7 +235,7 @@ class Sorter:
 numbers = [8, 3, 1, 2, 5, 4, 7, 6]
 group = [2, 3, 5, 7]
 sorter = Sorter(group)
-numbers.sort(key=sorter)
+numbers.sort(key=sorter) #- __call__ 함수를 선언했으므로, sorter 인스턴스를 함수 같이 사용
 print(numbers)
 ~~~
 #### 기억해야 할 내용
@@ -608,7 +615,7 @@ assert safe_division_d(2, 5) == 0.4
 
 
 ### 26-functions.wrap을 사용해 함수 데코레이터를 정의해라
-- 파이썬은 함수에 적용할 수 있는 데코레이터(decorator)를 정의하느 특수한 구문을 제공함
+- 파이썬은 함수에 적용할 수 있는 데코레이터(decorator)를 정의하는 특수한 구문을 제공함
 - 데코레이터는 자신이 감싸고 있는 함수가 호출되기 전과 후에 코드를 추가로 실행해 줌
 - 또한 자신이 감싸고 있는 함수의 입력 인자, 반환 값, 함수에서 발생한 오류에 접근할 수 있다는 뜻
 - 함수의 의미를 강화하거나 디버깅을 하거나 함수를 등록하는 등의 일에 이런 기능을 유용하게 쓸 수 있음
