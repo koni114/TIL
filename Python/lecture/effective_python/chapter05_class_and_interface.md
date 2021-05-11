@@ -725,8 +725,435 @@ print(tree.to_dict())
 - 예를 들어 다음 코드는 BinaryTree에 대한 참조를 저장하는 BinaryTree의 하위 클래스를 정의함
 - 이런 순환 참조가 있으면 원래의 `ToDictMixin.to_dict` 구현은 무한 루프를 돈다
 ~~~python
-
+class BinaryTreeWithParent(BinaryTree):
+    def __init__(self, value, left=None, right=None, parent=None):
+        super().__init__(value, left=left, right=right)
+        self.parent = parent
 ~~~
+- 해결 방법은 `BinaryTreeWithParent._traverse` 메서드를 오버라이드해 문제가 되는 값만 처리하게 만들어서 믹스인이 무한 루프를 돌지 못하게 하는 것임
+- 다음 코드에서 `_traverse`를 오버라이드한 메서드는 부모를 가리키는 참조에 대해서는 부모의 숫자 값을 삽입하고(`value.value` 부분), 부모가 아닌 경우에는 super 내장 함수를 통해 디폴트 믹스인 구현을 호출
+~~~python
+    def _traverse(self, key, value):
+        if (isinstance(value, BinaryTreeWithParent) and key == 'parent'):
+            return value.value
+        else:
+            return super()._traverse(key, value)
+~~~
+- 변환 시 순환 참조를 따라가지 않으므로 `BinaryTreeWithParent.to_dict`가 잘 작동한다
+~~~python
+root = BinaryTreeWithParent(10)
+root.left = BinaryTreeWithParent(7, parent=root)
+root.left.right = BinaryTreeWithParent(9, parent=root.left)
+root.to_dict()
+
+>>>
+{'value': 10, 
+    'left': {'value': 7, 
+            'left': None, 
+            'right': {'value': 9, 
+                        'left': None, 
+                        'right': None, 'parent': 7},
+             'parent': 10}, 
+    'right': None, 
+    'parent': None}
+~~~
+- `BinaryTreeWithParent._traverse`를 오버라이드 함에 따라 BinaryTreeWith Parent를 애트리뷰트로 저장하는 모든 클래스도 자동으로 `ToDictMixin`을 문제없이 사용할 수 있게 됨
+~~~Python
+class NamedSubTree(ToDictMixin):
+    def __init__(self, name, tree_with_parent):
+        self.name = name
+        self.tree_with_parent = tree_with_parent
+
+
+my_tree = NamedSubTree('foobar', root.left.right)
+
+#- 두 개의 결과를 비교해서 확인하기
+print(my_tree.__dict__)
+print(my_tree.to_dict())
+
+{'name': 'foobar', 
+ 'tree_with_parent': <__main__.BinaryTreeWithParent object at 0x7ffe3b4268d0>}
+
+{'name': 'foobar',
+ 'tree_with_parent': {'value': 9, 
+                      'left': None, 
+                      'right': None, 
+                      'parent': 7}}
+~~~
+- 믹스인을 서로 합성할 수도 있음. 예를 들어 임의의 클래스를 JSON으로 직렬화하는 제너릭 믹스인을 만들고 싶다고 하자.
+- 모든 클래스가 `to_dict` 메서드를 제공한다고 가정하면(to_dict를 ToDictMixin 클래스를 통해 제공할 수도 있고 다른 방식으로 제공할 수도 있음), 다음과 같은 제너릭 믹스인을 만들 수 있음
+~~~python
+import json
+
+
+class JsonMixin:
+    @classmethod
+    def from_json(cls, data):
+        kwargs = json.loads(data)
+        return cls(**kwargs)
+
+    def to_json(self):
+        return json.dumps(self.to_dict()) 
+~~~
+- 여기서 `JsonMixin` 클래스 안에 인스턴스 메서드와 클래스 메서드가 함께 정의됐다는 점에 유의해라
+- 믹스인을 사용하면 인스턴스 동작이나 클래스의 동작 중 어느 것이든 하위 클래스에 추가할 수 있음
+- 이 예제에서 JsonMixin 하위 클래스의 요구 사항은 `to_dict` 메서드를 제공해야 한다는 점과 `__init__` 메서드가 키워드 인자를 받아야 한다는 것뿐 
+- 이런 믹스인이 있으면 JSON과 직렬화를 하거나 역직렬화를 할 유틸리티 클래스의 클래스 계층 구조를 쉽게, 번잡스러운 준비 코드 없이 만들 수 있음
+- 예를 들어 데이터센터의 각 요소 간 연결(topology)를 표현하는 클래스 계층이 있다고 하자
+~~~python
+class DatacenterRack(ToDictMixin, JsonMixin):
+    def __init__(self, switch=None, machines=None):
+        self.switch = Switch(**switch)
+        self.machines = [
+            Machine(**kwargs) for kwargs in machines]
+
+
+class Switch(ToDictMixin, JsonMixin):
+    def __init__(self, ports=None, speed=None):
+        self.ports = ports
+        self.speed = speed
+
+
+class Machine(ToDictMixin, JsonMixin):
+    def __init__(self, cores=None, ram=None, disk=None):
+        self.cores = cores
+        self.ram = ram
+        self.disk = disk
+~~~
+- 이런 클래스들은 JSON으로 직렬화하거나 JSON으로부터 역직렬화하는 것은 간단함
+- 다음은 데이터를 JSON으로 직렬화한 다음에 다시 역직렬화하는 양방향 변환이 가능한지 검사하는 코드임
+~~~python
+serialized = """{
+    "switch": {"ports": 5, "speed": 1e9},
+    "machines": [
+        {"cores": 8, "ram": 32e9, "disk": 5e12},
+        {"cores": 4, "ram": 16e9, "disk": 1e12},
+        {"cores": 2, "ram": 4e9, "disk": 500e9}
+    ]
+}"""
+
+deserialized = DatacenterRack.from_json(serialized)
+roundtrip = deserialized.to_json()
+assert json.loads(serialized) == json.loads(roundtrip)
+~~~
+- 이렇게 믹스인을 사용할 때 jsonMixin을 적용하려고 하는 클래스 상속 계층의 상위 클래스에 이미 JsonMixin을 적용한 클래스가 있어도 아무런 문제가 없음
+- 이런 경우에도 super가 동작하는 방식으로 인해 믹스인을 적용한 클래스가 제대로 작동함
+
+#### 기억해야 할 내용
+- 믹스인을 사용해 구현할 수 있는 기능을 인스턴스 애트리뷰트와 `__init__`을 사용하는 다중 상속을 통해 구현하지 말라
+- 믹스인 클래스가 클래스별로 특화된 기능을 필요로 한다면 인스턴스 수준에서 끼워 넣을 수 있는 기능을 활용해라
+- 믹스인에는 필요에 따라 인스턴스 메서드는 물론 클래스 메서드도 포함될 수 있음
+- 믹스인을 합성하면 단순한 동작으로부터 더 복잡한 기능을 만들어낼 수 있음
+
+## 42-비공개 애트리뷰트보다는 공개 애트리뷰트를 사용해라
+- 파이썬에서 클래스의 애트리뷰트에 대한 가시성을 공개(public)와 비공개(private), 두 가지밖에 없음
+~~~python
+class MyObject:
+    def __init__(self):
+        self.public_field = 5       #- public
+        self.__private_field = 10   #- private
+
+    def get_private_field(self):
+        return self.__private_field
+
+foo = MyObject()
+assert foo.public_field == 5
+~~~
+- 객체 뒤에 점 연산자(.)를 붙이면 공개 애트리뷰트에 접근할 수 있음
+- 애트리뷰트 이름 앞에 밑줄을 두 개(__) 붙이면 비공개 필드가 됨. 
+- 비공개 필드를 포함하는 클래스 안에 있는 메서드에서는 해당 필드에 직접 접근할 수 있음
+~~~python
+assert foo.get_private_field() == 10
+~~~
+- 하지만 클래스 외부에서 비공개 필드에 접근하면 예외가 발생함
+~~~python
+foo.__private_field
+
+>>>
+Traceback (most recent call last):
+AttributeError: 'MyObject' object has no attribute '__private_field'
+~~~
+- 클래스 메서드는 자신을 둘러싸고 있는 class 블록 내부에 들어 있기 때문에 해당 클래스의 비공개 필드에 접근할 수 있음
+~~~python
+class MyOtherObject:
+    def __init__(self):
+        self.__private_field = 71
+
+    @classmethod
+    def get_private_field_of_isntance(cls, instance):
+        return instance.__private_field
+
+bar = MyOtherObject()
+assert MyOtherObject.get_private_field_of_isntance(bar) == 71
+~~~
+- 하위 클래스는 부모 클래스의 비공개 필드에 접근할 수 없음
+~~~python
+class MyParentObject:
+    def __init__(self):
+        self.__private_field = 71
+
+class MyChildObject(MyParentObject):
+    def get_private_field(self):
+        return self.__private_field
+
+baz = MyChildObject()
+baz.get_private_field() #- error
+~~~
+- <b>비공개 애트리뷰트의 동작은 애트리뷰트 이름을 바꾸는 단순한 방식으로 구현됨</b>
+- `MyChildObject.get_private_field`처럼 메서드 내부에서 private attribute에 접근하는 코드가 있으면, 파이썬 컴파일러는 `__private_field` 라는 애트리뷰트 접근 코드를 `_MyChildObject__private_field`라는 이름으로 바꿔줌 
+- 위 예제에서는 `MyParentObject.__init__` 안에만 `__private_field` 정의가 들어있음
+- 이는 이 비공개 필드의 이름이 실제로는 `_MyParentObject__private_field`라는 뜻임
+- 부모의 비공개 애트리뷰트를 지식 애트리뷰트에서 접근하면, 변경한 애트리뷰트 이름(`_MyParentObject__private_field`가 아니라 `MyChildObject__private_field`로 이름이 바뀜)이 존재하지 않는다는 이유로 오류가 발생함
+- 이 방식을 알고 나면 특별한 권한을 요청할 필요 없이 쉽게, 하위 클래스에서든 클래스 외부에서든 원하는 클래스의 비공개 애트리뷰트에 접근할 수 있음
+~~~python
+assert baz._MyParentObject__private_field == 71
+~~~
+- 객체 애트리뷰트 딕셔너리를 살펴보면 실제로 변환된 비공개 애트리뷰트 이름이 들어있는 모습을 볼 수 있음
+~~~python
+print(baz.__dict__)
+>>>
+{'_MyParentObject__private_field': 71}
+~~~
+- 비공개 애트리뷰트에 대한 접근 구문이 실제로 가시성을 엄격하게 제한하지 않는 이유는 무엇일끼?
+- 가장 간단한 답을 생각해보면, 파이썬의 모토로 자주 회자되는 '우리는 모두 책임질줄 아는 성인이다'일 것임
+- 이 말이 뜻하는 바는 우리가 하고 싶은 일을 언어가 제한해서는 안된다는 것임
+- 특정 기능을 확장할지의 여부는 사용자의 책임이다
+- 파이썬 프로그래머들은 열어둠으로써 얻을 수 있는 이익이 해악보다 더 크다고 믿음
+- 게다가 파이썬은 애트리뷰트에 접근할 수 있는 언어 기능에 대한 훅을 제공하기 때문에 원할 경우에는 객체 내부를 마음대로 주무를 수 있음
+- 이러 기능들을 제공하는데, 굳이 다른 방식으로 비공개 애트리뷰트에 접근하는 경우를 막으려고 노력하는 것이 과연 얼마나 큰 가치를 지닐까?
+- 내부에 몰래 접근하므로써 생길 수 있는 피해를 줄이고자 파이썬 프로그래머는 스타일 가이드에 정해진 명명규약을 지킴
+- 예를 들어 필드 앞에 밑줄이 하나 있으면 protected 필드를 뜻하며, 보호 필드는 클래스 외부에서 이 필드를 사용하는 경우 조심해야 한다는 뜻임
+- 파이썬을 처음 사용하는 많은 프로그래머가 하위 클래스나 클래스 외부에서 사용하면 안되는 내부 API를 표현하기 위하여 비공개 필드를 사용하는데, 이 접근 방법은 잘못된 것임
+- 괜히 추가적인 코드가 들어가고, 비공개 필드에 접근해야 한다면 여전히 접근이 가능하기 때문이다 
+~~~python
+    def get__value(self):
+        return int(self.__MyStringClass__value)
+~~~
+- 하지만 우리가 상위 클래스의 정의를 변경하면 더 이상 비공개 애트리뷰트에 대한 참조가 바르지 못하므로 하위 클래스가 깨질 것임
+- 일반적으로 상속을 허용하는 클래스 쪽에서 보호 애트리뷰트를 사용하고 오류를 내는 편이 낫다
+- 모든 보호 필드에 문서를 추가한 후, API 내부에 있는 필드 중에서 어떤 필드를 하위 클래스에서 변경할 수 있고 어떤 필드를 그대로 나둬야 하는지 명시해라
+- 코드를 안전하게 확장할 수 있는 방법을 다른 프로그래머는 물론, 미래의 자신에게도 안내해라
+~~~python
+class MyStringClass:
+    def __init__(self, value):
+        # 여기서 객체에게 사용자가 제공한 값을 저장
+        # 사용자가 제공하는 값은 문자열로 타입 변환이 가능해야 하며
+        # 일단 한번 객체 내부에 설정되고 나면
+        # 불변 값으로 취급해야 함
+        self.value = value
+~~~
+- 비공개 애트리뷰트틀 사용할지 진지하게 고민해야 하는 유일한 경우는 하위 클래스의 필드와 이름이 충돌할 수 있는 경우뿐
+- 자식 클래스가 실수로 부모 클래스가 이미 정의한 애트리뷰트를 정의하면 충돌이 생길 수 있음
+~~~python
+class ApiClass:
+    def __init__(self):
+        self._value = 5
+    def get(self):
+        return self._value
+
+
+class Child(ApiClass):
+    def __init__(self):
+        super().__init__()
+        self._value = 'hello' #- 충돌
+~~~
+- 주로 공개 API에 속한 클래스의 경우 신경 써야 하는 부분임. 우리가 만든 공개 API를 외부에 제공하는 경우에는 하위 클래스 작성이 우리의 제어 밖에서 일어나므로 이런 문제가 발생해도 리펙터링이 불가능함
+- 특히 애트리뷰트 이름이 흔한 이름(예) value)일 때 충돌이 자주 발생할 수 있음
+- 이런 문제가 발생할 위험성을 줄이려면 부모 클래스 쪽에서 자식 클래스의 애트리뷰트 이름이 자신의 애트리뷰트 이름과 겹치는 일을 방지하기 위해 비공개 애트리뷰트를 사용할 수 있음
+~~~python
+class ApiClass:
+    def __init__(self):
+        self.__value = 5
+
+    def get(self):
+        return self.__value
+
+class Child(ApiClass):
+    def __init__(self):
+        super().__init__()
+        self._value = 'hello'
+
+a = Child()
+print(f"{a.get()}과 {a._value}는 달라야 함")
+
+>>>
+5과 hello는 달라야 함
+~~~
+
+#### 기억해야 할 내용
+- 파이썬 컴파일러는 비공개 애트리뷰트를 자식 클래스나 클래스 외부에서 사용하지 않도록 엄격하게 금지하지 않음
+- 우리의 내부 API에 있는 클래스의 하위 클래스를 정의하는 사람들이 우리가 제공하는 클래스의 애트리뷰트를 사용하지 못하도록 막기보다는 애트리뷰트를 사용해 더 많은 일을 할 수 있도록 하자
+- 비공개 애트리뷰트로 접근을 막으려고 시도하기보다는 보호된 필드를 사용하면서 문서에 적절한 가이드를 남겨라
+- 여러분이 코드 작성을 제어할 수 없는 하위 클래스에서 <b>이름 충돌이 일어나는 경우</b>를 막고 싶을 때만 비공개 애트리뷰트를 사용할 것을 권함
+
+### 커스텀 컨테이너 타입은 collections.abc를 상속해라
+- 파이썬 프로그래밍의 상당 부분은 데이터를 포함하는 클래스를 정의하고 이런 클래스에 속하는 객체들이 서로 상호작용하는 방법을 기술하는 것으로 이뤄짐
+- 모든 파이썬 클래스는 함수의 애트리뷰트를 함께 캡슐화하는 일종의 컨테이너라고 할 수 있음
+- 파이썬은 데이터를 관리할 때 사용할 수 있도록 리스트, 튜플, 집합, 딕셔너리 등의 내장 컨테이너 타입을 제공함
+- 시퀀스처럼 사용법이 간단한 클래스를 정의할 때는 클파이썬 내장 리스트 타입의 하위 클래스를 만들고 싶은 것이 당연함
+- 예를 들어 멤버들의 빈도를 계산하는 메서드가 포함된 커스텀 리스트 타입이 필요하다고 가정하자 
+~~~python
+class FrequencyList(list):
+    def __init__(self, members):
+        super().__init__(members)
+
+    def frequency(self):
+        counts = {}
+        for item in self:
+            counts[item] = counts.get(item, 0) + 1
+        return counts
+~~~
+- `FrequencyList`를 리스트의 하위 클래스로 만듦으로써 리스트가 제공하는 모든 표준 함수를 FrequencyList에서도 사용할 수 있으며, 파이썬 프로그래머들이라면 이런 함수들의 의미가 낯익을 것임
+- 게다가 필요한 기능을 제공하는 메서드를 얼마든지 추가 할 수 있음
+~~~python
+class FrequencyList(list):
+    def __init__(self, members):
+        super().__init__(members)
+
+    def frequency(self):
+        counts = {}
+        for item in self:
+            counts[item] = counts.get(item, 0) + 1
+        return counts
+
+foo = FrequencyList(['a', 'b', 'a', 'c', 'b', 'a', 'd'])
+print("길이 : ", len(foo))
+
+foo.pop()
+print("pop한 다음 :", repr(foo))
+print("빈도:", foo.frequency())
+
+>>>
+길이 :  7
+pop한 다음 : ['a', 'b', 'a', 'c', 'b', 'a']
+빈도: {'a': 3, 'b': 2, 'c': 1}
+~~~
+- 이제 리스트처럼 느껴지면서 인덱싱이 가능한 객체를 제공하고 싶은데, 리스트의 하위 클래스를 만들고 싶지는 않다고 가정해보자 
+- 예를 들어, 다음 이진 트리 클래스를 시퀀스(리스트나 튜플)의 의미 구조를 사용해 다룰 수 있는 클래스를 만들고 싶음
+~~~python
+class BinaryNode:
+    def __init__(self, value, left=None, right=None):
+        self.value = value
+        self.left = left
+        self.right = right
+~~~
+- 어떻게 이 클래스가 시퀀스 타입처럼 작동하게 할 수 있을까? 파이썬에서는 특별한 이름의 인스턴스 메서드를 사용해 컨테이너의 동작을 구현함
+- 인덱스를 사용해 다음과 같이 시퀀스에 접근하는 코드는
+~~~python
+bar = [1, 2, 3]
+bar[0]
+
+#- 다음의 특별 메서드로 해석됨
+bar.__getitem__(0)
+~~~
+- `BinaryNode` 클래스가 시퀀스처럼 작동하게 하려면 트리 노드를 깊이 우선 순회하는 커스텀 `__getitem__` 메서드를 구현하면 됨
+~~~python
+class IndexableNode(BinaryNode):
+    def _traverse(self):
+        if self.left is not None:
+            yield from self.left._traverse()
+        yield self
+        if self.right is not None:
+            yield from self.right._traverse()
+
+    def __getitem__(self, index):
+        for i, item in enumerate(self._traverse()):
+            if i == index:
+                return item.value
+        raise IndexError(f"인덱서 ㅡ범위 초과: {index}")
+
+
+tree = IndexableNode(
+    10,
+    left=IndexableNode(
+        5,
+        left=IndexableNode(2),
+        right=IndexableNode(
+            6,
+            right=IndexableNode(7))),
+    right=IndexableNode(
+        15,
+        left=IndexableNode(11)))
+~~~
+- 이 트리를 left나 right 애트리뷰트를 사용해 순회할 수 있지만, 추가로 리스트처럼 접근할 수 있음
+~~~python
+print("LRR:", tree.left.right.right.value)
+print("인덱스 0:", tree[0])
+print("인덱스 1:", tree[1])
+print("11이 트리 안에 있나? ", 11 in tree)
+print("17이 트리 안에 있나? ", 17 in tree)
+print('트리:', list(tree))
+
+>>>
+LRR: 7
+인덱스 0: 2
+인덱스 1: 5
+11이 트리 안에 있나?  True
+17이 트리 안에 있나?  False
+트리: [2, 5, 6, 7, 10, 11, 15]
+~~~
+- 문제는 `__getitem__`을 구현하는 것만으로는 리스트 인스턴스에서 기대할 수 있는 모든 시퀀스 의미 구조를 제공할 수 없다는 데 있음
+~~~python
+len(tree)
+
+>>>
+Traceback (most recent call last):
+  File "<input>", line 1, in <module>
+TypeError: object of type 'IndexableNode' has no len()
+~~~
+- len 내장 함수는 `__len__` 이라는 특별 메서드를 구현해야 제대로 작동함
+- 커스텀 시퀀스 타입은 이 메서드를 꼭 구현해야 함
+~~~python
+    def __len__(self):
+        for count, _ in enumerate(self._traverse(), 1):
+            pass
+        return count
+~~~
+- 이것만으로도 완벽하지 않으며, `count`, `index` 메서드도 들어있지 않음
+- 결과적으로 자신만의 컨테이너 타입을 직접 정의하는 것은 생각보다 훨씬 어려운 일임을 알 수 있음
+- <b>파이썬을 사용할 때 흔히 발생하는 이런 어려움을 덜어주기 위하여 내장 collection.abc 모듈 안에는 컨테이너 타입에 정의해야 하는 전형적인 메서드를 모두 제공하는 추상 기반 클래스 정의가 여러 가지 들어가 있음</b>
+- 이런 추상 기반 클래스의 하위 클래스를 만들고 필요한 메서드 구현을 잊어버리면, collections.abc 모듈이 실수한 부분을 알려줌
+~~~python
+from collections.abc import Sequence
+
+class BadType(Sequence):
+    pass
+
+foo = BadType()
+>>>
+TypeError: Can't instantiate abstract class BadType with abstract methods __getitem__, __len__
+~~~
+- `SequenceNode`에서 한 것처럼 `collections.abc`에서 가져온 추상 기반 클래스가 요구하는 모든 메서드를 구현하면 index나 count와 같은 추가 메서드 구현을 거져 얻을 수 있음
+~~~python
+class BetterNode(SequenceNode, Sequence):
+    pass
+
+tree = BetterNode(
+    10,
+    left=BetterNode(
+        5,
+        left=BetterNode(2),
+        right=BetterNode(
+            6,
+            right=BetterNode(7))))
+
+
+print("7의 인덱스:", tree.index(7))
+print("10의 개수:", tree.count(10))
+
+>>>
+7의 인덱스: 3
+10의 개수: 1
+~~~
+- `Set`이나 `MutableMapping`과 같이 파이썬의 관례에 맞춰 구현해야 하는 특별 메서드가 훨씬 많은 더 복잡한 컨테이너 타입을 구현할 때는 이런 추상 기반 클래스가 주는 이점이 더 커짐
+- `collection.abc` 모듈 외에도, 파이썬에서는 객체 비교와 정렬을 위해 사용하는 다양한 특별 메서드들이 존재함
+- 컨테이너 클래스나 비컨테이너 클래스에서 모두 이런 특별 메서드를 구현할 수 있음
+
+#### 기억해야 할 내용
+- 간편하게 사용하는 경우에는 파이썬 컨테이너 타입을 직접 상속해라
+- 커스텀 컨테이너를 제대로 구현하려면 수많은 메서드를 구현해야 한다는 점에 주의해라
+- 커스텀 컨테이너 타입이 collections.abc에 정의된 인터페이스를 상속하면 커스텀 컨테이너 타입이 정상적으로 작동하기 위해 필요한 인터페이스와 기능을 제대로 구현하도록 보장할 수 있음
+
 
 ## 용어 정리
 - refactoring이란?
