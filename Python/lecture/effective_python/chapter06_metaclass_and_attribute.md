@@ -338,7 +338,7 @@ print('여전히', bucket)
 - 객체가 처음부터 제대로 인터페이스를 제공하지 않거나 아무 기능도 없는 데이터 컨테이너 역할만 하는 경우가 실전에서는 자주 발생함
 - 시간이 지나면서 코드가 커지거나, 프로그램이 다루는 영역이 넓어지거나, 장기적으로 코드를 깔끔하게 유지할 생각이 없는 프로그래머들이 코드에 기여하는 등의 경우 이런 일이 발생함
 - `@property`는 실제 세계에서 마주치는 문제를 해결할 때 도움이 됨. 하지만 @property를 과용하지는 말고 너무 많아지면 클래스를 리펙토링하자
-
+ㄴ
 #### 기억해야 할 내용
 - @property를 사용해 기존 인스턴스 애트리뷰트에 새로운 기능을 제공할 수 있음
 - @property를 사용해 데이터 모델을 점진적으로 개선해라
@@ -595,7 +595,7 @@ exists: 5
 
 #### __getattribute__
 - 이 데이터베이스 시스템 안에서 트랜젝션이 필요하다고 하자
-- 이제는 사용자가 프로퍼티에 접근할 때 상응하는 데이터베이스에 있는 레코드가 유효한지, 그리고 트랜잭션이 여전히 열려 있는지 판단해야함 
+- 이제는 사용자가 프로퍼티에 접근할 때 상응하는 데이터베이스에 있는 레코드가 유효한지, 그리고 트랜잭션이 여전히 열려 있는지 판단해야함
 - 기존 애트리뷰트를 확인하는 빠른경로로 객체의 인스턴스 딕셔너리를 사용하기 때문에 `__getattr__` 훅으로는 이런 기능을 안정적으로 만들 수는 없음
 - 이와 같은 고급 사용법을 제공하기 위해 파이썬은 `__getattribute__` 라는 다른 object 훅을 제공
 - <b>이 특별 메서드는 객체의 애트리뷰트에 접근 할때마다 수행됨</b>
@@ -603,5 +603,591 @@ exists: 5
 - 이런 연산은 부가 비용이 많이 들고 성능에 부정적인 영향을 미칠 수 있지만, 때로는 이런 비용을 감수할 만한 가치를 지닌 경우도 있다는 점을 명심하자
 - 다음 코드는 `__getattribute__`가 호출될 때마다 로그를 남기는 `ValidatingRecord`를 정의함
 ~~~python
+class ValidatingRecord:
+    def __init__(self):
+        self.exists = 5
 
+    def __getattribute__(self, name):
+        print(f"* 호출: __getattr__({name!r})")
+        try:
+            value = super().__getattribute__(name)
+            print(f"* {name!r} 찾음. {value!r} 반환")
+            return value
+        except AttributeError:
+            value = f'{name}를 위한 값'
+            print(f"* {name!r}를 {value!r}로 설정")
+            setattr(self, name, value)
+            return value
+
+data = ValidatingRecord()
+print(data.exists)
+print('첫 번째 foo:', data.foo)
+print('두 번째 foo:', data.foo)
 ~~~
+- 존재하지 않는 프로퍼티에 동적으로 접근하는 경우 `AttributeError` 가 발생함
+- `__getattr__`와 `__getattribute__`에서 존재하지 않는 프로퍼티를 사용할 떄 발생하는 표준적인 예외가 `AttributeError`임
+~~~python
+
+class MissingPropertyRecord:
+    def __getattr__(self, name):
+        if name == "bad_name":
+            raise AttributeError(f"{name}을 찾을 수 없음")
+
+data = MissingPropertyRecord()
+data.bad_name
+
+>>>
+AttributeError: bad_name을 찾을 수 없음
+~~~
+- 파이썬에서 일반적인 기능을 구현하는 코드가 `hasattr` 내장 함수를 통해 프로퍼티가 존재하는지 검사하는 기능과 `getattr` 내장 함수를 통해 프로퍼티 값을 꺼내오는 기능에 의존할 때도 있음
+- 이 두 함수도 `__getattr__`를 호출하기 전에 애트리뷰트 이름을 인스턴스 딕셔너리에서 검색함  
+- 즉, 아래 코드는 `hasattr` 함수가 호출되면 애트리뷰트 존재 여부를 확인하고 없으면 `__getattr__`를 호출
+~~~python
+class LazyRecord:
+    def __init__(self):
+        self.exists = 5
+
+    def __getattr__(self, name):
+        value = f"{name}를 위한 값"
+        setattr(self, name, value)
+        return value
+
+
+class LoggingLazyRecord(LazyRecord):
+
+    def __getattr__(self, name):
+        print(f"*호출: __getattr__({name!r})"
+                f"인스턴스 딕셔너리 채워 넣음")
+        result = super().__getattr__(name)
+        print(f"*반환: {result!r}")
+        return result
+
+print("이전 :", data.__dict__)
+>>>
+이전 : {'exists': 5, '__len__': '__len__를 위한 값'}
+
+
+print("최초에 foo가 있나:", hasattr(data, 'foo'))
+>>>
+#- hasattr 함수를 통해 `foo` 애트리뷰트를 찾고 없으니 __getattr__ 확인 필요
+*호출: __getattr__('foo')인스턴스 딕셔너리 채워 넣음
+*반환: 'foo를 위한 값'
+최초에 foo가 있나: True
+
+print("이후 :", data.__dict__)
+>>>
+이후 : {'exists': 5, '__len__': '__len__를 위한 값', 'foo': 'foo를 위한 값'}
+
+print("다음에 foo가 있나:", hasattr(data, 'foo'))
+>>>
+다음에 foo가 있나: True
+~~~
+- 이 예제에서는 `__getattr__`가 한번만 호출됨
+- 반대로 다음 예제에서는 `__getattribute__`를 구현하는 클래스에서 인스턴스에 대해 `hasattr` 이나 `getattr`이 쓰일 때마다 `__getattribute__` 가 호출되는 모습을 볼 수 있음
+~~~Python
+data = ValidatingRecord()
+print("최초에 foo가 있나:", hasattr(data, 'foo'))
+print("다음에 foo가 있나:", hasattr(data, 'foo'))
+~~~
+- 이제 파이썬 객체에 값이 대입된 경우, 나중에 이 값을 데이터베이스에 저장하고 싶다고 하자
+- 임의의 애트리뷰트에 값을 설정할 때마다 호출돠는 object 훅인 `__setattr__`는 인스턴스의 애트리뷰트에 대입이 이뤄질 때마다 항상 호출됨
+~~~python
+class SavingRecord:
+    def __setattr__(self, name, value):
+        # 데이터를 데이터베이스 레코드에 저장
+        super().__setattr__(name, value)
+~~~
+- 다음 코드는 로그를 남기는 하위 클래스로 `SavingRecord`를 정의함. 이 클래스에 속한 인스턴스의 애트리뷰트 값을 설정할 때마다 `__setattr__` 메서드가 항상 호출됨
+~~~python
+class LoggingSavingRecord(SavingRecord):
+    def __setattr__(self, name, value):
+        print(f"호출 : __setattr__ : {name!r} , {value!r}")
+        super().__setattr__(name, value)
+
+
+data = LoggingSavingRecord()
+print("이전:", data.__dict__)
+data.foo = 5
+print("이후:", data.__dict__)
+data.foo = 7
+print("최후:", data.__dict__)
+
+>>>
+이전: {}
+호출 : __setattr__ : 'foo' , 5
+이후: {'foo': 5}
+호출 : __setattr__ : 'foo' , 7
+초후: {'foo': 7}
+~~~
+- `__getattribute__`와 `__setattr__` 의 문제점은 여러분이 원하든 원하지 않든 어떤 객체의 모든 애트리뷰트에 접근할 때마다 함수가 호출된다는 것
+- 예를 들어 어떤 객체와 관련된 딕셔너리에 키가 있을 때만 이 객체의 애트리뷰트에 접근하고 싶다고 하자
+~~~python 
+class BrokenDictionaryRecord:
+    def __init__(self, data):
+        self._data = {}
+
+    def __getattribute__(self, name):
+        print(f"호출: __getattribute__({name!r})")
+        return self._data[name]
+~~~
+- 위의 코드는 파이썬이 스택을 다 소모할 때까지 재귀를 수행하다 죽어버림
+- 해결 방법은 `super().__getattribute__`를 호출해 인스턴스 애트리뷰트 딕셔너리에서 값을 가져오는 것
+- 이렇게 하면 재귀를 피할 수 있음
+~~~python
+class DictionaryRecord:
+    def __init__(self, data):
+        self._data = {}
+
+    def __getattribute__(self, name):
+        print(f"호출: __getattribute__({name!r})")
+        data_dict = super().__getattribute__('_data')
+        return data_dict[name]
+~~~
+- `__setattr__` 메서드 안에서 애트리뷰트를 변경하는 경우에도 `super().__setattr__` 를 적절히 호출해야 함
+
+#### 기억해야 할 내용
+- `__getattr__`과 `__setattr_`를 사용해 객체의 애트리뷰트를 지연해 가져오거나 저장할 수 있음
+- `__getattr__`는 애트리뷰트가 존재하지 않을 때만 호출되지만, `__getattribute__`는 애트리뷰트를 읽을 때마다 항상 호출
+- `__getattribute__`와 `__setattr__`에서 무한 재귀를 피하려면 `super()`에 있는 메서드를 사용해 인스턴스 애트리뷰트에 접근해라
+
+### 48- __init__subclass__ 를 사용해 하위 클래스를 검증해라
+- 메타클래스의 가장 간단한 활용법 중 하나는 어떤 클래스가 제대로 구현됐는지 검증하는 것
+- 복잡한 클래스 계층을 설계할 떄 어떤 스타일을 강제로 지키도록 만들거나, 메서드를 오버라이드하도록 요청하거나, 클래스 애트리뷰트 사이에 엄격한 관계를 가지도록 요구할 수 있음
+- 메타클래스는 이런 목적을 달성할 수 있음. 새로운 하위 클래스가 정의될 떄 마다 이런 검증 코드를 수행하도록 하기 때문
+- 어떤 클래스 타입의 객체 실행 시점에 생성될 때 클래스 검증 코드를 `__init__` 메서드 안에서 실행하는 경우도 종종있음
+- 검증에 메타클래스를 사용하면, 프로그램 시작 시 클래스가 정의된 모듈을 처음으로 임포트할 때와 같은 시점에 검증이 이뤄지기 떄문에 예외가 훨씬 더 빨리 발생할 수 있음
+- 하위 클래스를 검증하는 메타클래스를 정의하는 방법을 살펴보기 전에, 일반적인 객체에 대해 메타클래스가 어떻게 작동하는지 이해하는 것이 중요함
+- <b>메타클래스는 `type`을 상속해 정의됨</b>
+- 기본적인 경우 메타클래스는 `__new__` 메서드를 통해 자신과 연관된 클래스의 내용을 받음 
+- 다음 코드는 어떤 타입이 실제로 구성되기 전에 클래스 정보를 살펴보고 변경하는 모습을 보여줌
+~~~python
+class Meta(type):
+    def __new__(meta, name, bases, class_dict):
+        print(f"실행: {name}의 메타 {meta}.__new__")
+        print("기반 클래스들:", bases)
+        print(class_dict)
+        return type.__new__(meta, name, bases, class_dict)
+
+
+class MyClass(metaclass=Meta):
+    stuff = 123
+
+    def foo(self):
+        pass
+
+class MySubclass(MyClass):
+    other = 567
+
+    def bar(self):
+        pass
+
+>>>
+실행: MyClass의 메타 <class '__main__.Meta'>.__new__
+기반 클래스들: ()
+{'__module__': '__main__', '__qualname__': 'MyClass', 'stuff': 123, 'foo': <function MyClass.foo at 0x7fce767fe440>}
+실행: MySubclass의 메타 <class '__main__.Meta'>.__new__
+기반 클래스들: (<class '__main__.MyClass'>,)
+{'__module__': '__main__', '__qualname__': 'MySubclass', 'other': 567, 'bar': <function MySubclass.bar at 0x7fce767fe5f0>}
+~~~
+- 메타클래스는 클래스 이름(name), 클래스가 상속하는 부모 클래스들(bases), class 본문에 정의된 모든 클래스 애트리뷰트에 접근할 수 있음
+- 모든 클래스는 object를 상속하고 있기 때문에 메타클래스가 받는 부모 클래스의 튜플 안에는 object가 명시적으로 들어 있지 않음 
+- 연관된 클래스가 정의되기 전에 이 클래스의 모든 파라미터를 검증하려면 `Meta.__new__`에 기능을 추가해야 함
+- 예를 들어 다각형을 표현하는 타입을 만든다고 했을 때, 검증을 수행하는 특별한 메타클래스를 정의하고 이 메타클래스를 모든 다각형 클래스 계층 구조의 기준 클래스로 사용할 수 있음
+- 해당 기준 클래스에 대해서는 같은 검증을 수행하지는 않는다는 사실에 유의해라
+~~~python
+class ValidatePolygon(type):
+    def __new__(meta, name, bases, class_dict):
+        if bases:
+            if class_dict['sides'] < 3:
+                raise ValueError('다각형 변은 3개 이상이어야 함')
+        return type.__new__(meta, name, bases, class_dict)
+
+
+class Polygon(metaclass=ValidatePolygon):
+    sides = None # 하위 클래스는 이 애트리뷰트에 값을 지정해 주어야 함
+
+    @classmethod
+    def interior_angles(cls):
+        return (cls.sides -2) * 180
+
+
+class Triangle(Polygon):
+    sides = 3
+
+
+class Rectangle(Polygon):
+    sides = 4
+
+class Nonagon(Polygon):
+    sides = 9
+
+
+assert Triangle.interior_angles() == 180
+assert Rectangle.interior_angles() == 360
+assert Nonagon.interior_angles() == 1260
+~~~
+- class문에서 변 개수가 3보다 작은 경우에 해당 <b>class 정의문의 본문이 실행된 직후</b> 예외를 발생시킴
+- 이는 변이 두 개 이하인 클래스를 정의하면 프로그램이 아예 시작되지도 않는다는 뜻
+~~~python
+class Line(Polygon):
+    print("sides 이전")
+    sides = 2
+    print("sides 이후")
+
+>>>
+sides 이전
+sides 이후
+ValueError: 다각형 변은 3개 이상이어야 함
+~~~
+- 파이썬에게 이런 기본적인 작업을 시키기 위해 너무 복잡한 코드를 작성해야 하는 것처럼 보임
+- 다행히 파이썬 3.6에는 메타클래스를 정의하지 않고 같은 동작을 구현할 수 있는 더 단순한 구문이 추가됨  
+  (`__init_subclass__` 특별 메서드를 정의하는 방식)
+- 다음 코드는 이 방식을 사용해 앞에서 본 예제와 똑같은 수준의 검증을 제공함
+~~~python
+class BetterPolygon:
+    sides = None # 하위 클래스에서 이 애트리뷰트의 값을 지정해야 함
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        if cls.sides < 3:
+            raise ValueError('다각형의 변은 3개 이상이어야 함')
+
+    @classmethod
+    def interior_angles(cls):
+        return (cls.sides - 2) * 180
+
+
+class Hexagon(BetterPolygon):
+    sides = 6
+
+assert Hexagon.interior_angles() == 720
+~~~
+- 코드가 훨씬 짧아지고, 가독성도 좋아짐
+- 표준 파이썬 메타클래스 방식의 또 다른 문제점은 클래스 정의마다 메타클래스를 단 하나만 지정할 수 있다는 점
+- 다음 코느느 어떤 영역에 칠할 색을 검증하기 위한 메타클래스
+~~~python
+class ValidateFiled(type):
+    def __new__(meta, name, bases, class_dict):
+        if bases:
+            if class_dict['color'] not in ('red', 'green'):
+                raise ValueError('지원하지 않는 color 값')
+        return type.__new__(meta, name, bases, class_dict)
+
+
+class Filled(metaclass=ValidateFiled):
+    color = None
+~~~
+- `Polygon`, `Filled` 메타클래스를 함께 사용하려고 시도하면 이해하기 힘든 오류가 발생
+~~~python
+class RedPentagon(Filled, Polygon):
+    color = 'Red'
+    sides = 5
+
+>>>
+TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
+~~~
+- `__init_subclass__` 를 사용하면 해당 문제도 해결이 가능
+- `super` 내장 함수를 사용해 부모나 형제자매 클래스의 `__init_subclass__`를 호출해 주는 한, 여러 단계로 이루어진 `__init_subclass_`를 활용하는 클래스 계층 구조를 쉽게 정의할 수 있음
+- 이 방식은 심지어 다중 상속과도 잘 어우러짐
+ ~~~python
+class BetterPolygon:
+    sides = None # 하위 클래스에서 이 애트리뷰트의 값을 지정해야 함
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        if cls.sides < 3:
+            raise ValueError('다각형의 변은 3개 이상이어야 함')
+
+
+class Filled:
+    color = None
+
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        if cls.color not in ('red','green','blue'):
+            raise ValueError('지원하지 않는 color 값')
+
+
+class RedTriangle(Filled, BetterPolygon):
+    color = 'red'
+    sides = 3
+
+ruddy = RedTriangle()
+assert isinstance(ruddy, Filled)
+assert isinstance(ruddy, BetterPolygon)
+~~~  
+- 새로운 클래스에서 BetterPolygon과 Filled 클래스 모두 상속할 수 있음. 두 클래스는 모두 `super().__init_subclass__()`를 호출하기 때문에 하위 클래스가 생성될 때 각각의 검증 로직이 실행됨
+- 똑같이 변의 수나 색깔을 잘못 입력하면 오류가 발생함!
+- `__init_subclass__`를 다이아몬드 상속같은 복잡한 경우에도 사용 가능
+
+#### 기억해야 할 내용
+- 메타클래스의 `__new__` 특별 메서드는 class 문의 모든 본문이 처리된 직후 수행됨
+- 메타클래스를 사용해 클래스가 정의된 직후이면서 클래스가 생성되기 직전인 시점에 클래스 정의를 변경할 수 있음
+- 하지만 메타클래스는 원하는 목적을 달성하기에 너무 복잡해지는 경우가 많음
+- `__init_subclass__` 를 사용해 하위 클래스가 정의된 직후, 하위 클래스 타입이 만들어지기 직전에 해당 클래스가 원하는 요건을 잘 갖췄는지 확인해라
+- `__init_subclass__` 정의에서 super().__init_subclass__를 호출해 여러 계층에 걸쳐 클래스를 검증하고 다중 상속을 제대로 처리하도록 해라
+
+### 49-__init_subclass__를 사용해 클래스 확장을 등록해라 
+- 메타클래스의 다른 용례로 프로그램이 자동으로 타입을 등록하는 것이 있음
+- 간단한 식별자를 사용해 그에 해당하는 클래스를 찾는 역검색을 하고 싶을 때 이런 등록 기능이 유용함
+- 예를 들어 파이썬 object를 직렬화하고, 역직렬화하는 코드를 구현한다고 해보자  
+  생성자 파라미터를 기록하고, 이를 JSON 딕셔너리로 변환하는 방식으로 일반적인 파이썬 object를 JSON 문자열로 변환함 
+~~~python
+import json
+
+
+class Serializable:
+    def __init__(self, *args):
+        self.args = args
+
+    def serialize(self):
+        return json.dumps({'args': self.args})
+
+
+class Point2D(Serializable):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f'Point2D({self.x}, {self.y})'
+
+point = Point2D(5, 3)
+print("객체 :", point)
+print("직렬화한 값:", point.serialize())
+
+>>>
+객체 : Point2D(5, 3)
+직렬화한 값: ["args", [5, 3]]
+~~~
+- 이제 이 JSON 문자열을 역직렬화해서 문자열이 표현하는 Point2D 객체를 구성해야 함
+- 다음 코드는 Serializable를 부모 클래스로 하며, 이 부모 클래스를 활용해 데이터를 역직렬화하는 다른 클래스를 보여줌
+~~~python
+class Deserializable(Serializable):
+
+    @classmethod
+    def deserialize(cls, json_data):
+        params = json.loads(json_data)
+        return cls(*params['args'])
+
+
+class BetterPoint2D(Deserializable):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f'Point2D({self.x}, {self.y})'
+
+
+before = BetterPoint2D(5,3)
+print('이전:', before)
+data = before.serialize()
+print("직렬화한 값:", data)
+after = BetterPoint2D.deserialize(data)
+print("역직렬화한 값:", after)
+
+>>>
+이전: Point2D(5, 3)
+직렬화한 값: {"args": [5, 3]}
+역직렬화한 값: Point2D(5, 3)
+~~~
+- 이러한 일반적인 클래스를 정의한 직렬화/역직렬화는 데이터의 타입(Point2D, BetterPoint2D)를 미리 알고 있는 경우에만 사용 가능
+- (위의 예로 `BetterPoint2D`라는 클래스를 정의해야만 역직렬화가 가능함)
+- JSON으로 직렬화할 클래스가 아주 많더라도 <b>JSON 문자열을 적당한 파이썬 object로 역직렬화하는 함수는 공통으로 하나만 있는 것이 이상적임!</b>(어떠한 클래스가 들어와도 역직렬화 함수를 실행하면 역직렬화가 가능하게끔!)
+- 방법은 다음과 같이 여러가지 방법이 존재 
+
+#### JSON 객체에 클래스 이름을 직렬화해 저장하기
+~~~python
+class BetterSerializable:
+    def __init__(self, *args):
+        self.args = args
+
+    def serialize(self):
+        return json.dumps({
+            'class': self.__class__.__name__,
+            'args': self.args
+        })
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        args_str = ",".join(str(x) for x in self.args)
+        return f"{name}({args_str})"
+~~~
+- 이렇게하면 클래스 이름을 객체 생성자로 다시 연결해주는 매핑을 유지할 수 있음
+- 매핑을 사용한 일반 `deserialize` 함수는 `resister_class`를 통해 등록된 모든 클래스에 대해 잘 작동함
+~~~python
+registry = {}
+def register_class(target_class):
+    registry[target_class.__name__] = target_class
+
+
+def deserialize(data):
+    params = json.loads(data)
+    name = params['class']
+    target_class = registry[name]
+    return target_class(*params['args'])
+~~~
+- `desrialize`가 항상 제대로 작동하려면 나중에 역직렬화할 모든 클래스에서 `register_class`를 호출해야 함
+~~~python
+class EvenBetterPoint2D(BetterSerializable):
+    def __init__(self, x, y):
+        super().__init__(x, y)
+        self.x = x
+        self.y = y
+
+register_class(EvenBetterPoint2D)
+
+before = EvenBetterPoint2D(5, 3)
+print("이전 값 : ", before)
+data = before.serialize()
+print("직렬화한 값 :", data)
+after = deserialize(data)
+print("이후 값 : ", after)
+
+>>>
+이전 값 :  EvenBetterPoint2D(5,3)
+직렬화한 값 : {"class": "EvenBetterPoint2D", "args": [5, 3]}
+이후 값 :  EvenBetterPoint2D(5,3)
+~~~
+- 이 방식의 문제점은 register_class를 잊을 수 있다는 점이며, 나중에 등록을 잊어버린 클래스의 인스턴스를 역직렬화 하려고 시도하면 깨짐!
+- 이러한 실수를 방지하고자 메타클래스는 하위 클래스가 정의될 때  class문을 가로채 이런 동작 수행 가능
+- 다음은 메타클래스에서 사용해서 클래스 본문을 처리한 후에 새로운 타입(클래스타입)을 등록하는 코드!
+~~~python
+class Meta(type):
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        register_class(cls)
+        return cls
+
+class RegisteredSerializable(BetterSerializable, metaclass=Meta)
+    pass
+~~~
+- 이렇게되면 `RegisteredSerializable`의 하위 클래스를 정의할 때 `register_class`가 호출되고 deserialize가 항상 제대로 작동한다고 확신할 수 있음
+
+#### __init_subclass__ 특별 클래스 메서드를 사용하기
+- 더 좋은 접근 방법은 `__init_subclass__` 특별 클래스 메서드를 이용하는 것
+~~~python
+class Vector1D(BetterRegisteredSerializable):
+    def __init_(self, magnitude):
+        super().__init__(magnitude)
+        self.magnitude = magnitude
+
+before = Vector1D(6)
+print("이전:", before)
+data = before.serialize()
+print("직렬화:",data)
+after = deserialize(data)
+print("역직렬화:", after)
+~~~
+- 클래스 등록에 `__init_subclass__` 또는 매타클래스를 등록하면 상속 트리가 제대로 되어있는 한 클래스 등록을 잊어버릴 일이 없다고 보장할 수 있음
+- 이 방식은 방금 본 것처럼 직렬화인 경우 잘 작동하며, 객체-관계 매핑(ORM), 확장성 플러그인 시스템, 콜백 훅에도 마찬가지로 잘 작동
+
+#### 기억해야 할 내용
+- 클래스 등록은 파이썬 프로그램을 모듈화할 때 유용한 패턴
+- 메타클래스를 사용하면 프로그램 안에서 기반 클래스를 상속한 하위 클래스가 정의될 때마다 등록 코드를 자동으로 실행 가능
+- 메타클래스를 클래스 등록에 사용하면 클래스 등록 함수를 호출하지 않아서 생기는 오류를 피할 수 있음
+- 표준적인 메타클래스 방식보다 `__init_subclass__`가 더 낫다. `__init_subclass` 쪽이 깔끔하고 초보자가 이해하기도 더 쉬움
+
+### 50-__set_name__으로 클래스 애트리뷰트를 표시해라
+- 메타클래스의 유용한 기능 중 또 하나는 <b>클래스가 정의된 후 클래스가 실제로 사용되기 이전인 시점에 프로퍼티를 변경하거나 표시할 수 있는 기능임</b>
+- 애트리뷰트가 포함된 클래스 내부에서 애트리뷰트를 좀 더 자세히 관찰하고자 디스크립터를 쓸 때 이런 접근 방식을 활용함
+- 예를 들어 고객 데이터베이스의 로우(row)를 표현하는 새 클래스를 정의한다고 하자. 데이터베이스 테이블의 각 컬럼에 해당하는 프로퍼티를 클래스에 정의하고 싶음
+- 다음 코드는 애트리뷰트와 컬럼 이름을 연결하는 디스크립터 클래스임
+~~~python
+class Field:
+    def __init__(self, name):
+        self.name = name
+        self.internal_name = "_" + self.name
+
+    def __get__(self, instance, instance_type):
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_name, '')
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+~~~
+- 현재 디스크립터 클래스를 사용함으로써 Field 인스턴스를 할당받은 애트리뷰트 값이 변화할 때, `setattr` 내장 함수를 통해 인스턴스별 상태를 직접 인스턴스 딕셔너리에 저장할 수 있고, 나중에 `getattr` 인스턴스의 상태를 읽을 수 있음
+- 로우를 표현하는 클래스를 정의하려면 애트리뷰트별로 해당 테이블 컬럼 이름을 지정하면 됨
+~~~python
+class Customer:
+    first_name = Field('first_name')
+    last_name = Field('last_name')
+    prefix = Field('prefix')
+    suffix = Field('suffix')
+~~~
+- 다음 코드에서 `Field` 디스크립터가 `__dict__` 인스턴스 딕셔너리를 변화시킨다는 사실을 확인할 수 있음
+~~~python
+cust = Customer()
+print(f"이전: {cust.first_name!r} {cust.__dict__}")
+cust.first_name = '유클리드'
+print(f"이후: {cust.first_name!r} {cust.__dict__}")
+
+>>>
+이전: '' {}
+이후: '유클리드' {'_first_name': '유클리드'}
+~~~
+- 위의 Customer 코드는 중복이 많아 보이는데, 클래스 안에서 왼쪽에 필드 이름을 이미 정의했는데, 굳이 같은 정보가 들어있는 문자열을 Field 디스크립터에게 다시 전달해야 할 이유가 없음
+~~~python
+class Customer:
+    first_class = Field('first_name')
+    ...
+~~~
+- 문제는 우리가 Customer 클래스 정의를 읽을 때는 애트리뷰트 정의를 왼쪽에서 오른쪽으로 읽지만, 파이썬이 실제로 Cusotmer 클래스 정의를 처리하는 순서는 이와 반대라는 점
+- 파이썬은 먼저 `Field('first_name')`를 통해 Field 생성자를 호출하고, 반환된 값을 `Customer.field_name`에 등록함
+- Field 인스턴스가 자신이 대입될 클래스의 애트리뷰트 이름을 미리 알 방법은 없음
+- 이러한 중복을 줄이기 위해 메타클래스를 사용할 수 있음. 메타클래스를 사용하면 class문에 직접 훅을 걸어 class 본문이 끝나자마자 필요한 동작을 수행할 수 있음
+- 메타클래스를 사용해 디스크립터의 Field.name과 Field.internal_name을 자동으로 대입가능
+~~~python
+class Meta(type):
+    def __new__(meta, name, bases, class_dict):
+        for key, value in class_dict.items():
+            if isinstance(value ,Field):
+                print(f"key : {key}, value : {value}")
+                value.key = key
+                value.internal_name = '_' + key
+        cls = type.__new__(meta, name, bases, class_dict)
+        return cls
+
+
+class DatabaseRow(metaclass=Meta):
+    pass
+~~~
+- 메타클래스를 사용하기 위해 Field 디스크립터에서 바꿔야 할 부분이 많지는 않음
+- 유일하게 달라진 부분은 생성자 인자가 없다는 점
+- 생성자가 컬럼 이름을 받는 대신, 앞에서 본 `Meta.__new__` 메서드가 애트리뷰트를 설정해줌
+~~~python
+class Field:
+    def __init__(self):
+        self.name = None
+        self.internal_name = None
+
+    def __get__(self, instance, instance_type):
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_name, '')
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+
+
+class BetterCustomer(DatabaseRow):
+    first_name = Field()
+    last_name = Field()
+    prefix = Field()
+    suffix = Field()
+~~~
+- 매타클래스와 새 `DatabaseRow` 기반 클래스와 새 `Field` 디스크립터를 사용한 결과, 데이터베이스 로우에 대응하는 클래스 정의에는 이전과 달리 중복이 없음. 동작은 이전과 같음
+- 이 방법의 문제점은 `DatabaseRow`를 상속하는 것을 잊어버리거나 클래스 계층 구조로 인한 제약 때문에 어쩔 수 없이 DatabaseRow를 상속할 수 없는 경우, 여러분이 정의하는 클래스가 Field 클래스를 프로퍼티에 사용할 수 없다는 것임
+- DatabaseRow를 상속하지 않으면 코드가 깨짐! 
+- <b>이 문제를 해결할 수 있는 방법은 _set_name__ 특별 메서드를 사용하는 것</b>
+- 클래스가 정의될 때마다 파이썬은 해당 클래스 안에 들어있는 디스크립터 인스턴스의 `_set_name__`을 호출함
+- `_set_name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음
+- 다음 코드는 메타클래스 정의를 아예 피하고, `_set_name__`에서 처리!
+
+## 용어 정리
+- 훅(hook)
+  - API가 실행되는 과정에서 우리가 전달한 함수를 실행하는 경우, 해당 함수를 훅(hook)이라고 부름 
