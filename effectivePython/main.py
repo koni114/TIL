@@ -1,47 +1,102 @@
-import subprocess
-import pprint
-
-result = subprocess.run(['echo', '자식 프로세스가 보내는 인사!'],
-                        capture_output=True,
-                        encoding='utf-8'
-                        )
-
-result.check_returncode()
-print(result.stdout)
-
-proc = subprocess.Popen(['sleep', '3'])
-while proc.poll() is None:
-    print("작업 중..")
-
-print('종료 상태', proc.poll())
-
+from queue import Queue
+from threading import Thread
 import time
 
-start = time.time()
-sleep_procs = []
-for _ in range(10):
-    proc = subprocess.Popen(['sleep', '1'])
-    sleep_procs.append(proc)
+def download(item):
+    return item
 
-for proc in sleep_procs:
-    proc.communicate()
-end = time.time()
-delta = end - start
-print(f"{delta:.3}초만에 끝남")
+def resize(item):
+    return item
 
-import os
+def upload(item):
+    return item
+
+class ClosableQueue(Queue):
+    SENTINEL = object()
+
+    def close(self):
+        self.put(self.SENTINEL)
+
+    def __iter__(self):
+        while True:
+            item = self.get()
+            try:
+                if item is self.SENTINEL:
+                    return   # 스레드를 종료시킨다
+                yield item
+            finally:
+                self.task_done()
 
 
-def run_encrypt(data):
-    env = os.environ.copy()
-    env['password'] = 'zfShyBhZOraQDdE/FiZpm/m/8f9X+M1'
-    proc = subprocess.Popen(
-        ['openssl', 'enc', '-des3', '-pass', 'env:password'],
-        env=env,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE)
-    proc.stdin.write(data)
-    proc.stdin.flush()
-    return proc
+class StoppableWorker(Thread):
+    def __init__(self, func, in_queue, out_queue):
+        super().__init__()
+        self.func = func
+        self.in_queue = in_queue
+        self.out_queue = out_queue
 
-procs = []
+    def run(self):
+        for item in self.in_queue:
+            result = self.func(item)
+            self.out_queue.put(result)
+
+
+def start_threads(count, *args):
+    threads = [StoppableWorker(*args) for _ in range(count)]
+    for thread in threads:
+        thread.start()
+    return threads
+
+
+def stop_threads(closable_queue, threads):
+    for _ in threads:
+        closable_queue.close()
+
+    closable_queue.join()
+
+    for thread in threads:
+        thread.join()
+
+download_queue = ClosableQueue()
+resize_queue = ClosableQueue()
+upload_queue = ClosableQueue()
+done_queue = ClosableQueue()
+
+download_threads = start_threads(
+    3, download, download_queue, resize_queue)
+resize_threads = start_threads(
+    4, resize, resize_queue, upload_queue)
+upload_threads = start_threads(
+    5, upload, upload_queue, done_queue)
+
+for _ in range(1000):
+    download_queue.put(object())
+
+stop_threads(download_queue, download_threads)
+stop_threads(resize_queue, resize_threads)
+stop_threads(upload_queue, upload_threads)
+
+print(done_queue.qsize(), '개의 원소가 처리됨')
+
+
+def start_threads(count, *args):
+    threads = [StoppableWorker(* args) for _ in range(count)]
+    for thread in threads:
+        thread.start()
+    return threads
+
+
+def stop_threads(closable_queue, threads):
+    for _ in threads:
+        closable_queue.close()
+
+    closable_queue.join()
+
+    for thread in threads:
+        thread.join()
+
+download_queue = ClosableQueue()
+resize_queue = ClosableQueue()
+upload_queue = ClosableQueue()
+done_queue = ClosableQueue()
+
