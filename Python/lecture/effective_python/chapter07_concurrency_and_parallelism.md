@@ -758,6 +758,339 @@ print(done_queue.qsize(), '개의 원소가 처리됨')
 - 동시성 파이프라인을 만들 때 발생할 수 있는 여러가지문제(busy waiting, 작업자에게 종료를 알리는 방법, 잠재적인 메모리 사용량 폭발등)를 잘 알아두자
 - Queue 클래스는 튼튼한 파이프라인을 구축할 때 필요한 기능인 블로킹 연산, 버퍼 크기 지정, join을 통한 완료 대기 등을 모두 제공함
 
+
+### 3-언제 동시성이 필요한지 인식하는 방법을 알아두라
+- 프로그램이 다루는 영역이 커짐에 따라서 불가피하게 복잡도도 증가함
+- 프로그램의 명확성, 테스트 가능성, 효율성을 유지하면서 늘어나는 요구 조건을 만족시키는 것은 프로그래밍에서 가장 어려운 부분임
+- 그중에서도 가장 처리하기 어려운 일은 단일 스레드 프로그램을 동시 실행되는 여러 흐름으로 이뤄진 프로그램으로 바꾸는 경우일 것임
+- 이런 문제를 겪을 수 있은 경우를 예제로 살펴보자
+- 한 게임이 있는데, 임의의 크기인 2차원 그리드가 있으며, 이 그리드의 각 셀(cell)은 비어 있거나(empty) 살아 있을 수 있음
+~~~python
+ALIVE = "*"
+EMPTY = '-'
+~~~
+- 클럭이 한 번 틱할 때마다 게임이 진행됨. 틱마다 각 셀은 자신의 주변 여덟 개 셀이 살아 있는지 보고, 주변 셀 중 살아있는 셀의 개수에 따라 계속 살아남을지, 죽을지, 재생성할지를 결정함
+- 각 셀의 상태를 컨테이너 클래스를 사용해 표현할 수 있음
+- 이 클래스는 임의의 좌표에 있는 셀의 값을 설정하는 메서드를 제공해야 함
+- 그리드 크기를 벗어나는 좌표는 나머지 연산을 사용해 적절한 그리드 내부 좌표로 바뀜(wrap around)
+- 그리드 클래스는 무한히 반복되는 공간처럼 작동함
+~~~python
+class Grid:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.rows = []
+        for _ in range(self.height):
+            self.rows.append([EMPTY] * self.width)
+
+    def get(self, x, y):
+        return self.rows[y % self.height][x % self.height]
+
+    def set(self, y, x, state):
+        self.row[y % self.height][x % self.width] = state
+
+    def __str__(self):
+        pass
+~~~
+- 클래스가 작동하는 모습을 보기 위해 Grid 인스턴스를 만들고 초기 상태를 고전적인 글라이더 형태로 설정함
+~~~Python
+ALIVE = "*"
+EMPTY = '-'
+
+
+class Grid:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.rows = []
+        for _ in range(self.height):
+            self.rows.append([EMPTY] * self.width)
+
+    def get(self, x, y):
+        return self.rows[y % self.height][x % self.height]
+
+    def set(self, y, x, state):
+        self.rows[y % self.height][x % self.width] = state
+
+    def __str__(self):
+        result = ""
+        for list in self.rows:
+            tmp = ""
+            for list_str in list:
+                tmp += list_str
+            result += tmp + '\n'
+        return result
+
+grid = Grid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+print(grid)
+~~~
+- 다음으로는 특정 셀의 주변 상태를 얻을 방법이 필요하므로, 그리드에 대해 질의를 수행해 살아있는 주변 셀 수를 반환하는 도우미 함수를 만든다
+- 코드 결합을 줄이고자 Grid 인스턴스를 넘기는 대신 get 함수를 파라미터로 받는 간단한 함수를 사용한다
+~~~python
+def count_neighbors(y, x, get):
+    n_ = get(y-1, x+0)
+    ne = get(y-1, x+1)
+    c_ = get(y+0, x+1)
+    se = get(y+1, x+1)
+    s_ = get(y+1, x+0)
+    sw = get(y+1, x-1)
+    w_ = get(y+0, x-1)
+    nw = get(y-1, x-1)
+    neighbor_states = [n_, ne, c_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    return count
+~~~
+- 콘웨이 생명 게임의 규칙
+  - 두 개 이하가 살아 있으면 가운데 셀이 죽음
+  - 네 개 이상이 살아 있으면 가운데 셀이 죽음
+  - 정확히 3개가 살아있으면 가운데 셀이 살아있으면 계속 살아남고, 빈 셀이면 살아있는 상태로 바뀜
+~~~python
+def game_logic(state, neighbors):
+    if state == ALIVE:
+        if neighbors < 2:
+            return EMPTY
+        elif neighbors > 3:
+            return EMPTY
+        else:
+            if neighbors == 3:
+                return ALIVE
+        return state
+~~~
+- `count_neighbors` 와 `game_logic` 함수를 셀 상태를 변화시키는 다른 함수와 연결할 수 있음
+- 각 제너레이션마다 이 함수를 한 그리드 셀에 대해 호출해서, 현재 셀 상태를 알아내고 이웃 셀의 상태를 살펴본 후 다음 상태를 결정한 다음 다음 결과 그리드의 셀 상태를 적절히 갱신함
+- 여기서도 Grid 인스턴스를 넘기는 대신 그리드를 설정하는 함수를 set 파라미터로 받는 함수 인터페이스를 사용해 코드의 결합도를 낮춤
+~~~python
+def step_cell(x, y, get, set):
+    state = get(x, y)
+    neighbors = count_neighbors(y, x, get)
+    next_state = game_logic(state, neighbors)
+    set(y, x, next_state
+~~~
+- 마지막으로 셀로 이뤄진 전체 그리드를 한 단계 진행시켜서 다음 세대의 상태가 담긴 그리드를 반환하는 함수를 정의함
+- 여기서 중요한 세부 사항은 방금 우리가 만든 함수들이 이전 세대의 Grid 인스턴스에 대해 get 메서드를 호출해주는 함수와 다음 세대의 Grid 인스턴스에 대해 set 메서드를 호출해주는 함수에 의존한다는 점
+- 이로 인해 모든 셀이 동일하게 작동하도록 할 수 있음. 이 기능은 생명 게임이 제대로 작동하려면 반드시 필요
+- 앞에서 Grid 대신 get과 set에 대한 함수 인터페이스를 사용했으므로 이 기능을 쉽게 구현할 수 있음
+~~~python
+def simulate(grid):
+    next_grid = Grid(grid.height, grid.width)
+    for y in range(grid.width):
+        for x in range(grid.height):
+            step_cell(y, x, grid.get, next_grid.set)
+        return next_grid
+~~~
+- 이제 한 번에 한 세대씩 전체 그리드를 진행 할 수 있음
+- `game_logic` 함수에 구현한 간단한 규칙을 사용해 글라이더가 오른쪽 아래 방향으로 움직이는 모습을 볼 수 있음
+~~~Python
+class ColumnPrinter:
+    def __init__(self):
+        self.columns = []
+
+    def append(self, data):
+        self.columns.append(data)
+
+    def __str__(self):
+        row_count = 1
+        for data in self.columns:
+            row_count = max(
+                row_count, len(data.splitlines()) + 1)
+
+        rows = [''] * row_count
+        for j in range(row_count):
+            for i, data in enumerate(self.columns):
+                line = data.splitlines()[max(0, j - 1)]
+                if j == 0:
+                    padding = ' ' * (len(line) // 2)
+                    rows[j] += padding + str(i) + padding
+                else:
+                    rows[j] += line
+
+                if (i + 1) < len(self.columns):
+                    rows[j] += ' | '
+
+        return '\n'.join(rows)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = simulate(grid)
+
+print(columns)
+~~~
+- 단일 코어에서 한 스레드로 실행하는 프로그램의 경우에는 이런 코드가 잘 동작함. 하지만 프로그램의 요구 사항이 바뀌어서 이제는 앞에서 살짝 암시한 바와 같이, `game_logic` 함수 안에서 약간의 I/O(소켓 통신 등)가 필요하다고 하자
+- 예를 들어 그리드 상태와 인터넷을 통한 사용자 간 통신에 의해 상태 전이가 결정되는 MMOG(Massively Multiplayer Online Game)가 이런 경우임
+- 앞의 구현을 어떻게 확장하면 이런 기능을 지원하게 할 수 있을까?
+- 가장 단순한 방법은 블로킹 I/O를 game_logic안에 직접 추가하는 것
+~~~python
+def game_logic(state, neighbors):
+    # 블로킹 I/O를 여기서 수행함
+~~~
+- 하지만 이 접근 방법은 블로킹 I/O로 인해 프로그램이 느려짐
+- I/O의 지연 시간이 100밀리초이고 그리도에 셀이 45개 있으면, simulate 함수에서 순차적으로 처리되기 때문에 한 세대를 처리하는데 최소 4.5초가 걸림
+- 게임을 즐길수 없을 정도이며, 나중에 그리드가 10000개의 셀을 포함하게 변경해야 한다면 각 세대를 계산하는데 15분이 걸림 
+- <b>해결책은 I/O를 병렬로 수행해서 그리드 크기와 관계 없이 각 세대를 대략 100밀리초 안에 계산할 수 있게 만드는 것</b>
+- <b>각 작업 단위에 대해 동시 실행되는 여러 실행 흐름을 만들어내는 과정을 팬아웃(fan-out)이라고 함</b> 
+- 전체를 조율하는 프로세스안에서 다음 단계로 진행하기 전에 동시 작업 단위의 작업이 모두 끝날 때까지 기다리는 과정을 팬인(fan-in)이라고 함
+- 파이썬은 팬아웃과 팬인을 지원하는 여러 가지 내장 도구를 제공하며ㄴ, 각 도구는 서로 다른 장단점을 지님
+- 따라서 각 접근 방식의 장단점을 이해하고 상황에 따라 원하는 직업에 가장 알맞는 도구를 택해야함
+
+#### 기억해야 할 내용
+- 프로그램이 커지면서 범위와 복잡도가 증가함에 따라 동시에 실행되는 여러 실행 흐름이 필요해지는 경우가 많음
+- 동시성을 조율하는 가장 일반적인 방법으로는 Fan-out -> Fan-In이 있음
+- 파이썬은 팬아웃과 팬인을 구현하는 다양한 방법 제공
+
+### 57-요구에 따라 팬아웃을 진행하려면 새로운 스레드를 생성하지 마라
+- 파이썬에서 병렬 I/O를 실행하고 싶을 때는 자연스레 스레드를 가장 먼저 고려하게 됨. 하지만 여러 동시 실행 흐름을 만들어내는 팬아웃을 수행하고자 스레드를 사용할 경우 중요한 단점과 마주치게 됨
+- 이 단점을 보여주기 위해 다룬 생명 게임 예제를 계속 살펴보
+- 여기서는 스레드를 사용해 `game_logic` 안에서 I/O를 수행함으로써 생기는 지연 시간을 해결함
+- 먼저 스레드를 사용할 때는 데이터 구조에 대해 가정한 내용을 유지하도록 여러 스레드를 조율해야 함
+- Grid 클래스에 락 관련 동작을 추가하면, 여러 스레드에서 인스턴스를 동시에 사용해도 안전한 하위 클래스를 정의할 수 있음
+~~~python
+from threading import Lock
+
+class LockingGrid(Grid):
+    def __init__(self, height, width):
+        super().__init__(height, width)
+        self.lock = Lock()
+
+    def __str__(self):
+        with self.lock:
+            return super().__str__()
+
+    def get(self, y, x):
+        with self.lock:
+            return super().get(y, x)
+
+    def set(self, y, x, state):
+        with self.lock:
+            return super().set(y, x, state)
+~~~
+- 이제 각 `step_cell` 호출마다 스레드를 정의해 팬아웃하도록 simulate 함수를 다시 정의할 수 있음
+- 스레드는 병렬로 실행되며, 다른 I/O가 끝날 때까지 기다리지 않아도 됨
+- 그 후 다음 세대로 진행하기 전에 모든 스레드가 작업을 마칠 때까지 기다리므로 팬인 할 수 있음
+~~~python
+def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0) # 북(N)
+    ne = get(y - 1, x + 1) # 북동(NE)
+    e_ = get(y + 0, x + 1) # 동(E)
+    se = get(y + 1, x + 1) # 남동(SE)
+    s_ = get(y + 1, x + 0) # 남(S)
+    sw = get(y + 1, x - 1) # 남서(SW)
+    w_ = get(y + 0, x - 1) # 서(W)
+    nw = get(y - 1, x - 1) # 북서(NW)
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    return count
+
+def game_logic(state, neighbors):
+    if state == ALIVE:
+        if neighbors < 2:
+            return EMPTY # 살아 있는 이웃이 너무 적음: 죽음
+        elif neighbors > 3:
+            return EMPTY # 살아 있는 이웃이 너무 많음: 죽음
+    else:
+        if neighbors == 3:
+            return ALIVE # 다시 생성됨
+    #여기서 블러킹 I/O를 수행한다.
+    #data = my_socket.recv(100)
+    return state
+
+def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = count_neighbors(y, x, get)
+    next_state = game_logic(state, neighbors)
+    set(y, x, next_state)
+
+
+def simulate_threaded(grid):
+    next_grid = LockingGrid(grid.height, grid.width)
+
+    threads = []
+    for y in range(grid.height):
+        for x in range(grid.width):
+            args = (y, x, grid.get, next_grid.set)
+            thread = Thread(target=step_cell, args=args)
+            thread.start()  # 팬아웃
+            threads.append(thread)
+
+    for thread in threads:
+        thread.join()  # 팬인
+
+    return next_grid
+~~~
+- 앞서 본 예제의 step_cell을 그대로 사용하고, 구동 코드가 LockingGrid와 simulate_threaded 구현을 사용하도록 두 줄만 바꾸면 방금 만든 그리드 클래스 코드를 구동할 수 있음
+~~~python
+grid = LockingGrid(5, 9)            # 바뀐부분
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = simulate_threaded(grid)  # 바뀐부분
+
+print(columns)
+~~~
+- 코드는 예상대로 잘 동작하지만, 세가지 문제점이 존재
+  - Thread 인스턴스를 서로 안전하게 조율하려면 몇 가지 도구가 필요함(Locking 등). 이로 인해 가독성이 떨어짐  
+    이러한 복잡도 때문에 유지 보수 및 확장성이 떨어짐
+  - 스레드는 메모리를 많이 사용하며, 스레드 하나당 8MB를 사용함. 현재 45개까지는 괜찮지만, 향후 10000개로 늘어났을 경우에는 out-of-memory 현상이 발생할 수 있음
+  - 스레드를 시작하는 비용이 비싸며, context switching에 비용이 발생하기 때문에 스레드는 성능에 부정적인 영향을 미칠 수 있음 
+- 게다가 이 코드는 무엇인가 잘못되었을 때 디버깅하기가 매우 어려움
+- 예를 들어 I/O 예외가 발생했다고 가정해보자. I/O는 신뢰할 수 없기 때문에 `game_logic` 함수에서 예외가 발생했을 가능성이 매우 높은
+~~~python
+def game_logic(state, neighbors):
+    # IOError가 발생하는 것을 에뮬레이션함
+    raise OSError('I/O 문제 발생')
+~~~
+- 이 함수를 가리키는 Thread 인스턴스를 실행하고, 프로그램의 sys.stderr 출력을 메모리상의 StringIO 버퍼로 전달해 이 코드에서 어떤 일이 벌어지는지 살펴볼 수 있음
+~~~python
+import contextlib
+import io
+
+fake_stderr = io.StringIO()
+with contextlib.redirect_stderr(fake_stderr):
+    thread = Thread(target=game_logic, args=(ALIVE, 3))
+    # 스레드 시작이나 join에는 문제 없음
+    thread.start()
+    thread.join()
+
+print(fake_stderr.getvalue())
+
+>>>
+Exception in thread Thread-85:
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/threading.py", line 926, in _bootstrap_inner
+    self.run()
+  File "/Library/Frameworks/Python.framework/Versions/3.7/lib/python3.7/threading.py", line 870, in run
+    self._target(*self._args, **self._kwargs)
+  File "<input>", line 67, in game_logic
+OSError: I/O 문제 발생
+~~~
+- 예상대로 I/O 문제가 발생함. 하지만 Thread를 만들고 join을 호출하는 코드는 영향을 받지 않음
+- 이유는 Thread 클래스가 target 함수에서 발생하는 예외를 독립적으로 잡아내서 sys.stderr로 예외의 트레이스를 출력하기 때문
+- 이런 예외는 결코 최초의 스레드를 시작한 쪽으로 다시 던져지지 않음
+- 이와 같은 여러 문제가 있으므로, 지속적으로 새로운 동시성 함수를 시작하고 끝내야 하는 경우 스레드는 적절한 해법이 아님
+- 파이썬은 이러한 경우에 더 적합한 해법을 제공함
+
+#### 기억해야 할 내용
+- 스레드는 많은 단점이 있음. 스레드를 시작하고 실행하는데 비용이 들기 때문에 스레드가 많이 필요하면 상당히 많은 메모리를 사용함. 그리고 스레드 사이를 조율하기 위해 Lock과 같은 특별한 도구를 사용해야 함
+- 스레드를 시작하거나 스레드가 종료하기를 기다리는 코드에게 스레드 실행 중에 발생한 예외를 돌려주는 파이썬 내장 기능은 없음. 이로 인해 스레드 디버깅이 어려워짐
+
+
 ## 용어 정리
 - 업스트림, 다운스트림
   - 업스트림: 로컬에서 서버로 전달되는 데이터의 흐름

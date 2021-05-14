@@ -1,102 +1,130 @@
 from queue import Queue
 from threading import Thread
+from threading import Lock
 import time
 
-def download(item):
-    return item
+ALIVE = '*'
+EMPTY = '-'
 
-def resize(item):
-    return item
+class Grid:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.rows = []
+        for _ in range(self.height):
+            self.rows.append([EMPTY] * self.width)
 
-def upload(item):
-    return item
+    def get(self, y, x):
+        return self.rows[y % self.height][x % self.width]
 
-class ClosableQueue(Queue):
-    SENTINEL = object()
+    def set(self, y, x, state):
+        self.rows[y % self.height][x % self.width] = state
 
-    def close(self):
-        self.put(self.SENTINEL)
-
-    def __iter__(self):
-        while True:
-            item = self.get()
-            try:
-                if item is self.SENTINEL:
-                    return   # 스레드를 종료시킨다
-                yield item
-            finally:
-                self.task_done()
-
-
-class StoppableWorker(Thread):
-    def __init__(self, func, in_queue, out_queue):
-        super().__init__()
-        self.func = func
-        self.in_queue = in_queue
-        self.out_queue = out_queue
-
-    def run(self):
-        for item in self.in_queue:
-            result = self.func(item)
-            self.out_queue.put(result)
+    def __str__(self):
+        output = ''
+        for row in self.rows:
+            for cell in row:
+                output += cell
+            output += '\n'
+        return output
 
 
-def start_threads(count, *args):
-    threads = [StoppableWorker(*args) for _ in range(count)]
-    for thread in threads:
-        thread.start()
-    return threads
+class LockingGrid(Grid):
+    def __init__(self, height, width):
+        super().__init__(height, width)
+        self.lock = Lock()
+
+    def __str__(self):
+        with self.lock:
+            return super().__str__()
+
+    def get(self, y, x):
+        with self.lock:
+            return super().get(y, x)
+
+    def set(self, y, x, state):
+        with self.lock:
+            return super().set(y, x, state)
+
+def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0) # 북(N)
+    ne = get(y - 1, x + 1) # 북동(NE)
+    e_ = get(y + 0, x + 1) # 동(E)
+    se = get(y + 1, x + 1) # 남동(SE)
+    s_ = get(y + 1, x + 0) # 남(S)
+    sw = get(y + 1, x - 1) # 남서(SW)
+    w_ = get(y + 0, x - 1) # 서(W)
+    nw = get(y - 1, x - 1) # 북서(NW)
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    return count
+
+def game_logic(state, neighbors):
+    # IOError가 발생하는 것을 에뮬레이션함
+    raise OSError('I/O 문제 발생')
+
+def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = count_neighbors(y, x, get)
+    next_state = game_logic(state, neighbors)
+    set(y, x, next_state)
 
 
-def stop_threads(closable_queue, threads):
-    for _ in threads:
-        closable_queue.close()
+def simulate_threaded(grid):
+    next_grid = LockingGrid(grid.height, grid.width)
 
-    closable_queue.join()
-
-    for thread in threads:
-        thread.join()
-
-download_queue = ClosableQueue()
-resize_queue = ClosableQueue()
-upload_queue = ClosableQueue()
-done_queue = ClosableQueue()
-
-download_threads = start_threads(
-    3, download, download_queue, resize_queue)
-resize_threads = start_threads(
-    4, resize, resize_queue, upload_queue)
-upload_threads = start_threads(
-    5, upload, upload_queue, done_queue)
-
-for _ in range(1000):
-    download_queue.put(object())
-
-stop_threads(download_queue, download_threads)
-stop_threads(resize_queue, resize_threads)
-stop_threads(upload_queue, upload_threads)
-
-print(done_queue.qsize(), '개의 원소가 처리됨')
-
-
-def start_threads(count, *args):
-    threads = [StoppableWorker(* args) for _ in range(count)]
-    for thread in threads:
-        thread.start()
-    return threads
-
-
-def stop_threads(closable_queue, threads):
-    for _ in threads:
-        closable_queue.close()
-
-    closable_queue.join()
+    threads = []
+    for y in range(grid.height):
+        for x in range(grid.width):
+            args = (y, x, grid.get, next_grid.set)
+            thread = Thread(target=step_cell, args=args)
+            thread.start()  # 팬아웃
+            threads.append(thread)
 
     for thread in threads:
-        thread.join()
+        thread.join()  # 팬인
 
-download_queue = ClosableQueue()
-resize_queue = ClosableQueue()
-upload_queue = ClosableQueue()
-done_queue = ClosableQueue()
+    return next_grid
 
+class ColumnPrinter:
+    def __init__(self):
+        self.columns = []
+
+    def append(self, data):
+        self.columns.append(data)
+
+    def __str__(self):
+        row_count = 1
+        for data in self.columns:
+            row_count = max(
+                row_count, len(data.splitlines()) + 1)
+
+        rows = [''] * row_count
+        for j in range(row_count):
+            for i, data in enumerate(self.columns):
+                line = data.splitlines()[max(0, j - 1)]
+                if j == 0:
+                    padding = ' ' * (len(line) // 2)
+                    rows[j] += padding + str(i) + padding
+                else:
+                    rows[j] += line
+
+                if (i + 1) < len(self.columns):
+                    rows[j] += ' | '
+
+        return '\n'.join(rows)
+
+import contextlib
+import io
+
+fake_stderr = io.StringIO()
+with contextlib.redirect_stderr(fake_stderr):
+    thread = Thread(target=game_logic, args=(ALIVE, 3))
+    # 스레드 시작이나 join에는 문제 없음
+    thread.start()
+    thread.join()
+
+print(fake_stderr.getvalue())
