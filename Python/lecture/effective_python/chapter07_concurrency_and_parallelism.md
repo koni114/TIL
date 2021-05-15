@@ -1090,8 +1090,957 @@ OSError: I/O 문제 발생
 - 스레드는 많은 단점이 있음. 스레드를 시작하고 실행하는데 비용이 들기 때문에 스레드가 많이 필요하면 상당히 많은 메모리를 사용함. 그리고 스레드 사이를 조율하기 위해 Lock과 같은 특별한 도구를 사용해야 함
 - 스레드를 시작하거나 스레드가 종료하기를 기다리는 코드에게 스레드 실행 중에 발생한 예외를 돌려주는 파이썬 내장 기능은 없음. 이로 인해 스레드 디버깅이 어려워짐
 
+### 58-동시성과 Queue를 사용하기 위해 코드를 어떻게 리펙터링해야 하는지 이해해라
+- 바로 앞에서는 Thread를 사용해 생명 게임 예제의 병렬 I/O 문제를 해결할 경우 어떤 단점이 있는지 살펴봄 
+- 다음은 queue 내장 모듈의 Queue 클래스를 사용해 파이프라인을 스레드로 실행되게 구현하는 것
+- 일반적인 접근 방법은 다음과 같음. 생명 게임 세대마다 셀당 하나씩 스레드를 생성하는 대신, 필요한 병렬 I/O의 숫자에 맞춰 미리 정해진 작업자 스레드를 만듬
+- 프로그램은 이를 통해 자원 사용을 제어하고, 새로운 스레드를 자주 시작하면서 생기는 부가 비용을 덜 수 있음
+- 이를 위해 작업자 스레드의 `game_logic` 함수 사이의 통신에 ClosableQueue 인스턴스 두 개를 사용함
+~~~python
+from queue import Queue
+
+class ClosableQueue(Queue):
+    SENTINEL = object()
+
+    def close(self):
+        self.put(self.SENTINEL)
+
+    def __iter__(self):
+        while True:
+            item = self.get()
+            try:
+                if item is self.SENTINEL:
+                    return   # 스레드를 종료시킨다
+                yield item
+            finally:
+                self.task_done()
+
+in_queue = ClosableQueue()
+out_queue = ClosableQueue()
+~~~
+- `in_queue`에서 원소를 소비하는 스레드를 여러 개 시작할 수 있음
+- 각 스레드는 `game_logic`를 호출해 원소를 처리한 다음, `out_queue`에 결과를 넣음
+- 각 스레드는 동시에 실행되며, 병렬적으로 I/O를 수행하므로, 그에 따라 세대를 처리하는데 필요한 지연 시간이 줄어듬
+~~~python
+from threading import Thread
+
+class StoppableWorker(Thread):
+    def __init__(self, func, in_queue, out_queue, **kwargs):
+        super().__init__(**kwargs)
+        self.func = func
+        self.in_queue = in_queue
+        self.out_queue = out_queue
+
+    def run(self):
+        for item in self.in_queue:
+            result = self.func(item)
+            self.out_queue.put(result)
+
+def game_logic_thread(item):
+    y, x, state, neighbors = item
+    try:
+        next_state = game_logic(state, neighbors)
+    except Exception as e:
+        next_state = e
+    return (y, x, next_state)
+
+# 스레드를 미리 시작한다
+threads = []
+for _ in range(5):
+    thread = StoppableWorker(
+        game_logic_thread, in_queue, out_queue)
+    thread.start()
+    threads.append(thread)
+~~~
+- 이런 큐와 상호작용하면서 상태 전이 정보를 요청하고 응답을 받도록 `simulate` 함수를 재정의 할 수 있음
+- 원소를 `in_queue`에 추가하는 과정은 팬아웃이고, `out_queue`가 빈큐가 될 떄까지 원소를 소비하는 과정은 팬인임
+~~~python
+def simulate_pipeline(grid, in_queue, out_queue):
+    for y in range(grid.height):
+        for x in range(grid.width):
+            state = grid.get(y, x)
+            neighbors = count_neighbors(y, x, grid.get)
+            in_queue.put((y, x, state, neighbors))  # 팬아웃
+    in_queue.join()
+    out_queue.close()
+    next_grid = Grid(grid.height, grid.width)
+    for item in out_queue:  # 팬인
+        y, x, next_state = item
+        if isinstance(next_state, Exception):
+            raise SimulationError(y, x) from next_state
+        next_grid.set(y, x, next_state)
+
+    return next_grid
+~~~
+- `Grid.get`과 `Grid.set` 호출은 모두 새로운 simuate_pipeline 함수 안에서만 일어남
+- 이는 동기화를 위해 Lock 인스턴스를 사용하는 Grid 구현을 새로 만드는 대신에 기존의 단일 스레드 구현을 쓸 수 있다는 뜻
+- 이 코드는 전의 사용한 코드보다 디버깅도 더 쉬움
+- `game_logic` 함수 안에서 I/O를 하는 동안 발생하는 예외는 모두 잡혀서 `out_queue` 로 전달되고 주 스레드에서 다시 던져짐
+~~~python
+def game_logic(state, neighbors):
+    ...
+    raise OSError("게임 로직에서 I/O 발생")
+    ...
+
+simulate_pipeline(Grid(1,1), in_queue, out_queue)
+
+>>>
+Traceback ...
+~~~
+- simulate_pipeline을 루프 안에서 호출해 이 세대별 다중 스레드 파이프라인을 구동할 수 있음
+~~~python
+class ColumnPrinter:
+    def __init__(self):
+        self.columns = []
+
+    def append(self, data):
+        self.columns.append(data)
+
+    def __str__(self):
+        row_count = 1
+        for data in self.columns:
+            row_count = max(
+                row_count, len(data.splitlines()) + 1)
+
+        rows = [''] * row_count
+        for j in range(row_count):
+            for i, data in enumerate(self.columns):
+                line = data.splitlines()[max(0, j - 1)]
+                if j == 0:
+                    padding = ' ' * (len(line) // 2)
+                    rows[j] += padding + str(i) + padding
+                else:
+                    rows[j] += line
+
+                if (i + 1) < len(self.columns):
+                    rows[j] += ' | '
+
+        return '\n'.join(rows)
+
+
+grid = LockingGrid(5, 9)            # 바뀐부분
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = simulate_threaded(grid)  # 바뀐부분
+
+print(columns)
+
+for thread in threads:
+    in_queue.close()
+for thread in threads:
+    thread.join()
+~~~
+- 결과는 이전과 같음. 메모리를 폭발적으로 사용하는 문제, 스레드 시작 비용, 스레드를 디버깅 하는 문제 등을 해결했지만 여전히 많은 문제가 남아있음
+  - Better way 56에서 본 simlate thread 함수의 방식보다 simultate_pipeline 함수가 더 따라가기 어려움
+  - 코드의 가독성을 개선하려면 `ClosableQueue`아 `StoppableWorker`라는 추가 지원 클래스가 필요하며, 이에 따라 복잡도가 늘어남
+  - 병렬성을 활용해 필요에 따라 자동으로 시스템 규모가 확장되지 않음. 따라서 미리 부하를 예측해서 잠재적인 병렬성 수준을 미리 지정해야함
+  - 디버깅을 활성화하려면 발생한 예외를 작업 스레드에서 수동으로 잡아 Queue를 전달함으로써 주 스레드에서 다시 발생시켜야 함
+- 하지만 이 코드의 가장 큰 문제점은 요구 사항이 다시 변경될 떄 들어남. 예를 들어 `game_logic`
+뿐 아니라 `count_neighbors` 함수에서도 I/O를 수행해야 한다고 가정해보자
+~~~python
+def count_neighbors(y, x, get):
+    ...
+    # 여기서 블로킹 #I/O를 수행함
+    data = my_socket.recv(100)
+    ...
+~~~
+- 이 코드를 병렬화하려면 `count_neighbors`를 별도의 스레드에서 실행하는 단계를 파이프라인에 추가해야함
+- 이때 작업자 스레드 사이에서 예외가 제대로 전달돼 주 스레드까지 도달하는지 확인해야함
+- 그리고 작업자 스레드 사이의 동기화를 위해 Grid 클래스에 대해 Lock을 사용해야 함
+- `count_neighbors_thread` 작업자와 그에 해당하는 Thread 인스턴스를 위해 또 다른 Queue 인스턴스 집합을 만들어야 함
+- 마지막으로 파이프라인의 여러 단계를 조율하고 작업을 제대로 팬아웃하거나 팬인하도록 `simulate_phased_pipeline`를 변경해야 함
+- 바꾼 구현을 사용하면 다단계로 변경한 파이프라인을 처음부터 끝까지 실행할 수 있음
+~~~python
+from queue import Queue
+from threading import Thread
+from threading import Lock
+import time
+
+from queue import Queue
+
+class ClosableQueue(Queue):
+    SENTINEL = object()
+
+    def close(self):
+        self.put(self.SENTINEL)
+
+    def __iter__(self):
+        while True:
+            item = self.get()
+            try:
+                if item is self.SENTINEL:
+                    return   # 스레드를 종료시킨다
+                yield item
+            finally:
+                self.task_done()
+
+in_queue = ClosableQueue()
+logic_queue = ClosableQueue()
+out_queue = ClosableQueue()
+
+class StoppableWorker(Thread):
+    def __init__(self, func, in_queue, out_queue, **kwargs):
+        super().__init__(**kwargs)
+        self.func = func
+        self.in_queue = in_queue
+        self.out_queue = out_queue
+
+    def run(self):
+        for item in self.in_queue:
+            result = self.func(item)
+            self.out_queue.put(result)
+
+ALIVE = '*'
+EMPTY = '-'
+
+class SimulationError(Exception):
+    pass
+
+class Grid:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.rows = []
+        for _ in range(self.height):
+            self.rows.append([EMPTY] * self.width)
+
+    def get(self, y, x):
+        return self.rows[y % self.height][x % self.width]
+
+    def set(self, y, x, state):
+        self.rows[y % self.height][x % self.width] = state
+
+    def __str__(self):
+        output = ''
+        for row in self.rows:
+            for cell in row:
+                output += cell
+            output += '\n'
+        return output
+
+class LockingGrid(Grid):
+    def __init__(self, height, width):
+        super().__init__(height, width)
+        self.lock = Lock()
+
+    def __str__(self):
+        with self.lock:
+            return super().__str__()
+
+    def get(self, y, x):
+        with self.lock:
+            return super().get(y, x)
+
+    def set(self, y, x, state):
+        with self.lock:
+            return super().set(y, x, state)
+
+def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0) # 북(N)
+    ne = get(y - 1, x + 1) # 북동(NE)
+    e_ = get(y + 0, x + 1) # 동(E)
+    se = get(y + 1, x + 1) # 남동(SE)
+    s_ = get(y + 1, x + 0) # 남(S)
+    sw = get(y + 1, x - 1) # 남서(SW)
+    w_ = get(y + 0, x - 1) # 서(W)
+    nw = get(y - 1, x - 1) # 북서(NW)
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    # 여기서 블러킹 I/O를 수행한다
+    #data = my_socket.recv(100)
+    return count
+
+def count_neighbors_thread(item):
+    y, x, state, get = item
+    try:
+        neighbors = count_neighbors(y, x, get)
+    except Exception as e:
+        neighbors = e
+    return (y, x, state, neighbors)
+
+def game_logic(state, neighbors):
+    if state == ALIVE:
+        if neighbors < 2:
+            return EMPTY # 살아 있는 이웃이 너무 적음: 죽음
+        elif neighbors > 3:
+            return EMPTY # 살아 있는 이웃이 너무 많음: 죽음
+    else:
+        if neighbors == 3:
+            return ALIVE # 다시 생성됨
+
+    # 여기서 블러킹 I/O를 수행한다
+    #data = my_socket.recv(100)
+    return state
+
+def game_logic_thread(item):
+    y, x, state, neighbors = item
+    try:
+        next_state = game_logic(state, neighbors)
+    except Exception as e:
+        next_state = e
+    return (y, x, next_state)
+
+# 스레드를 미리 시작한다
+threads = []
+
+for _ in range(5):
+    thread = StoppableWorker(
+        count_neighbors_thread, in_queue, logic_queue)
+    thread.start()
+    threads.append(thread)
+
+for _ in range(5):
+    thread = StoppableWorker(
+        game_logic_thread, logic_queue, out_queue)
+    thread.start()
+    threads.append(thread)
+
+def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = count_neighbors(y, x, get)
+    next_state = game_logic(state, neighbors)
+    set(y, x, next_state)
+
+class ColumnPrinter:
+    def __init__(self):
+        self.columns = []
+
+    def append(self, data):
+        self.columns.append(data)
+
+    def __str__(self):
+        row_count = 1
+        for data in self.columns:
+            row_count = max(
+                row_count, len(data.splitlines()) + 1)
+
+        rows = [''] * row_count
+        for j in range(row_count):
+            for i, data in enumerate(self.columns):
+                line = data.splitlines()[max(0, j - 1)]
+                if j == 0:
+                    padding = ' ' * (len(line) // 2)
+                    rows[j] += padding + str(i) + padding
+                else:
+                    rows[j] += line
+
+                if (i + 1) < len(self.columns):
+                    rows[j] += ' | '
+
+        return '\n'.join(rows)
+
+
+def simulate_phased_pipeline(
+        grid, in_queue, logic_queue, out_queue):
+    for y in range(grid.height):
+        for x in range(grid.width):
+            state = grid.get(y, x)
+            item = (y, x, state, grid.get)
+            in_queue.put(item)  # 팬아웃
+
+    in_queue.join()
+    logic_queue.join()  # 파이프라인을 순서대로 실행한다
+    out_queue.close()
+
+    next_grid = LockingGrid(grid.height, grid.width)
+    for item in out_queue:  # 팬인
+        y, x, next_state = item
+        if isinstance(next_state, Exception):
+            raise SimulationError(y, x) from next_state
+        next_grid.set(y, x, next_state)
+    return next_grid
+
+grid = Grid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = simulate_phased_pipeline(
+        grid, in_queue, logic_queue, out_queue)
+
+print(columns)
+
+for thread in threads:
+    in_queue.close()
+for thread in threads:
+    logic_queue.close()
+for thread in threads:
+    thread.join()
+~~~
+- 코드는 예상대로 작동하지만, 변경할 부분이 아주 많고, 준비 코드도 많이 필요함
+- 또한 Queue가 팬아웃과 팬인 문제를 해결해줄 수는 있지만 부가 비용이 아주 높다는 사실도 중요
+- Thread를 사용하는 방식 보다는 낫지만, Queue는 파이썬이 제공하는 다른 도구만큼 좋지 못함
+
+#### 기억해야 할 내용
+- 작업자 스레드 수를 고정하고 Queue를 함께 사용하면 스레드를 사용할 때 팬인과 팬아웃의 규모 확장성을 개선할 수 있음
+- Queue를 사용하도록 기존 소스를 리펙터링하면 상당히 많은 작업이 필요함. 특히 다단계로 이뤄진 파이프라인이 필요하면 작업량이 더 늘어남
+- 다른 파이썬 내장 기능이나 모듈이 제공하는 병렬 I/O를 가능하게 해주는 다른 기능과 비교하면, Queue는 프로그램이 활용할 수 있는 전체 I/O의 병렬성 정도를 제한한다는 단점이 있음
+
+### 59-동시성을 위해 스레드가 필요한 경우에는 ThreadpoolExecutor를 사용해라
+- 파이선에는 `concurrent.funtures` 라는 내장 모듈이 있음
+- 이 모듈은 `ThreadPool Excutor` 클래스를 제공함. `ThreadPoolExcutor`는 Thread와 Queue를 사용한 접근 방법들의 장점을 조합해 생명 게임 예제의 병렬 I/O 문제를 해결함
+~~~python
+ALIVE = '*'
+EMPTY = '-'
+
+class Grid:
+    def __init__(self, height, width):
+        self.height = height
+        self.width = width
+        self.rows = []
+        for _ in range(self.height):
+            self.rows.append([EMPTY] * self.width)
+
+    def get(self, y, x):
+        return self.rows[y % self.height][x % self.width]
+
+    def set(self, y, x, state):
+        self.rows[y % self.height][x % self.width] = state
+
+    def __str__(self):
+        output = ''
+        for row in self.rows:
+            for cell in row:
+                output += cell
+            output += '\n'
+        return output
+
+class LockingGrid(Grid):
+    def __init__(self, height, width):
+        super().__init__(height, width)
+        self.lock = Lock()
+
+    def __str__(self):
+        with self.lock:
+            return super().__str__()
+
+    def get(self, y, x):
+        with self.lock:
+            return super().get(y, x)
+
+    def set(self, y, x, state):
+        with self.lock:
+            return super().set(y, x, state)
+
+def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0) # 북(N)
+    ne = get(y - 1, x + 1) # 북동(NE)
+    e_ = get(y + 0, x + 1) # 동(E)
+    se = get(y + 1, x + 1) # 남동(SE)
+    s_ = get(y + 1, x + 0) # 남(S)
+    sw = get(y + 1, x - 1) # 남서(SW)
+    w_ = get(y + 0, x - 1) # 서(W)
+    nw = get(y - 1, x - 1) # 북서(NW)
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    # 여기서 블러킹 I/O를 수행한다
+    #data = my_socket.recv(100)
+    return count
+
+def game_logic(state, neighbors):
+    if state == ALIVE:
+        if neighbors < 2:
+            return EMPTY # 살아 있는 이웃이 너무 적음: 죽음
+        elif neighbors > 3:
+            return EMPTY # 살아 있는 이웃이 너무 많음: 죽음
+    else:
+        if neighbors == 3:
+            return ALIVE # 다시 생성됨
+
+    # 여기서 블러킹 I/O를 수행한다
+    #data = my_socket.recv(100)
+    return state
+
+def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = count_neighbors(y, x, get)
+    next_state = game_logic(state, neighbors)
+    set(y, x, next_state)
+~~~
+- Grid의 객 셀에 대해 새 Thread 인스턴스를 시작하는 대신, <b>함수를 실행기(executor)에 제출함으로써 팬아웃 할 수 있음. 실행기는 제출받은 함수를 별도의 스레드에서 수행해줌</b>
+- 나중에 다음과 같이 팬인하기 위해 모든 작업의 결과를 기다릴 수 있음
+~~~python
+def simulate_pool(pool, grid):
+    next_grid = LockingGrid(grid.height, grid.width)
+    futures = []
+    for y in range(grid.height):
+        for x in range(grid.width):
+            args = (y, x, grid.get, next_grid.set)
+            future = pool.submit(step_cell, * args) #- 팬아웃
+            futures.append(future)
+
+    for future in futures:
+        future.result()        #- 팬인
+
+    return next_grid
+~~~
+- 실행기는 사용할 스레드를 미리 할당함. 따라서 `simulate_pool`을 실행할 때마다 스레드를 시작하는데 필요한 비용이 들지 않음
+- 또한 병렬 I/O 문제를 처리하기 위해 Thread를 별 생각 없이 사용하면 memory 문제가 발생할 수 있는데, 이 문제를 해결하기 위해 <b>스레드 풀(pool)에 사용할 스레드의 최대 개수를 지정할 수도 있음</b>
+~~~python
+class ColumnPrinter:
+    def __init__(self):
+        self.columns = []
+
+    def append(self, data):
+        self.columns.append(data)
+
+    def __str__(self):
+        row_count = 1
+        for data in self.columns:
+            row_count = max(
+                row_count, len(data.splitlines()) + 1)
+
+        rows = [''] * row_count
+        for j in range(row_count):
+            for i, data in enumerate(self.columns):
+                line = data.splitlines()[max(0, j - 1)]
+                if j == 0:
+                    padding = ' ' * (len(line) // 2)
+                    rows[j] += padding + str(i) + padding
+                else:
+                    rows[j] += line
+
+                if (i + 1) < len(self.columns):
+                    rows[j] += ' | '
+
+        return '\n'.join(rows)
+
+grid = LockingGrid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+with ThreadPoolExecutor(max_workers=10) as pool:
+    for i in range(5):
+        columns.append(str(grid))
+        grid = simulate_pool(pool, grid)
+~~~
+- ThreadPoolExecutor 클래스에서 가장 좋은 점은 <b>submit 메서드가 반환하는 Future 인스턴스에 대해 result 메서드를 호출하면 스레드를 실행하는 중에 발생한 예외를 자동으로 전파시켜 준다는 것임</b>
+~~~python
+def game_logic(state, neighbors):
+    ...
+    raise OSError('I/O 문제 발생')
+    ...
+
+with ThreadPoolExecutor(max_workers=10) as pool:
+    task = pool.submit(game_logic, ALIVE, 3)
+    task.result()
+
+>>>
+Traceback
+OSError: I/O 문제발생 
+~~~
+- `game_logic` 함수와 더불어 `count_neighbors` 함수에 I/O 병렬성을 제공해야 할 때도 `ThreadPoolExecutor`가 `step_cell`의 일부분으로 이 두 함수를 이미 동시에 실행하고 있기 때문에 별도로 프로그램을 변경하지 않아도 됨   
+- 심지어 필요하면 같은 인터페이스를 사용해 CPU 병렬성을 달성할 수도 있음
+- 하지만 ThreadPoolExecutor가 제한된 수의 I/O 병렬성만 제공한다는 큰 문제점이 남아 있음
+- `max_workers` 파라미터를 100으로 설정한다고 해도, 규모를 확장할 수 없음
+- `ThreadPoolExecutor`는 비동기적인 해법이 존재하지 않는 상황을 처리할 때는 좋은 방법이지만, 그 외 많은 경우에는 I/O 병렬성을 최대화할 수 있는 더 나은 방법이 존재함
+
+#### 기억해야 할 내용
+- `ThreadPoolExecutor`를 사용하면 한정된 리펙터링만으로 간단한 I/O 병렬성을 활성화 할 수 있고, 동시성을 팬아웃해야 하는 경우에 발생하는 스레드 시작 비용을 쉽게 줄일 수 있음
+- `ThreadPoolExecutor`를 사용하면 스레드를 직접 사용할 때 발생할 수 있는 잠재적인 메모리 낭비 문제를 없애주지만, `max_workers`의 개수를 미리 정해야하므로 I/O 병렬성을 제한함
+
+### 60- I/O를 할 때는 코루틴을 사용해 동시성을 높여라
+- better-way 56~59에서는 생명 게임 예제를 사용해 병렬 I/O 문제를 해결하려 노력했지만 수천 개의 동시성 함수를 다룰 때 다른 접근 방식은 모두 한계가 있음
+- <b>파이썬은 높은 I/O 동시성을 처리하기 위해 코루틴을 사용함</b>
+- 코루틴을 사용하면 파이썬 프로그램 안에서 동시에 실행되는 것처럼 보이는 함수를 아주 많이 쓸 수 있음
+- 코루틴은 `async`와 `await` 키워드를 사용해 구현되며, 제너레이터를 실행하기 위한 인프라를 사용함
+- 코루틴을 시작하는 비용은 함수 호출뿐. 활성화된 코루틴은 종료될 때까지 1KB 미만의 메모리를 사용함
+- 스레드와 마찬가지로 코루틴도 환경으로부터 입력을 소비하고 결과를 출력할 수 있는 독립적인 함수
+- 코루틴과 스레드를 비교해보면, 코루틴은 매 `await` 식에서 일시 중단되고 일시 중단된 대기 가능성이 해결된 다음에 `async` 함수로부터 실행을 재개한다는 차이점이 있음(이는 제너레이터의 yield 동작과 비슷)
+- 여러 분리된 `async` 함수가 서로 장단을 맞춰 실행되면 마치 모든 `async` 함수가 동시에 실행되는 것처럼 보이며, 이를 통해 파이썬 스레드의 동시성 동작을 흉내 낼 수 있음
+- 하지만 이런 동작을 하는 코루틴은 스레드와 달리 메모리 부가 비용이나 시작 비용, 컨텍스트 전환 비용이 들지 않고 복잡한 락과 동기화 코드가 필요하지 않음
+- 코루틴을 가능하게 하는 마법과 같은 매커니즘은 이벤트 루프(event loop)로, 다수의 I/O를 효율적으로 동시에 실행할 수 있고 이벤트 루프에 맞춰 작성된 함수들을 빠르게 전환해가며 골고루 실행할 수 있음
+- 코루틴을 통해 생명 게임을 구현해보자. 이전 Thread나 Queue를 사용한 방법에 나타난 문제를 극복하면서 game_logic 함수 안에서 I/O를 발생시키는 것이 그 목표
+- 먼저 이를 위해 `def` -> `async def`로 정의하면 `game_logic` 함수를 코루틴으로 만들 수 있음을 알아둬야 함
+- 이렇게 `async def`로 함수를 정의하면 그 함수 안에서 I/O에 `await` 구문을 사용할 수 있음
+~~~python
+ALIVE = "*"
+EMPTY = "-"
+
+class Grid:
+    ...
+
+def count_neighbors(y, x, get):
+    ...
+
+async def game_logic(state, neighbors):
+    ...
+
+    #- 여기서 I/O를 수행함
+    data = await my_socket.read(50)
+~~~
+- 비슷한 방식으로 `step_cell`의 정의에 `async`를 추가하고 `game_logic` 함수 호출 앞에 `await`를 덧붙이면 `step_cell`을 코루틴으로 바꿀 수 있음
+~~~python
+async def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = count_neighbors(y, x, get)
+    next_state = await game_logic(state, neighbors)
+    set(y, x, next_state)
+~~~
+- 그리고 simuate 함수도 코루틴으로 만들어야 함
+~~~python
+async def simulate(grid):
+    next_grid = Grid(grid.height, grid.width)
+
+    tasks = []
+    for y in range(grid.height):
+        for x in range(grid.width):
+            task = step_cell(
+                y, x, grid.get, next_grid.set)  # 팬아웃
+            tasks.append(task)
+
+    await asyncio.gather(*tasks)  # 팬인
+
+    return next_grid
+~~~
+- `simulate` 함수의 코루틴 버전을 좀 더 자세히 살펴보자
+  - `step_cell` 을 호출해도 이 함수가 즉시 호출되지 않음. 대신 step_cell 호출은 나중에 `await` 식에 사용할 수 있는 `coroutine` 인스턴스를 반환함
+  - 마치 `yield`를 사용하는 제너레이터 함수를 호출하면 즉시 실행되지 않고 제너레이터를 반환하는 것과 같음
+  - 이와 같은 실행 연기 메커니즘이 팬아웃을 수행함
+  - `asyncio` 내장 라이브러리가 제공하는 `gather` 함수는 팬인을 수행함. 
+  - `gather`에 대해 적용한 `await` 식은 이벤트 루프가 `step_cell` 코루틴을 동시에 실행하면서 `step_cell` 코루틴이 완료될 때마다 `simulate` 코루틴 실행을 재개하라고 요청함
+  - 모든 실행이 단일 스레드에서 이뤄지므로 Grid 인스턴스에 락을 사용할 필요가 없음
+  - I/O는 asyncio가 제공하는 이벤트 루프의 일부분으로 병렬화됨
+- 마지막으로 구동 코드 한 줄만 바꾸면 이 절에서 구현한 생명 게임을 구동할 수 있음
+- 새로운 코드는 `asyncio.run` 함수를 사용해 simulate 코루틴을 이벤트 루프상에서 실행하고 각 함수가 의존하는 I/O를 수행함
+~~~python
+grid = Grid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    # python 3.7이상에서만 asyncio.run을 제공함
+    grid = asyncio.run(simulate(grid)) # 이벤트 루프를 실행한다
+
+print(columns)
+~~~
+- 결과는 예전과 같다. 스레드와 관련된 모든 부가 비용이 제거됨
+- Queue나 ThreadPoolExecutor 접근 방법은 예외 처리에 한계가 있었지만(예외를 스레드 경계에서 다시 발생시켜야 했음), 코루틴에서는 대화형 디버거를 사용해 코드를 한 줄씩 실행시켜볼 수 있음
+~~~python
+async def game_logic(state, neighbors):
+    ...
+    raise OSError('I/O 문제 발생')
+    ...
+
+asyncio.run(game_logic(ALIVE, 3))
+~~~
+- 나중에 요구 사항이 변경돼 `count_neighbors`에서 I/O를 수행해야 한다면 Thread나 Queue 인스턴스를 사용할 때 모든 코드의 구조를 변경했던 것과 달리, 기존 함수와 함수 호출 부분에 `async`와 `await`를 붙이면 바뀐 요구 사항을 쉽게 달성할 수 있음
+~~~python
+async def count_neighbors(y, x, get):
+    n_ = get(y - 1, x + 0) # 북(N)
+    ne = get(y - 1, x + 1) # 북동(NE)
+    e_ = get(y + 0, x + 1) # 동(E)
+    se = get(y + 1, x + 1) # 남동(SE)
+    s_ = get(y + 1, x + 0) # 남(S)
+    sw = get(y + 1, x - 1) # 남서(SW)
+    w_ = get(y + 0, x - 1) # 서(W)
+    nw = get(y - 1, x - 1) # 북서(NW)
+    neighbor_states = [n_, ne, e_, se, s_, sw, w_, nw]
+    count = 0
+    for state in neighbor_states:
+        if state == ALIVE:
+            count += 1
+    # 여기서 블러킹 I/O를 수행한다
+    #data = my_socket.recv(100)
+    return count
+
+async def step_cell(y, x, get, set):
+    state = get(y, x)
+    neighbors = await count_neighbors(y, x, get)
+    next_state = await game_logic(state, neighbors)
+    set(y, x, next_state)
+
+grid = Grid(5, 9)
+grid.set(0, 3, ALIVE)
+grid.set(1, 4, ALIVE)
+grid.set(2, 2, ALIVE)
+grid.set(2, 3, ALIVE)
+grid.set(2, 4, ALIVE)
+
+columns = ColumnPrinter()
+for i in range(5):
+    columns.append(str(grid))
+    grid = asyncio.run(simulate(grid)) # 이벤트 루프를 실행한다
+
+print(columns)
+~~~
+- 코루틴은 코드에서 외부 환경에 대한 명령과 원하는 명령을 수행하는 방법을 구현하는 것을 분리해준다는 점이 멋짐
+- 코루틴을 사용하면 원하는 목표를 동시성을 사용해 달성하는 방법을 알아내는 데 시간을 낭비하는 대신, 우리가 만들고 싶은 로직을 작성하는데 초점을 맞출 수 있음
+
+#### 기억해야 할 내용
+- `async` 키워드로 정의한 함수를 코루틴이라고 부름. 코루틴을 호출하는 호출자는 `await` 키워드를 사용해 자신이 의존하는 코루틴의 결과를 받을 수 있음
+- 코루틴은 수만 개의 함수가 동시에 실행되는 것처럼 보이게 만드는 효과적인 방법을 제공
+- I/O를 병렬화하면서 스레드로 I/O를 수행할 때 발생할 수 있는 문제를 극복하기 위해 팬인과 팬아웃에 코루틴을 사용할 수 있음
+
+### 61-스레드를 사용한 I/O를 어떻게 asyncio로 포팅할 수 있는지 알아두라
+- 코루틴의 장점을 이해한 뒤에는 코루틴을 사용하고자 기존 코드베이스를 포팅하기가 두려울 수 있음
+- 다행히 파이썬의 비동기 지원은 파이썬 언어에 잘 통합돼 있음. 따라서 스레드와 블로킹 I/O를 사용하는 코드를 코루틴과 비동기 I/O를 사용하는 코드로 옮기기 쉬움
+- 예를 들어 숫자를 추측해주는 게임을 실행해주는 TCP 기반의 서버를 생각해보자
+- 이 서버는 고려할 숫자의 범위를 표현하는 lower와 upper 파라미터를 받음. 그 후 클라이언트가 요청할 때마다 서버는 이 범위 안의 숫자를 반환함
+- 마지막으로 서버는 자신이 추측한 숫자가 클라이언트가 정한 비밀의 수에 가까운지(따뜻함), 아니면 먼지(차가움)에 대한 정보를 클라이언트로부터 받음
+- 이런 유형의 클라이언트/서버 시스템을 구축하는 가장 일반적인 방법은 블로킹 I/O와 스레드를 사용하는 것
+- 그러려면 메세지 송수신을 처리하는 도우미 클래스가 필요함
+- 이 경우 서버가 보내거나 받는 메세지 한 줄 한 줄은 처리할 명령을 표현
+~~~python
+class ConnectionBase:
+    def __init__(self, connection):
+        self.connection = connection
+        self.file = connection.makefile('rb')
+
+    def send(self, command):
+        line = command + "\n"
+        data = line.encode()
+        self.connection.send(data)
+
+    def receive(self):
+        line = self.file.readline()
+        if not line:
+            raise EOFError('Connection closed')
+        return line[:-1].decode()
+~~~
+- 서버는 한 번에 하나씩 연결을 처리하고 클라이언트의 세션 상태를 유지하는 클래스로 구현됨
+~~~python
+class Session(ConnectionBase):
+    def __init__(self, * args):
+        super().__init__(*args)
+        self._clear_state(None, None)
+
+    def _clear_state(self, lower, upper):
+        self.lower = lower
+        self.upper = upper
+        self.secret = None
+        self.guesses = []
+~~~
+- 이 클래스에서 가장 중요한 메서드는 다음 메서드
+- 이 메서드는 클라이언트에서 들어오는 메세지를 처리해 명령에 맞는 메서드를 호출해줌
+~~~python
+    #- 클라이언트에게 들어오는 메세지 처리 함수 : loop
+    def loop(self):
+        command = self.receive()
+        while command:
+            parts = command.split(' ')
+            if parts[0] == 'PARAMS':
+                self.set_params(parts)
+            elif parts[0] == 'NUMBER':
+                self.send_number()
+            elif parts[0] == 'REPORT':
+                self.receive_report(parts)
+            else:
+                raise UnknownCommandError(command)
+~~~
+- 첫 번째 명령은 서버가 추측할 값의 상한과 하한을 결정함
+~~~python
+  def set_params(self, parts):
+        assert len(parts) == 3
+        lower = int(parts[1])
+        upper = int(parts[2])
+        self._clear_state(lower, upper)
+~~~
+- 두 번째 명령은 클라이언트에 해당하는 Session 인스턴스에 저장된 이전 상태를 바탕으로 새로운 수를 추측함
+- 특히 이 코드는 서버가 파라미터가 설정된 시점 이후에 같은 수를 두 번 반복해 추측하지 않도록 보장함
+~~~python
+   def next_guess(self):
+        if self.secret is not None:
+            return self.secret
+
+        while True:
+            guess = random.randint(self.lower, self.upper)
+            if guess not in self.guesses:
+                return guess
+
+    def send_number(self):
+        guess = self.next_guess()
+        self.guesses.append(guess)
+        self.send(format(guess))
+~~~
+- 세 번째 명령은 서버의 추측이 따뜻한지 차가운지에 대해 클라이언트가 보낸 결과를 받은 후 Session 상태를 적절히 바꿈
+~~~python
+  def receive_report(self, parts):
+        assert len(parts) == 2
+        decision = parts[1]
+        last = self.guesses[-1]
+        if decision == CORRECT:
+            self.secret = last
+
+        print(f'서버: {last}는 {decision}')
+~~~
+- 클라이언트도 상태가 있는 클래스를 사용해 구현됨
+~~~python
+import contextlib
+import math
+
+class Client(ConnectionBase):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._clear_state()
+
+    def _clear_state(self):
+        self.secret = None
+        self.last_distance = None
+~~~
+- 추측 게임의 파라미터를 with 문을 통해 설정함으로써 서버 측의 상태를 제대로 관리하게 만듬
+- 다음 메서드는 첫 번째 명령을 서버에게 보냄
+~~~python
+ @contextlib.contextmanager
+    def session(self, lower, upper, secret):
+        print(f'\n{lower}와 {upper} 사이의 숫자를 맞춰보세요!'
+              f' 쉿! 그 숫자는 {secret} 입니다.')
+        self.secret = secret
+        self.send(f'PARAMS {lower} {upper}')
+        try:
+            yield
+        finally:
+            self._clear_state()
+            self.send('PARAMS 0 -1')
+~~~
+- 두 번째 명령을 구현하는 다른 메서드를 사용해 새로운 추측을 서버에게 요청함
+~~~python
+  def request_numbers(self, count):
+        for _ in range(count):
+            self.send('NUMBER')
+            data = self.receive()
+            yield int(data)
+            if self.last_distance == 0:
+                return
+~~~
+- 세 번째 명령을 구현하는 마지막 메서드를 통해 서버가 돌려준 추측이 마지막으로 결과를 알려준 추측보다 더 차갑거나 따뜻한지를 알려줌
+~~~python
+    def report_outcome(self, number):
+        new_distance = math.fabs(number - self.secret)
+        decision = UNSURE
+
+        if new_distance == 0:
+            decision = CORRECT
+        elif self.last_distance is None:
+            pass
+        elif new_distance < self.last_distance:
+            decision = WARMER
+        elif new_distance > self.last_distance:
+            decision = COLDER
+
+        self.last_distance = new_distance
+
+        self.send(f'REPORT {decision}')
+        return decision
+~~~
+- 소켈에 리슨하는 스레드를 하나 사용하고 새 연결이 들어올 때마다 스레드를 추가로 시작하는 방식으로 서버를 실행함
+~~~python
+import socket
+from threading import Thread
+
+
+def handle_connection(connection):
+    with connection:
+        session = Session(connection)
+        try:
+            session.loop()
+        except EOFError:
+            pass
+
+
+def run_server(address):
+    with socket.socket() as listener:
+        listener.bind(address)
+        listener.listen()
+        while True:
+            connection, _ = listener.accept()
+            thread = Thread(target=handle_connection,
+                            args=(connection,),
+                            daemon=True)
+            thread.start()
+~~~
+- 클라이언트는 주 스레드에서 실행되며 추측 게임의 결과를 호출한 쪽에 돌려줌
+- 이 코드는 명시적으로 다양한 파이썬 언어 기능을 활용함
+- 앞으로 각 기능을 코루틴으로 어떻게 포팅할 수 있는지 살펴보자
+~~~python
+def run_client(address):
+    with socket.create_connection(address) as connection:
+        client = Client(connection)
+
+        with client.session(1, 5, 3):
+            results = [(x, client.report_outcome(x))
+                       for x in client.request_numbers(5)]
+
+        with client.session(10, 15, 12):
+            for number in client.request_numbers(5):
+                outcome = client.report_outcome(number)
+                results.append((number, outcome))
+
+    return results
+~~~
+- 마지막으로 지금까지 만든 모든 요소를 하나로 붙여 제대로 작동하는지 확인
+~~~python
+def main():
+    address = ('127.0.0.1', 1234)
+    server_thread = Thread(
+        target=run_server, args=(address,), daemon=True)
+    server_thread.start()
+
+    results = run_client(address)
+    for number, outcome in results:
+        print(f'클라이언트: {number}는 {outcome}')
+
+main()
+~~~
+- 이 예제를 async, await, asyncio 내장 모듈을 사용해 변환하려면 얼마나 많은 노력이 필요할까?
+- 먼저 ConnectionBase 클래스가 블로킹 I/O대신 send와 receive라는 코루틴을 제공하게 바꿔야 함
+- 앞에서 본 코드와 새로운 코드의 차이를 명확히 보여주고자 변경된 부분에 `#변경됨` 이라고 주석을 넣음
+~~~python
+# python 3.8 이상에서만 실행됨(walus연산자때문)
+
+class EOFError(Exception):
+    pass
+
+
+class AsyncConnectionBase:
+    def __init__(self, reader, writer):  # 변경됨
+        self.reader = reader  # 변경됨
+        self.writer = writer  # 변경됨
+
+    async def send(self, command):
+        line = command + '\n'
+        data = line.encode()
+        self.writer.write(data)  # 변경됨
+        await self.writer.drain()  # 변경됨
+
+    async def receive(self):
+        line = await self.reader.readline()  # 변경됨
+        if not line:
+            raise EOFError('연결 닫힘')
+        return line[:-1].decode()
+~~~
+
 
 ## 용어 정리
 - 업스트림, 다운스트림
   - 업스트림: 로컬에서 서버로 전달되는 데이터의 흐름
   - 다운스트림: 서버에서 로컬로 전달되는 데이터의 흐름  
+- event loop
+  - 
