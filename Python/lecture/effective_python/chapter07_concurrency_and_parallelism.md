@@ -2029,18 +2029,213 @@ class AsyncConnectionBase:
         data = line.encode()
         self.writer.write(data)  # 변경됨
         await self.writer.drain()  # 변경됨
-
+ㅎ
     async def receive(self):
         line = await self.reader.readline()  # 변경됨
         if not line:
             raise EOFError('연결 닫힘')
         return line[:-1].decode()
 ~~~
+- 단일 연결의 세션 상태를 표현하기 위해 상태를 담는 클래스를 추가해야 함
+- 여기서 달라진 부분은 클래스 이름과 이 클래스가 `ConnectionBase` 대신 `AsyncConnectionBase`를 상속한다는 점 뿐
+~~~python
+class AsyncSession(AsyncConnectionBase):  # 변경됨
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._clear_state(None, None)
 
+    def _clear_state(self, lower, upper):
+        self.lower = lower
+        self.upper = upper
+        self.secret = None
+        self.guesses = []
+~~~
+- 서버의 명령 처리 루프에 들어가는 주 진입점 메서드를 변경함. 코루틴이 되기 위해 꼭 필요한 곳만 바꾸자
+~~~python
+ async def loop(self):  # 변경됨
+        while command := await self.receive():  # 변경됨
+            parts = command.split(' ')
+            if parts[0] == 'PARAMS':
+                self.set_params(parts)
+            elif parts[0] == 'NUMBER':
+                await self.send_number()  # 변경됨
+            elif parts[0] == 'REPORT':
+                self.receive_report(parts)
+            else:
+                raise UnknownCommandError(command)
+~~~
+- 첫 번째 명령을 처리하는 메서드는 바꿀 필요가 없음
+~~~python
+  def set_params(self, parts):
+        assert len(parts) == 3
+        lower = int(parts[1])
+        upper = int(parts[2])
+        self._clear_state(lower, upper)
+~~~
+- 두 번쨰 명령을 처리하는 메서드에서 바꿀 부분은 추측한 값을 클라이언트에게 송신할 떄 비동기 I/O를 쓰게 하는 것
+~~~Python
+ def next_guess(self):
+        if self.secret is not None:
+            return self.secret
+
+        while True:
+            guess = random.randint(self.lower, self.upper)
+            if guess not in self.guesses:
+                return guess
+
+ async def send_number(self):           # 변경됨
+        guess = self.next_guess()
+        self.guesses.append(guess)
+        await self.send(format(guess))  # 변경됨
+~~~
+- 세 번쨰 명령을 처리하는 메서드에서 바꿀 부분은 없음
+~~~python
+  def receive_report(self, parts):
+        assert len(parts) == 2
+        decision = parts[1]
+        last = self.guesses[-1]
+        if decision == CORRECT:
+            self.secret = last
+
+        print(f'서버: {last}는 {decision}')
+~~~
+- 마찬가지로 클라이언트 클래스도 `AsyncConnectionBase`를 상속하게 바꾸어야 함
+~~~python
+import contextlib
+import math
+
+class AsyncClient(AsyncConnectionBase):
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._clear_state()
+
+    def _clear_state(self):
+        self.secret = None
+        self.last_distance = None
+~~~
+- 클라이언트의 첫 번째 명령을 처리하는 메서드에서는 몇 부분에 async와 await 키워드를 추가해야함
+- 그리고 `contextlib` 내장 모듈에서 `asnyc contextmanager` 도우미 함수를 가져와 사용해야 함 
+~~~Python
+ @contextlib.asynccontextmanager                         # 변경됨
+    async def session(self, lower, upper, secret):          # 변경됨
+        print(f'\n{lower}와 {upper} 사이의 숫자를 맞춰보세요!'
+              f' 쉿! 그 숫자는 {secret} 입니다.')
+        self.secret = secret
+        await self.send(f'PARAMS {lower} {upper}')          # 변경됨
+        try:
+            yield
+        finally:
+            self._clear_state()
+            await self.send('PARAMS 0 -1')                   # 변경됨
+~~~
+- 두 번째 명령에서도 코루틴 동작이 필요한 부분에 async와 await를 추가하기만 하면 됨
+~~~python
+    async def request_numbers(self, count):            # 변경됨
+        for _ in range(count):
+            await self.send('NUMBER')                  # 변경됨
+            data = await self.receive()                # 변경됨
+            yield int(data)
+            if self.last_distance == 0:
+                return
+~~~
+- 세 번째 명령에서는 `async`와 `await`를 각각 하나씩만 추가하면 됨
+~~~python
+ async def report_outcome(self, number):                    # 변경됨
+        new_distance = math.fabs(number - self.secret)
+        decision = UNSURE
+
+        if new_distance == 0:
+            decision = CORRECT
+        elif self.last_distance is None:
+            pass
+        elif new_distance < self.last_distance:
+            decision = WARMER
+        elif new_distance > self.last_distance:
+            decision = COLDER
+
+        self.last_distance = new_distance
+
+        await self.send(f'REPORT {decision}')                  # 변경됨
+
+        # 잠시 대기해서 출력 순서 조정
+        await asyncio.sleep(0.01)
+        return decision
+~~~
+- 서버를 실행하는 코드는 `asyncio` 내장 모듈과 그 모듈에 있는 `start_server` 함수를 사용하도록 완전히 다시 작성해야함
+~~~python
+import asyncio
+
+async def handle_async_connection(reader, writer):
+    session = AsyncSession(reader, writer)
+    try:
+        await session.loop()
+    except EOFError:
+        pass
+
+async def run_async_server(address):
+    server = await asyncio.start_server(
+        handle_async_connection, *address)
+    async with server:
+        await server.serve_forever()
+~~~
+- 게임을 시작하는 `run client` 함수는 거의 모든 줄을 바꿔야 함. 예전에 블로킹 `socket` 인스턴스와 상호작용하던 모든 부분을 비슷한 기능을 제공하는 `asyncio` 버전으로 변경해야 함
+- 함수에서 코루틴과 상호작용해야 하는 다른 부분에는 `async`과 `await` 키워드를 적절히 추가해줘야 함
+- 이런 키워드를 추가하지 않으면 실행 시점에 예외가 발생함
+~~~python
+async def run_async_client(address):
+    # 서버가 시작될 수 있게 기다려주기
+    await asyncio.sleep(0.1)
+
+    streams = await asyncio.open_connection(*address)   # New
+    client = AsyncClient(*streams)                      # New
+
+    async with client.session(1, 5, 3):
+        results = [(x, await client.report_outcome(x))
+                   async for x in client.request_numbers(5)]
+
+    async with client.session(10, 15, 12):
+        async for number in client.request_numbers(5):
+            outcome = await client.report_outcome(number)
+            results.append((number, outcome))
+
+    _, writer = streams                                # 새 기능
+    writer.close()                                     # 새 기능
+    await writer.wait_closed()                         # 새 기능
+
+    return results
+~~~
+- `run_async_client` 에서 흥미로운 부분은 기존 함수를 코루틴으로 포팅하기 위해 `AsyncClient`와 상호작용하는 대부분의 코드 구조를 바꿀 필요가 없었다는 점
+- 우리에게 필요한 언어 기능들은 대부분 그에 대응하는 비동기 기능이 존재하므로 코드를 쉽게 마이그레이션 할 수 있음
+- 하지만 항상 포팅이 쉬운 것은 아니며, `next`와 `iter` 내장 함수에 대응하는 비동기 함수는 없음
+- 대신 직접 `__anext__`나 `__aiter__` 메서드에 대해 await를 해야함
+- `yield from`에 대응하는 비동기 버전도 없음
+- 따라서 제너레이터를 합성하면 코드 잡음이 늘어남. 하지만 파이썬에 `async` 기능이 빠르게 추가된 추세를 감안하면, 이런 기능이 추가되는 것은 금방일 것임
+- 마지막으로 위에서 만든 새로운 비동기 예제를 전부 실행하기 위한 코드를 변경해야 함
+- 다음 코드는 `asyncio.create_task` 함수를 통해 서버를 큐에 넣은 후 이벤트 루프에서 실행함
+- 그 후 코드가 await에 도달하면 클라이언트 코드와 서버가 병렬로 수행됨
+- 이 방식은 `asyncio.gather` 함수의 동작과는 다른 팬아웃 접근 방법
+~~~python
+async def main_async():
+    address = ('127.0.0.1', 4321)
+
+    server = run_async_server(address)
+    asyncio.create_task(server)
+
+    results = await run_async_client(address)
+    for number, outcome in results:
+        print(f'클라이언트: {number}는 {outcome}')
+
+asyncio.run(main_async())
+~~~
+- 코드는 예상대로 동작함. 코루틴 버전은 스레드와의 상호작용이 제거됐기 때문에 코드를 따라가기가 더 쉽다
+- asyncio 내장 모듈은 다양한 도우미 함수를 제공하므로, `asyncio`를 사용하면 본 예제와 같은 서버를 작성할 때 필요한 소켓 관련 준비 코드의 양을 줄일 수 있음 
+
+#### 기억해야 할 내용
+- 파이썬은 for 루프, with 문, 제너레이터, 컴프리헨션의 비동기 버전을 제공하고, 코루틴 안에서 기존 라이브러리 도우미 함수를 대신에 즉시 사용할 수 있는 대안을 제공함
+- asyncio 내장 모듈을 사용하면 스레드와 블로킹 I/O를 사용하는 기존 코드를 코루틴과 비동기 I/O를 사용하는 코드로 포팅할 수 있음
 
 ## 용어 정리
 - 업스트림, 다운스트림
   - 업스트림: 로컬에서 서버로 전달되는 데이터의 흐름
   - 다운스트림: 서버에서 로컬로 전달되는 데이터의 흐름  
 - event loop
-  - 
