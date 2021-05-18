@@ -1,28 +1,129 @@
-import os,time
-os.environ['TZ'] = 'KST-09' # -는 본초자오선 동쪽을 뜻함
-time.tzset()
+class Book:
+    def __init__(self, title, due_date):
+        self.title = title
+        self.due_date = due_date
 
-import time
 
-now = 159823184
-local_tuple = time.localtime(now)
-time_format = '%Y-%m-%d %H:%M:%S'
+def add_book(queue, book):
+    queue.append(book)
+    queue.sort(key=lambda x: x.due_date, reverse=True)
 
-#- strftime --> UTC time -> current time
-time_str = time.strftime(time_format, local_tuple)
-print(time_str)
+queue = []
+add_book(queue, Book('돈키호테', '2020-06-07'))
+add_book(queue, Book('프랑켄슈타인', '2020-06-05'))
+add_book(queue, Book('레미제라블', '2020-06-08'))
+add_book(queue, Book('전쟁과 평화', '2020-06-03'))
 
-#- strftime --> current time -> UTC time
-time_tuple = time.strptime(time_str, time_format)
-utc_now = time.mktime(time_tuple)
-print(utc_now)
+class NoOverdueBooks(Exception):
+    pass
 
-import os
-parse_format = '%Y-%m-%d %H:%M:%S %Z'  # %Z는 시간대를 뜻함
-depart_icn = '2020-08-27 19:13:04 KST'
-time_tuple = time.strptime(depart_icn, parse_format)
-time_str = time.strftime(time_format, time_tuple)
-print(time_str)
+def next_overdue_book(queue, now):
+    if queue:
+        book = queue[-1]
+        if book.due_date < now:
+            queue.pop()
+            return book
+    raise NoOverdueBooks
 
-arrival_sfo = '2020-08-28 04:13:04 PDT'
-time_tuple = time.strptime(arrival_sfo, time_format)
+now = '2020-06-10'
+found = next_overdue_book(queue, now)
+print(found.title)
+
+found = next_overdue_book(queue, now)
+print(found.title)
+
+
+def return_book(queue, book):
+    queue.remove(book)
+
+queue = []
+book = Book('보물섬', '2020-06-04')
+
+add_book(queue, book)
+print('반납 전', [x.title for x in queue])
+
+return_book(queue, book)
+print('반납 후', [x.title for x in queue])
+
+
+try:
+    next_overdue_book(queue, now)
+except NoOverdueBooks:
+    pass
+else:
+    assert False
+
+from heapq import heappush
+
+def add_book(queue, book):
+    heappush(queue, book)
+
+queue = []
+add_book(queue, Book('작은 아씨들', '2020-06-05'))
+add_book(queue, Book('타임 머신', '2020-05-30'))
+
+import functools
+
+@functools.total_ordering
+class Book:
+    def __init__(self, title, due_date):
+        self.title = title
+        self.due_date = due_date
+
+    def __lt__(self, other):
+        return self.due_date < other.due_date
+
+queue = []
+add_book(queue, Book('돈키호테', '2020-06-07'))
+add_book(queue, Book('프랑켄슈타인', '2020-06-05'))
+add_book(queue, Book('레미제라블', '2020-06-08'))
+add_book(queue, Book('전쟁과 평화', '2020-06-03'))
+
+queue = [
+Book('돈키호테', '2020-06-07'),
+Book('프랑켄슈타인', '2020-06-05'),
+Book('레미제라블', '2020-06-08'),
+Book('전쟁과 평화', '2020-06-03'),
+]
+
+queue.sort()
+
+from heapq import heapify
+
+queue = [
+    Book('돈키호테', '2020-06-07'),
+    Book('프랑켄슈타인', '2020-06-05'),
+    Book('레미제라블', '2020-06-08'),
+    Book('전쟁과 평화', '2020-06-03'),
+]
+heapify(queue)
+
+from heapq import heappop
+def next_overdue_book(queue, now):
+    if queue:
+        book = queue[0]
+        if book.due_date < now:
+            heappop(queue)
+            return book
+    raise NoOverdueBooks
+
+now = '2020-06-02'
+book = next_overdue_book(queue, now)
+print(book.title)
+
+book = next_overdue_book(queue, now)
+print(book.title)
+
+try:
+    next_overdue_book(queue, now)
+except NoOverdueBooks:
+    pass
+else:
+    assert False
+
+@functools.total_ordering
+class Book:
+    def __init__(self, title, due_date):
+        self.title = title
+        self.due_date = due_date
+        self.returned = False
