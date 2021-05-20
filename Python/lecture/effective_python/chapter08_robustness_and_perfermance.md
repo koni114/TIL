@@ -992,7 +992,7 @@ def my_end_func():
 
 loop([], my_end_func())
 ~~~
-- 어차피 produce_email 안에서 try_receive_email로부터 전자우편을 받는데, 왜 Email을 produce_emails 안에서 처리하지 않을까?
+- 어차피 produce_email 안에서 try_receive_email로부터 전자우편을 받는데, 왜 Email을 produce_emails 안에서 처리하지 않을까?(하나의 함수에서 producer-consumer를 동시 처리해도 무방한데, 함수를 두개로 나눈 이유)
 - 이 문제는 결국 지연 시간과 단위 시간당 스루풋 사이의 상충 관계로 귀결됨
 - 생산자-소비자 큐를 사용할 때는 가능하면 빨리 원소를 수집하길 원하므로 새로운 원소를 받아들이는 지연 시간을 최소화하고 싶을 때가 많음
 - 소비자는 큐에 쌓인 원소를 일정한 스루풋(앞의 예제에서는 루프를 한 번 돌때마다 하나씩)으로 처리함
@@ -1012,6 +1012,7 @@ def list_append_benchmark(count):
         for i in range(count):
             queue.append(i)
 
+    #- 1000번 run(queue) 수행시 걸린 시간을 list로 return 해줌      
     tests = timeit.repeat(
         setup='queue = []',
         stmt='run(queue)',
@@ -1173,6 +1174,11 @@ print(f'이진 검색: {comparison:.6f}초')
 
 slowdown = 1 + ((baseline - comparison) / comparison)
 print(f'선형 검색이 {slowdown:.1f}배 더 걸림')
+
+>>>
+선형 검색: 6.426039초
+이진 검색: 0.006127초
+선형 검색이 1048.8배 더 걸림
 ~~~
 - `bisect`에서 가장 좋은 점은 리스트 타입뿐만 아니라 시퀀스처럼 작동하는 모든 파이썬 객체에 대해 bisect 모듈의 기능을 사용할 수 있다는 점임
 - `bisect` 모듈은 더 고급스런 기능도 제공함
@@ -1181,10 +1187,10 @@ print(f'선형 검색이 {slowdown:.1f}배 더 걸림')
 - 리스트에 들어 있는 정렬된 데이터를 검색할 때 index 메서드를 사용하거나 for 루프와 맹목적인 비교를 하면 선형 시간이 걸림
 - bisect 내장 모듈의 bisect_left 함수는 정렬된 리스트에서 원하는 값을 찾는데 로그 시간이 걸림. 따라서 접근 방법보다 훨씬 빠름
 
-### 73- 우선순위 큐로 headq를 사용하는 방법을 알아두라
+### 73- 우선순위 큐로 heapq를 사용하는 방법을 알아두라
 - 때로는 프로그램에서 원소를 받은 순서가 아닌 원소 간의 상대적인 중요도에 따라 원소를 정렬해야 하는 경우가 있음
 - 이런 목적에는 우선순위 큐가 적합함
-- 예를 들어 도서관에서 대출한 책을 관리하는 프로그램을 작성한다고 하자. 회원 중에는 계속 신간만 대출하는 사람이 있고, 대출한 책을 제시간에 반밥하는 사람이 있으며, 연체된 책이 있음을 통지해야 하는 사람이 있음
+- 예를 들어 도서관에서 대출한 책을 관리하는 프로그램을 작성한다고 하자. 회원 중에는 계속 신간만 대출하는 사람이 있고, 대출한 책을 제시간에 반납하는 사람이 있으며, 연체된 책이 있음을 통지해야 하는 사람이 있음
 - 다음은 대출한 책을 표현하는 클래스임 
 ~~~python
 class Book:
@@ -1373,7 +1379,7 @@ class Book:
 ~~~python
 def next_overdue_book(queue, now):
     while queue:
-        book = queue-[0]
+        book = queue[0]
         if book.returned:
             heappop(queue)
             continue
@@ -1391,3 +1397,211 @@ def next_overdue_book(queue, now):
 def return_book(queue, book):
     book.returned = True
 ~~~
+- 이 해법의 단점은 도서관의 모든 책이 대출된 후 만기 이전에 반환된 경우 가장 빠른 만기일이 될 때까지는 힙의 크기가 최대 크기에서 줄어들지 않는다는 것
+- heapq를 사용하면 힙 연산은 빨라지지만, 이런 저장소 부가 비용으로 인해 메모리 사용량이 크게 늘어날 수 있음
+- 이런 단점에도 불구하고 튼튼한 시스템을 구축하려고 한다면 ,최악의 경우를 가정하고 계획을 세워야 함
+- 따라서 무슨 이유로든 대출된 모든 책이 연체될 수도 있다고 가정해야 함
+- 이런 메모리 비용은 우리가 계획을 세울 때 제약을 추가함으로써 완화시킬 방법을 고안해야 하는 설계상의 고려 사항임
+
+#### 기억해야 할 내용
+- 우선순위 큐를 사용하면 선입선출이 아니라 원소의 중요도에 따라 처리할 수 있음
+- 리스트 연산을 사용해 우선순위를 구현하면 큐 크기가 커짐에 따라 프로그램의 성능이 선형보다 더 빠르게 나빠짐
+- `heapq` 내장 모듈은 효율적으로 규모 확장이 가능한 우선순위 큐를 구현하는 데 필요한 모든 기능을 제공함
+- `heapq`를 사용하려면 우선순위를 부여하려는 자연스러운 순서를 가져야 함. 이는 원소를 표현하는 클래스에 대해 `__lt__`와 같은 특별 메서드가 있어야 함
+
+### 74- bytes를 복사하지 않고 다루려면 memoryview와 bytearray를 사용해라
+- 파이썬이 CPU 위주의 계산 작업을 추가적인 노력없이 병렬화해줄 수는 없지만, 스루풋이 높은 병렬 I/O를 다양한 방식으로 지원할 수는 있음
+- 그럼에도 불구하고 이런 I/O 도구를 잘못 사용해서 파이썬 언어가 I/O 위주의 부하에 대해서도 너무 느리다는 결론으로 이어지기가 쉬움
+- 예를 들어 TV나 영화를 모두 내려받지 않고도 시청할 수 있게 네트워크를 통해 스트리밍하는 미디어 서버를 만든다고 하자
+- 이런 시스템의 기능으로 플레이 중인 비디오를 플레이 시간상 앞이나 뒤로 이동해서 일부를 건너뛰거나 반복하는 기능이 있음
+- 클라이언트 프로그램에서 사용자가 선택한 시간에 대응하는 데이터 덩어리를 서버에 요청해 이 기능을 구현할 수 있음 
+~~~python
+def timecode_to_index(video_id, timecode):
+    # video data의 offset을 반환
+
+
+def request_chunk(video_id, byte_offset, size):
+    #- video id에 대한 비디오 데이터 중 바이트 오프셋에서부터 size만큼 반환
+
+video_id = ...
+timecode = '01:09:14:28'
+byte_offset = timecode_to_index(video_id, timecode)
+size = 20 * 1024 * 1024 #- 20MB
+video_data = request_chunk(video_id, byte_offset, size)
+~~~
+- `request_chunk` 요청을 받아 요청에 해당하는 20MB의 데이터를 돌려주는 서버 측 핸들러를 어떻게 구현할 수 있을까? 
+- 이 예제의 경우 서버의 명령과 제어 부분은 이미 만들어져 있다고 가정하자
+- 여기서는 요청받은 데이터 덩어리를 메모리 캐시에 들어 있는 수 기가바이트 크기의 비디오 정보에서 꺼낸 후 소켓을 통해 클라리언트에게 돌려주는 과정에 집중
+- 다음은 서버 핸들러를 구현한 코드를 보여줌
+~~~Python
+socket = ...             #- 클라이언트가 연결한 소켓
+video_data = ...         #- video_id에 해당하는 데이터가 들어 있는 bytes 
+byte_offset = ...        #- 요청받은 시작 위치
+size = 20 * 1024 * 1024  #- 요청받은 데이터 크기
+
+chunk = video_data[byte_offset:byte_offset+size]
+socket.send(chunk)
+~~~
+- 이 코드의 지연 시간과 스루풋은 video_data에서 20MB의 비디오 덩어리를 가져오는 데 걸리는 시간과 이 데이터를 클라이언트에게 송신하는 데 걸리는 시간이라는 두 가지 요인에 의해 결정됨
+- 소켓이 무한히 빠르다고 가정하면, 이 코드의 지연시간과 스루풋은 데이터 덩어리를 가져와 만드는 데 걸리는 시간에 따라 결정됨
+- 따라서 최대 성능을 알아보려면 소켓 송신 부분은 무시하고 데이터 덩어리를 만들기 위해 bytes 인스턴스를 슬라이싱하는 방법에 걸리는 시간을 측정하면 됨
+- timeit을 이용한 마이크로 벤치마크를 통해 이 방법의 특성을 알아볼 수 있음
+~~~Python
+import timeit
+
+def run_test():
+    chunk = video_data[byte_offset:byte_offset+size]
+
+result = timeit.timeit(
+    stmt='run_test()',
+    globals=globals(),
+    number=100) / 100
+
+print(f"{result:0.9f}초")
+
+>>>
+0.004925669초
+~~~
+- 클라이언트에게 보낼 20MB의 슬라이스를 꺼내는 데 대략 5밀리초가 걸림
+- 이는 우리 서버 최대 전체 스루풋이 이론적으로 20MB / 5밀리초 = 7.3GB/초라는 뜻임
+- 이 보다 빨리 메모리에서 비디오 데이터를 꺼내올 수는 없음
+- 이 서버에서 병렬로 데이터 덩어리를 요청할 수 있는 클라이언트의 최대 개수는 1 CPU - 초 / 5밀리초 = 200임(1초동안 멀티스레드로 처리할 수 있는 클라이언트 개수가 200개)
+- 이 개수는 `asyncio` 내장 모듈 같은 도구가 지원할 수 있는 수만 건의 동시 접속에 비하면 아주 작음
+- <b>문제는 기반 데이터를 bytes 인스턴스로 슬라이싱하려면 메모리를 복사해야 하는데, 이 과정이 CPU 시간을 점유한다는 점임</b>
+- 이 코드를 더 잘 작성하는 방법은 파이썬이 제공하는 `memoryview` 내장 타입을 사용하는 것
+- memoryview는 CPython의 고성능 버퍼 프로토콜을 프로그램에 노출시켜줌
+- 버퍼 프로토콜은 런타입과 C 확장이 bytes와 같은 객체를 통하지 않고 하부 데이터 버퍼에 접근할 수 있게 해주는 저수준 C API임
+- memoryview 인스턴스의 가장 좋은 점은 <b>슬라이싱을 하면 데이터를 복사하지 않고 새로운 memoryview 인스턴스를 만들어 준다는 점</b>
+- 다음 코드는 bytes 인스턴스를 둘러싸는 memoryview를 만들고, 이 memoryview의 슬라이스를 살펴봄
+~~~python
+data = '동해물과 abc 백두산이 마르고 닳도록'.encode('utf8')
+view = memoryview(data)
+chunk = view[12:19]
+print(chunk)
+print('크기:', chunk.nbytes)
+print("뷰의 데이터:", chunk.tobytes())
+print("내부 데이터: ", chunk.obj)
+
+>>>
+<memory at 0x7fd5891221f0>
+크기: 7
+뷰의 데이터: b' abc \xeb\xb0'
+내부 데이터:  b'\xeb\x8f\x99\xed\x95\xb4\xeb\xac\xbc\xea\xb3\xbc abc \xeb\xb0\xb1\xeb\x91\x90\xec\x82\xb0\xec\x9d\xb4 \xeb\xa7\x88\xeb\xa5\xb4\xea\xb3\xa0 \xeb\x8b\xb3\xeb\x8f\x84\xeb\xa1\x9d'
+~~~
+- 복사가 없는(zero-copy) 연산을 활성화함으로써 memoryview는 Numpy 같은 수치 계산 확장이나 이 예제 프로그램 같은 I/O 위주 프로그램이 커다란 메모리를 빠르게 처리해야 하는 경우에 성능을 엄청나게 향상 시킬 수 있음
+- 다음은 앞의 예제를 `memoryview`를 사용해 마이크로 벤치마크를 이용해 성능을 측정한 결과임
+~~~python
+video_view = memoryview(video_data)
+def run_test():
+    chunk = video_view[byte_offset:byte_offset+size]
+
+result = timeit.timeit(
+    stmt='run_test()',
+    globals=globals(),
+    number=100) / 100
+
+print(f"{result:0.9f} 초")
+
+>>>
+0.000000250초
+~~
+- 결과는 250나노초임. 이제 서버의 이론적인 최대 스루풋은 20MB/250나노초 = 164TB/초
+- 병렬 클라이언트의 경우 이론적으로 최대 1 CPU - 초 / 250나노초 = 400만개까지 지원 가능
+- 성능 개선으로 인해 이제 프로그램 성능은 CPU의 성능이 아니라 클라이언트 소켓 연결의 성능에 따라 전적으로 제한됨
+- 이제 데이터가 반대 방향으로 흘러야 한다고 생각해보자
+- 일부 클라이언트가 여러 사용자게에 방송을 하기 위해 서버로 라이브 비디오 스트림을 보내야 함
+- 그렇게 하려면 사용자가 가장 최근에 보낸 비디오 데이터를 캐시에 넣고 다른 클라이언트가 캐시에 있는 비디오 데이터를 읽게 해야 함
+- 다음은 클라이언트가 서버로 1MB 데이터를 새로 보낸 경우를 구현한 코드임
+~~~python
+socket = ...
+video_cache = ...
+byte_offset = ...
+size = 1024 * 1024
+chunk = socket.recv(size)
+video_view = memoryview(video_cache)
+before = video_view[:byte_offset]
+after = video_view[byte_offset + size:]
+new_cache = b''.join([before, chunk, after])
+~~~
+- socket.recv 메서드는 bytes 인스턴스를 반환함. 간단한 슬라이스 연산과 bytes.join 메서드를 사용하면 현재의 `bytes_offset`에 있는 기존 캐시 데이터를 새로운 데이터로 스플라이스(splice)할 수 있음
+- 이런 연산의 성능을 확인하기 위해 또 다른 마이크로 벤치마크를 실행할 수 있음
+- 여기서는 가짜 소켓을 사용하기 때문에 이 성능 테스트는 I/O 상호작용을 테스트하지 않고 메모리 연산의 성능만 테스트함
+~~~python
+def run_test():
+    chunk = socket.recv(size)
+    before = video_view[:byte_offset]
+    after = video_view[byte_offset + size:]
+    new_cache = b''.join([before, chunk, after])
+
+timeit.timeit(
+    stmt='run_test()',
+    globals=globals(),
+    number=100) / 100
+
+>>>
+0.033520550초
+~~~
+- 1MB 데이터를 받아 비디오 캐시를 갱신하는데 33밀리초가 걸림. 이는 수신 시 최대 스루풋이 1MB / 33밀리초 = 31MB/초이고, 비디오를 이런 방식으로 스트리밍해 방송하는 클라이언트는 최대 31MB / 1MB = 31개로 제한된다는 뜻
+- 이런 구조는 확장성이 없음
+- 이런 코드를 작성하는 더 나은 방법은 파이썬 내장 `bytearray` 타입과 `memoryview`를 같이 사용하는 것
+- bytes 인스턴스의 한 가지 단점은 읽기 전용이라 인덱스를 사용해 변경이 불가능하다는 점임
+~~~python
+my_bytes = b'hello'
+my_bytes[0] = b'\x79'
+
+>>>
+TypeError: 'bytes' object does not support item assignment
+~~~
+- <b>bytearray 타입은 bytes에서 원하는 있는 값을 바꿀 수 있는 가변(mutable) 버전과 같음</b>
+- 인덱스를 사용해 bytearray의 내용을 바꿀 때는 바이트 문자열(한 글자짜리)이 아니라 정수를 대입함
+~~~python
+my_array = bytearray('hello 안녕'.encode('utf8')) #- b"가 아니라# " 문자열
+my_array[0] = 0x79
+print(my_array)
+
+>>>
+bytearray(b'yello \xec\x95\x88\xeb\x85\x95')
+~~~
+- bytearray도 memoryview를 통해 감쌀 수 있음. memoryview를 슬라이싱해서 객체를 만들고, 이 객체에 데이터를 대입하면 하부의 bytearray 버퍼에 데이터가 대입됨
+- 이런 방법을 사용하면, 앞에서 bytes 인스턴스를 스플라이스해 클라이언트로부터 받은 데이터를 덧붙였던 것과 달리 데이터 복사에 드는 비용이 사라짐
+~~~python
+my_array = bytearray('row, row, row, your boat'.encode('utf8'))
+my_view = memoryview(my_array)
+write_view = my_view[3:13]
+write_view[:] = b'-10 bytes-'
+print(my_array)
+
+>>>
+bytearray(b'row-10 bytes-, your boat')
+~~~
+- `socket.recv_into` 나 `RawIOBase.readinto`와 같은 여러 파이썬 라이브러리 메서드가 버퍼 프로토콜을 사용해 데이터를 빠르게 받아들이거나 읽을 수 있음
+- 이런 메서드를 사용하면 새로 메모리를 할당하고 데이터를 복사할 필요가 없어짐
+- 다음 코드는 스플라이스를 하지 않고 `socket.recv_into`와 `memoryview` 슬라이스를 사용해 하부의 `bytearray`에 데이터를 수신함
+~~~python
+video_array = bytearray(video_cache)
+write_view = memoryview(video_array)
+chunk = write_view[byte_offset: byte_offset + size]
+
+socket.recv_into(chunk)
+~~~
+- 마이크로 벤치마크를 실행해 이런 방법과 앞에서 본 `socket.recv`를 사용하는 방법의 성능을 비교할 수 있음
+~~~python
+def run_test():
+    chunk = write_view[byte_offset:byte_offset + size]
+    socket.recv_into(chunk)
+
+result = timeit.timeit(
+    stmt='run_test()',
+    globals=globals(),
+    number=100) / 100
+
+>>>
+0.000033925 초
+~~~
+- 1MB 데이터를 받는 데 33마이크로초가 걸림. 이는 이 서버의 최대 스루풋이 1MB / 33마이크로초 = 31GB/초이고, 최대 31GB / 1MB = 31,000개의 클라이언트를 병렬로 처리할 수 있다는 의미 
+- 이런 규모 확장성이 바로 우리가 원하던 확장성임!
+
+#### 기억해야 할 내용
+- `memoryview` 내장 타입은 객체의 슬라이스에 대해 파이썬 고성능 버퍼 프로토콜로 읽고 쓰기를 지원하는, 복사가 없는 인터페이스를 제공
+- `bytearray` 내장 타입은 복사가 없는 읽기 함수(`socket.recv_from`)에 사용할 수 있는 bytes와 비슷한 변경 가능한 타입을 제공
+- `memoryview`로 bytearray를 감싸면 복사에 따른 비용을 추가 부담하지 않고도 수신받은 데이터를 버퍼에서 원하는 위치에 스플라이스 할 수 있음
