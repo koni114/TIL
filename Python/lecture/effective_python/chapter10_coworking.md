@@ -846,3 +846,460 @@ def configure():
 - 동적 임포트는 리펙터링과 복잡도 증가를 최소화하면서 모듈 간의 순환 의존 관계를 깨는 가장 단순한 해법임
 
 ### 89- 리펙터링과 마이그레이션 방법을 알려주기 위해 warning을 사용해라
+- 예전에 예측하지 못했던 상황을 새로 코딩하기 위하여 자연스럽게 API를 변경하게 됨
+- API가 작고 상위, 하위 의존관계가 없다면 API를 변경하는 것은 단조로움
+- 프로그래머가 혼자 작은 API와 그 API를 호출하는 모든 지점을 변경하고 한꺼번에 커밋할 수 있을 정도임
+- 하지만 코드베이스가 커지면 API를 호출하는 지점 수가 너무 많아지거나 여러 소스 코드 저장소에 호출 지점이 흩어지므로, API 변경과 호출 지점 변경을 함께 일관성 있게 수행하는 것이 실용적이지 않거나 불가능 할 수 있음
+- 대신 우리는 사람들에게 자신의 코드를 리펙터링하고 우리의 API를 사용하는 부분을 최신 API에 맞춰 변경하도록 협력을 요청할 수 있는 방법을 찾아야 함
+- 다음은 속력과 시간으로 거리를 계산하는 코드
+~~~python
+def print_distance(speed, duration):
+    distance = speed * duration
+    print(f"{distance} 마일")
+
+print_distance(5, 2.5)
+~~~
+- 코드가 아주 잘 작동해서 여러 군데에서 이 코드를 사용한다고 하자
+- 잘 작동하지만, 계산 단위가 암시적이라 오류 발생률이 높음
+- `print_distance`가 `speed`와 `duration`에 대한 단위와 계산한 값을 출력할 때 선택적인 키워드 인자로 받게하면 문제 해결 가능
+~~~python
+CONVERSIONS = {
+    'mph': 1.60934 / 3600 * 1000,
+    '시간': 3600,
+    '마일': 1.60934 * 1000,
+    '미터': 1,
+    'm/s': 1,
+    '초': 1}
+
+#- 값을 unit 해당 단위로 바꿔줌
+def convert(value, units):
+    """value을 unit 단위로 바꿔줌
+    """
+    rate = CONVERSIONS[units]
+    return rate * value
+
+
+def localize(value, units):
+    """
+    다시 원 값으로 돌려줌
+    """
+    rate = CONVERSIONS[units]
+    return value / rate
+
+
+def print_distance(speed, duration, *,
+                   speed_units='mph', duration_units='시간', distance_units='마일'):
+
+    norm_speed = convert(speed, speed_units)
+    norm_duration = convert(duration, duration_units)
+    norm_distance = norm_speed * norm_duration
+    distance = localize(norm_distance, distance_units)
+    print(f"{distance} {distance_units}")
+~~~
+- 이제 코드를 변경해 마일로 변경하므로서 단위를 맞춰줄 수 있음
+~~~python
+print_distance(1000, 3, 
+speed_units= '미터',duration_units='초')
+
+>>>
+1.8641182099494205 마일
+~~~
+- 단위를 지정하면 오류 가능성도 낮아지고, 새로 읽는 사람도 코드를 이해하기 쉬움
+- 파이썬은 `warnings` 내장 모듈을 제공하는데, 다른 프로그래머에게 자신이 의존하는 모드가 변경됐으므로 코드를 변경하라고 안내할 수 있음
+- <b>컴퓨터가 자동으로 오류를 처리할 때는 예외를 사용하지만, 프로그래머가 협업하는 사람들에게 의사를 전달할 때는 warning 사용</b>
+- `print_distance`를 변경해 단위를 지정하는 키워드 인자를 제공하지 않았다고 경고를 발생할 수 있음
+- 이런 방식으로 `print_distance`에 의존하는 사람들에게 적절한 조치를 취하지 않으면 경고를 명시적으로 제공하면서 잠시 동안 키워드 인자를 선택적으로 유지할 수 있음
+~~~python
+import warnings
+
+
+def print_distance(speed, duration, *,
+                   speed_units=None, duration_units=None, distance_units=None):
+
+    if speed_units is None:
+        warnings.warn('speed_unit가 필요합니다.', DeprecationWarning)
+        speed_units = 'mph'
+
+    if duration_units is None:
+        warnings.warn('duration_units가 필요합니다.', DeprecationWarning)
+        duration_units = 'mph'
+
+    if distance_units is None:
+        warnings.warn('distance_units가 필요합니다.', DeprecationWarning)
+        distance_units = 'mph'
+
+    norm_speed = convert(speed, speed_units)
+    norm_duration = convert(duration, duration_units)
+    norm_distance = norm_speed * norm_duration
+    distance = localize(norm_distance, distance_units)
+    print(f"{distance} {distance_units}")
+~~~
+- 예전과 같은 인자를 사용해 함수를 호출하고, `warnings`의 `sys.stderr` 출력을 살펴보면 경고가 발생하는지 알 수 있음
+~~~python
+import contextlib
+import io
+
+fake_stderr = io.StringIO()
+with contextlib.redirect_stderr(fake_stderr):
+    print_distance(1000, 3,
+                   speed_units='미터', duration_units='초')
+
+print(fake_stderr.getvalue())
+
+>>>
+<input>:15: DeprecationWarning: distance_units가 필요합니다.
+~~~
+- 이 함수에 경고 추가시, 일일이 `warnings.warn`를 추가해야 하고, 코드를 읽거나 유지하기가 어려움
+- 경고 메세지는 `warnings.warn`이 호출된 위치를 표시하지만, 실제 우리가 가리키고 싶은 위치는 `print_dinstance`를 호출하는 부분. 왜냐하면 나중에 수정을 해야할 부분이기 때문임!
+- <b>warnings.warn 함수는 stacklevel 파라미터를 지원함</b>. 이 파라미터를 사용하면 호출 스택에서 경고를 발생시킨 위치를 정확히 보고할 수 있음
+- 다음 코드는 선택적인 인자가 제공되지 않은 경우에 경고를 표시하고 빠진 인자에 대한 값을 제공하는 도우미 함수를 정의함
+~~~python
+def require(name, value, default):
+    if value is not None:
+        return value
+    warnings.warn(f'{name}이 곧 필수가 됩니다. 단위를 지정해 주세요',
+                  DeprecationWarning,
+                  stacklevel=3)
+    return default
+
+
+def print_distance(speed, duration, *,
+                   speed_units=None, duration_units=None, distance_units=None):
+
+    speed_units = require('speed_units', speed_units, 'mph')
+    duration_units = require('duration_units', duration_units, '시간')
+    distance_units= require('distance_units', distance_units, '마일')
+
+    norm_speed = convert(speed, speed_units)
+    norm_duration = convert(duration, duration_units)
+    norm_distance = norm_speed * norm_duration
+    distance = localize(norm_distance, distance_units)
+    print(f"{distance} {distance_units}")
+~~~
+- 프로그램 실행시, 경고하는 호출 위치를 정확히 전달할 수 있는지 확인 가능
+~~~python
+import contextlib
+import io
+
+fake_stderr = io.StringIO()
+with contextlib.redirect_stderr(fake_stderr):
+    print_distance(1000, 3,
+                   speed_units='미터', duration_units='초')
+
+print(fake_stderr.getvalue())
+
+>>>
+<input>:22: DeprecationWarning: distance_units이 곧 필수가 됩니다. 단위를 지정해 주세요
+~~~
+- 또한 warnings 모듈은 경고 발생시 작업을 수행할 수 있도록 할 수 있는데, 한가지 방법은 모든 경고를 오류로 바꿔 예외 처리를 하게끔 하는 것
+~~~python
+
+warnings.simplefilter('error')
+try:
+    warnings.warn('이 사용법은 향후 금지될 예정입니다.')
+except DeprecationWarning:
+    print('DeprecationWarning이 실제로 발생함.')
+    pass
+
+>>>
+Traceback (most recent call last):
+  File "<input>", line 4, in <module>
+UserWarning: 이 사용법은 향후 금지될 예정입니다.
+~~~
+- 이런 식으로 활용하는 것은 협업하는 사람들에게 코드를 변경해야 한다는 사실을 명확히 알려주는 아주 좋은 방법임
+- `warnings.simplefilter('error')`를 쓰지 않더라도, `-W error` command line에서 파이썬 인터프리터에게 넘기거나, PYTHONWARNINGS 환경 변수를 설정해 이런 정책을 사용 할 수 있음
+~~~Python
+# ex6.py
+warnings.simplefilter('error')
+try:
+    warnings.warn('이 사용법은 향후 금지될 예정입니다.')
+except DeprecationWarning:
+    print('DeprecationWarning이 실제로 발생함.')
+~~~
+~~~shell
+$ python -W error ex6.py
+~~~
+- 일단 사용이 금지될 코드를 사용하는 사람들이 `simplefilter`와 `filterwarnings` 함수를 사용해 오류를 무시할 수 있음
+~~~python
+warnings.simplefilter('ignore')
+warnings.warn('이 경고는 포준 오류(stderr)에 표시되지 않습니다.')
+~~~
+- 프로그램이 프로덕션에 배포하고 나면, 중요한 시점에 프로그램이 중단될 수도 있으므로 warning이 error로 발생되는 것은 타당하지 않음
+- 그 대신에 `logging` 내장 모듈에 복제하는 것을 고려할 수 있음
+- 다음 코드는 `logging.captureWarning` 함수를 호출하고 적절한 `py.warning` 로거를 설정함
+~~~python
+import warnings
+import logging
+import io
+
+fake_stderr = io.StringIO()
+handler = logging.StreamHandler(fake_stderr)
+formatter = logging.Formatter(
+    '%(asctime)-15s WARNING] %(message)s')
+handler.setFormatter(formatter)
+
+logging.captureWarnings(True)
+logger = logging.getLogger('py.warnings')
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+
+warnings.resetwarnings()
+warnings.simplefilter('default')
+warnings.warn('이 경고는 로그 출력에 표시됩니다')
+
+print(fake_stderr.getvalue())
+~~~
+- 로깅을 사용해 경고를 잡아내면, 프로그램에 오류 보고 시스템이 설정된 경우 프로덕션 환경에서도 중요한 warning을 통보 받을 수 있음
+- 실제 사용시 발생할 수 있는 미묘한 경우를 테스트가 다 체크하지 못하는 경우에는 이런 식으로 경고를 받는 기능이 특히 유용함
+- 또한 API 라이브러리 관리자는 경고가 제대로 된 환경에서 명확하고 해결 방법을 제대로 알려주는 메세지와 함께 만들어지는지 검증하는 단위 테스트를 작성해야 함
+- 다음 코드는 `warnings.catch_warnings` 함수를 contextManager를 통해 앞에서 정의한 `require` 함수 호출을 감쌈
+~~~python
+with warnings.catch_warnings(record=True) as found_warnings:
+    found = require('my_arg', None, '가짜 단위')
+    expected = '가짜 단위'
+    assert found == expected
+~~~
+- 경고 메세지를 수집하고 나면 경고의 개수, 자세한 메세지, 분류가 예상과 맞아떨어지는지 확인 가능
+~~~python
+assert len(found_warnings) == 1
+single_warnings = found_warnings[0]
+assert str(single_warnings.message) == 'my_arg이 곧 필수가 됩니다. 단위를 지정해 주세요'
+assert single_warnings.category == DeprecationWarning
+~~~
+
+#### 기억해야 할 내용
+- warnings 모듈을 사용하면 우리의 API를 호출하는 사용자들에게 앞으로 사용 금지될 사용법에 대해 알려줄 수 있음
+- 경고 메세지는 API 사용자들이 자신의 코드가 깨지기 전에 코드를 변경하도록 권장함
+- `-w error` 명령줄 인자를 파이썬 인터프리터에게 넘기면 경고를 오류로 높일 수 있음. 의존 관계에서 잠재적인 회귀 오류가 있는지 잡아내고 싶은 자동화 테스트에서 이런 기능이 특히 유용함
+- 프로덕션 환경에서는 경고를 logging 모듈로 복제해 실행 시점에 기존 오류 보고 시스템이 경고를 잡아내게 할 수 있음
+- 다운스트림 의존 관계에서 알맞은 때 경고가 발동되도록 코드가 생성하는 경고에 대해 테스트를 작성하면 유용함
+
+### 90-typing 정적 분석을 통해 버그를 없애라
+- 문서는 API 사용자가 API를 제대로 사용하게끔 도와주는 좋은 도구
+- 하지만 API 사용할 때 문서만 보고 참고하면 여전히 버그가 생기므로 API를 사용하는 사람이 API를 올바른 방법으로 사용하고, 우리의 코드가 하위 의존 관계를 올바른 방법으로 활용하는지 감시하는 매커니즘이 존재해야 함
+- 이를 위해 여러 프로그래밍 언어가 컴파일 시점 타입 검사를 제공하는데, 파이썬은 동적인 기능에 초점을 맞췄고 컴파일 시점의 타입 안정성을 전혀 제공하지 않음
+- 하지만 최근 들어 파이썬에서도 특별한 구문과 typing 모듈이 도입돼 변수, 클래스 필드, 함수, 메서드에 타입 애너테이션을 덧붙일 수 있게 됨
+- 이런 <b>type hint</b>를 사용하면 타입이 필요할 때마다 타입 지정이 가능해짐
+- 타입 애너테이션을 파이썬 프로그램에 추가하면, 정적 분석 도구로 프로그램 소스 코드를 검사해서 버그가 생길 가능성이 높은 부분을 식별할 수 있다는 장점이 있음
+- <b>typing 내장 모듈은 실제 그 자체로는 어떠한 타입 검사 기능도 제공하지 않음</b>
+- 단지 generics를 포함한 타입을 정의할 때 사용하는 공통 라이브러리를 제공해 줄 뿐
+- 파이썬 인터프리터 구현이 여럿 있는 것처럼(CPython, PyPy) typing을 사용하는 정적 분석 도구 구현도 여러 가지가 있음
+- 현재 가장 유명한 도구로는 mypy , pyre 등이 있는데, 이 책의 typing 예제에서는 mypy에 `--strict` 플래그를 사용함. 이를 사용하면 mypy 도구가 지원하는 여러 가지 경고를 모두 사용할 수 있음
+- 다음은 명령줄에서 mypy와 함께 프로그램을 실행하는 방법임
+~~~shell
+$python3 -m mypy --strict example.py
+~~~
+- 이 실행은 프로그램 실행 전에 많은 오류를 잡아낼 수 있음. 이로 인해 정적 분석은 좋은 단위 테스트에 안정성 계층을 추가해줌
+- 예를 들어 다음 코드에 있는 단순한 함수에서 컴파일은 잘되지만 실행 시점에 예외가 발생하는 경우
+~~~python
+def subtract(a, b):
+    return a - b
+
+subtract(10, '5')
+~~~
+- <b>파라미터와 변수 타입 애너테이션 사이는 콜론으로 구분함(name: int)</b> 반환 값 타입은 함수 인자 목록 뒤에 -> 타입이라는 형태로 지정함
+- 이런 타입 애너테이션과 mypy를 사용하면 버그를 쉽게 찾을 수 있음
+~~~python
+def subtract(a: int, b:int) -> int:
+    return a - b
+
+subtract(10, '5')
+
+>>>
+$ python3 -m mypy --strict example.py
+~~~
+- 또 다른 실수는 bytes와 str 인스턴스를 섞어 쓰는 것임
+~~~python
+def concat(a, b):
+    return a + b
+
+concat('first', b'second')
+~~~
+- 타입 힌트와 mypy를 사용하면 프로그램을 실행하기 전에 정적으로 문제를 감지할 수 있음
+~~~python
+def concat(a:str, b:str) -> str:
+    return a + b
+
+concat('first', b'second')
+~~~
+- 타입 애너테이션을 클래스에 적용할 수도 있음. 예를 들어 다음 클래스에는 프로그램을 실행하면 예외가 발생하는 버그가 두 개 있음
+~~~python
+class Counter:
+    def __init__(self):
+        self.value = 0
+
+    def add(self, offset):
+        value += offset
+
+    def get(self) -> int:
+        self.value
+~~~
+- `add`와 `get` 함수를 호출했을 때 에러 발생. mypy를 사용하면 두 에러를 쉽게 찾아낼 수 있음
+- 동적으로 작동하는 파이썬의 강점은 덕 타입(duck type)에 대해 작동하는 제너릭 기능을 작성하기 쉽다는 것임
+- 덕 타입에 대한 제너릭 기능을 사용하면, 한 구현으로 다양한 타입을 처리할 수 있으므로, 반복적인 수고를 줄일 수 있으며 테스트도 단순해짐
+- 다음 코드는 리스트의 값을 모두 조합하는 덕 타입을 지원하는 제너릭 함수를 정의함
+~~~python
+def combine(func, values):
+    assert len(values) > 0
+    result = values[0]
+    for next_value in values[1:]:
+        result = func(result, next_value)
+
+    return result
+
+def add(x, y):
+    return x + y
+
+inputs = [1, 2, 3, 4j]
+result = combine(add, inputs)
+assert result == 10
+
+>>>
+Traceback ...
+AssertError: (6+4j)
+~~~
+- typing 모듈의 제너릭 지원을 사용하면 이 함수에 에너테이션을 붙일 수 있고, 이 코드의 문제를 정적으로 발견할 수도 있음
+~~~python
+#- 다음의 코드 방식은 기억하기!
+from typing import Callable, List, TypeVar
+
+Value = TypeVar('Value')
+Func = callable[[Value, Value], Value]
+
+def combine(func: Func[Value], values:List[Value]) -> Value:
+
+    assert len(values) > 0
+
+    result =values[0]
+    for next_value in values[1:]:
+        result = func(result, next_value)
+
+    return result
+
+
+Real = TypeVar('Real', int, float)
+
+def add(x:Real, y:Real) -> Real:
+    return x + y
+
+inputs = [1, 2, 3, 4j]
+result = combine(add, inputs)
+assert result == 10
+
+>>>
+$ python3 -m mypy --restrict example.py
+~~~
+- 또 다른 흔한 오류로는 올바른 객체가 있다고 생각했는데, None 값을 만나는 경우를 들 수 있음
+~~~python
+def get_or_default(value, default):
+    if value is not None:
+        return value
+    return value
+
+found = get_or_default(3, 5)
+assert found == 3
+
+found = get_or_default(None, 5)
+assert found == 5
+
+>>>
+AssertionError: None
+~~~
+- typing 모듈은 선택적인 타입을 지원함. 선택적인 타입은 프로그램이 널 검사를 제대로 수행한 경우에만 값을 다룰 수 있게 강제함
+- 이를 활용하면 mypy가 코드 안에 버그가 있는지 추론할 수 있음. 다음 코드에서 두 번째 return 문에 사용한 값은 반드시 None이어야 하고, 이 값은 함수 시그니처가 요구하는 int 타입과 맞아떨어지지 않음 
+~~~python
+from typing import Optional
+
+def get_or_default(value: Optional[int],
+                   default: int) -> int:
+
+    if value is not None:
+        return value
+    return value
+
+$python3 -m mypy --strict example.py
+~~~
+- typing 모듈은 이외에도 매우 다양한 기능을 제공함. 또한 예외는 포함되지 않는다는 사실에 유의해라
+- 파이썬 typing 모듈은 예외를 인터페이스 정의의 일부분으로 간주하지 않음
+- 따라서 예외를 제대로 발생시키고 잡아내는지 검증하고 싶다면 테스트를 작성해 사용해야 함
+- typing 모듈을 사용하다가 흔히 빠지게 되는 함정으로 다음의 경우를 보자. 예를 들어 두 클래스가 있는데, 한 클래스가 다른 클래스의 참조를 저장하는 경우를 보자
+~~~python
+class FirstClass:
+    def __init__(self, value):
+        self.value = value
+
+
+class SecondClass:
+    def __init__(self, value):
+        self.value = value
+
+second = SecondClass(5)
+first = FirstClass(second)
+~~~
+- 이 프로그램에 다음과 같이 타입 힌트를 추가하고, mypy를 실행해도 mypy는 아무 문제가 없다고 보고함
+- 하지만 실제 실행하면, SecondClass가 먼저 정의되어 있지 않아 에러가 발생
+~~~python
+class FirstClass:
+    def __init__(self, value: SecondClass) -> None: #- 오류 발생. 
+                                                    #- SecondClass가 정의되어 있지 않음
+        self.value = value
+
+
+class SecondClass:
+    def __init__(self, value: int) -> None:
+        self.value = value
+
+
+second = SecondClass(5)
+first = FirstClass(second)
+~~~
+- 이런 상황을 우회하기 위해 정적 분석 도구가 지원하는 방법 중 하나는 <b>전방 참조가 포함된 타입 에너테이션을 표현할 때 문자열을 쓰는 것임</b>
+- 분석 도구는 이 문자열을 구문 분석해서 타입 정보를 추출
+~~~python
+class FirstClass:
+    def __init__(self, value: 'SecondClass') -> None:
+        self.value = value
+
+
+class SecondClass:
+    def __init__(self, value: int) -> None:
+        self.value = value
+
+
+second = SecondClass(5)
+first = FirstClass(second)
+~~~
+- 더 나은 접근 방법은 `from __future__ import annotaion`을 사용하는 것
+- 이 방법은 파이썬 3.7부터 사용할 수 있고, 파이썬 4에서는 디폴트 동작이 될 것임. 이 임포트는 파이썬 인터프리터가 프로그램을 실행할 때 타입 에너테이션에 지정된 값을 완전히 무시하라고 지시함
+- 이렇게 하면 전방 참조 문제도 해결될 뿐 아니라 프로그램을 시작할 때 성능도 향상시킬 수 있음
+~~~python
+from __future__ import annotations
+
+class FirstClass:
+    def __init__(self, value: SecondClass) -> None:
+        self.value = value
+
+
+class SecondClass:
+    def __init__(self, value: int) -> None:
+        self.value = value
+
+
+second = SecondClass(5)
+first = FirstClass(second)
+~~~
+- 다음은 타입 힌트를 사용하는 방법과 타입 힌트에 대한 모범적인 사용법임
+  - 처음부터 타입 에너테이션을 사용하면 개발이 느려지므로, 타입 정보가 가장 유용하게 쓰일 수 있는 곳에 타입 정보를 추가하는 것
+  - 타입 힌트는 우리 코드에 의존하는 많은 호출자에게 기능을 제공하는 API와 같이 코드베이스의 경계에서 가장 중요함
+  - 타입힌트는 API를 변경해도 API를 호출하는 사람들이 예기치 못한 오류를 보거나 깨지는 일이 없도록 하기 위해 통합 테스트나 경고를 보완함
+  - 코드베이스에서 가장 복잡하고 오류가 발생하기 쉬운 부분에 타입 힌트를 적용해도 유용할 수 있음
+  - 하지만 타입 힌트를 코드의 모든 부분에 100% 적용하는 것은 바람직하지 않음
+  - 타입을 추가하다 보면, 타입을 추가해서 얻을 수 있는 이익이 점점 줄어들기 마련임
+  - 가능하면 우리의 자동 빌드와 테스트 시스템의 일부분으로 정석 분석을 포함시켜 코드베이스에 커밋할 때마다 오류가 없는지 검사해야 함. 추가로 타입 검사에 사용할 설정을 저장소에 유지해서 우리가 협업하는 모든 사람이 똑같은 규칙을 사용하게 해야함
+  - 타입을 추가하면서 타입 검사기를 실행하는 것이 중요. 타입 오류가 무지 많이 발생하면, 오히려 정적 분석을 포기하게 될 수 있음
+  - 마지막으로 타입 애너테이션을 사용하고 싶은 경우가 그리 많지 않을 것이라는 사실을 알아두자
+
+#### 기억해야 할 내용
+- 파이썬은 변수, 필드, 함수, 메서드에 타입 정보를 추가할 수 있게 특별한 구문과 typing 내장 모듈을 제공함
+- 정적인 타입 검사기를 사용하면 타입 정보를 활용해 런타임에 발생할 수 있는 다양한 일반적인 오류를 방지할 수 있음
+- 타입 프로그램에 도입하고, API에 타입을 적용하고, 타입 정보를 추가해도 생산성이 떨어지지 않도록 해주는 다양한 모범 사례가 있음
