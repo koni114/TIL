@@ -1,9 +1,11 @@
 import dialog
 
+print("app 입니다")
+
 class Prefs:
-    pass
+    def get(self, name):
+        pass
+
 
 prefs = Prefs()
-
-def configure():
-    pass
+dialog.now()

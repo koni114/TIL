@@ -1,19 +1,27 @@
+#- 무게(weight)를 계산하는 함수를 작성하고,
+#- 각각의 세부적인 예외처리를 수행
+#-  예외 종류: InvaildDensityError
+#-          InvaildVolumeError
+
 class Error(Exception):
-    """이 모듈에서 발생할 모든 예외의 상위 클래스."""
+    pass
 
 
-class InvalidDensityError(Error):
-    """밀도 값이 잘못된 경우."""
+class InvaildDensityError(Error):
+    pass
 
 
-class InvalidVolumeError(Error):
-    """부피 값이 잘못된 경우."""
+class InvaildVolumeError(Error):
+    pass
 
+
+class NegativeDensityError(Error):
+    pass
 
 def determine_weight(volume, density):
     if density < 0:
-        raise InvalidDensityError('밀도는 0보다 커야 합니다')
+        raise NegativeDensityError('밀도는 0보다 커야함')
     if volume < 0:
-        raise InvalidVolumeError('부피는 0보다 커야 합니다')
-    if volume == 0:
-        density / volume
+        raise InvaildVolumeError('부피는 0보다 커야함')
+    return density / volume
+

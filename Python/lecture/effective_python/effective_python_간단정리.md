@@ -522,18 +522,10 @@ run()
 - `itertools.combinations_with_replacement`
 
 ### 37-내장 타입을 여러 단계로 내포시키기보다는 클래스를 합성해라
-- 보통 내장 타입을 사용하면 동적인 내부 상태를 잘 유지시킬 수 있는데, 이 때 동적이라는 말은 미리 알 수 없는 식별자를 뜻함
-- 내장 타입을 여러 단계로 내포시키면 유지 보수의 악몽으로 들어가게됨
-- 코드에서 값을 관리하는 부분이 점점 복잡해지고 있다는 것을 느끼면, 클래스로 분리해야 함
-- 이런 접근 방법을 택하면 인터페이스와 구체적인 규현 사이에 잘 정의된 추상화 계층을 만들 수 있음
-- 리펙토링시 취할 수 있는 방법은 많은데, 예를 들어 의존 관계의 제일 밑바닥 부분을 클래스로 표현할 수 있지만, 이렇게 되면 생산성이 낮아질 수 있음
-- 반대로 이를 튜플로 사용하게 되면 위치 기반이기 때문에 알기도 힘들고, 불필요한 정보들을 많이 가지고 와야 함
-~~~python
-#- weight만 필요한데, 다른 데이터는 _로 표시해야하는 단점이 있음
-total_weight = sum(weight for _, weight in grades)
-~~~
-- <b>따라서 원소가 3개 이상인 튜플을 이용한다면 collections 내장 모듈의 namedtuple 타입을 고려하자</b>
-- `Grade = namedtuple('Grade', ('score', 'weight'))`
+- 내장타입(dict, list)를 통해 여러 단계를 내포시키면 향후 유지보수 등에 있어 어려워짐  
+  --> 클래스를 사용해서 구조적으로 구현하자
+- <b>원소가 3개 이상인 튜플을 이용한다면 collections 내장 모듈의 namedtuple 타입을 고려하자</b>
+- namedtuple 선언: `Grade = namedtuple('Grade', ('score', 'weight'))`
 - `namedtuple`의 장점
   - 키워드 기반 인자와 위치 기반 인자를 모두 사용할 수 있음
   - 해당 클래스 기반의 객체 필드 접근시, 애트리뷰트 사용 가능(ex) `Grade.score`, `Grade.weight`)
@@ -610,3 +602,311 @@ class Gradebook:
 
 ### 40- 객체를 제너릭하게 구성하려면 @classmethod를 통한 다형성을 활용해라
 - 파이썬은 클래스도 다형성을 지원하는데, 다형성을 지원하면 좋은 이유는 계층을 이루는 여러 클래스가 자신에게 맞는 유일한 메소드 버전을 구현할 수 있음
+
+
+
+
+### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
+- 파이썬 패키지 인덱스(PyPI)에는 풍부한 패키지가 들어가 있음(http://pypi.org)
+- `pip`를 사용하면 새로운 모듈을 쉽게 설치할 수 있음
+- `python3 pip install pandas`
+- 패키지를 지속적으로 추적하고 관리할 수 있게 venv와 같이 쓰는 것이 중요
+
+### 83- 가상 환경을 의존해 의존 관계를 격리하고 반복 생성할 수 있게 해라
+- `pip`로 설치한 패키지들은 기본적으로 전역 위치에 저장됨  
+  이로 인해 우리 시스템에서 실행되는 모든 파이썬 프로그램이 모듈의 영향을 받게 됨
+- 패키지 설치 후 이 패키지가 의존하는 다른 패키지 목록을 볼 수 있음  
+  `python3 -m show Sphinx`
+- 파이썬에서는 전역적으로 모듈은 한 버전만 설치 가능
+- 이런 의존 관계를 해소하고자 <b>venv라는 도구를 사용</b>. venv라는 가상 환경을 제공하는데, 파이썬 3.4부터 파이썬 설치시 pip와 venv 모듈을 default로 제공함
+- venv를 사용하면 좋은 점
+  - 파이썬 환경을 독립적으로 구성 가능
+  - 한 시스템 안에 같은 패키지의 다양한 버전을 서로 충돌없이 사용가능   
+    한 컴퓨터 안에서 여러 다른 프로젝트 작업을 진행하면서 프로젝트마다 각각 다른 도구 활용 가능
+- <b>venv는 각 버전의 패키지와 의존 관계를 별도의 디렉토리에 저장함</b>
+~~~shell
+$ which python3             #- 디렉토리 확인
+$ python3 --version         #- 버전 확인
+$ python3 -c 'import ptyz'  #- pytz 패키지 임포트 가능 여부 확인
+$ python3 -m venv myproject #- venv를 이용해 myproject라는 가상 환경을 만듬
+$ cd myproject              #- ** 가상환경 디렉토리롤 이동해야만 venv 실행 가능
+$ source bin/activate       #- 가상 환경 사용
+                            #- 명령줄 프롬프트에서 가상환경명이 붙여짐
+$ which python3             #- 명령줄 도구가 가상 환경 디렉터리 안에 도구 경로로 바뀜
+
+~~~
+- venv 환경 복사시, `python3 -m pip freeze > requirement.txt` 명령을 이용해 현재 명시적으로 의존하는 모든 의존 관계를 파일에 저장 가능(관례적인 이름 --> requirement.txt)
+~~~shell
+$ python3 -m pip freeze > requirement.txt
+$ cat requirement.txt
+~~~
+- 해당 venv 환경과 동일한 환경을 새로 만들고 싶으면 다음과 같이 실행
+~~~shell
+$ python -m venv otherproject
+$ cd otherproject
+$ source bin/source
+$ python3 -m pip install -r /tmp/project/requirement.txt
+~~~
+- <b>파이썬 버전은 requirement.txt 파일에 들어가지 않음. 따라서 별도 관리가 필요</b>
+- <b>가상 환경을 사용할 때 가상 환경 디렉토리를 통째로 옮기면 모든 요소가 깨짐. 이유는 python3 등의 명령줄 도구 경로가 하드코딩돼 있기 때문</b>
+- 따라서 새로운 가상 환경을 만든 후 원래 디렉터리에서 requirement.txt를 실행해 얻은 requirement.txt 파일로 모든 모듈을 재설치하면 됨
+
+### 84-모든 함수, 클래스, 모듈에 독스트링을 작성해라
+- 파이썬은 코드 블록에 문서를 첨부하는 기능을 기본으로 제공 
+- `python3 -m pydoc -p 1234`로 파이썬 문서 확인 가능
+~~~python
+#- 함수 docstring
+def test():
+  """주어진 함수는 test 용도입니다."""
+  return None
+print(repr(palindrome.__doc__))
+~~~
+- 함수 docstring 작성시 알아둘 것들
+  - 함수에 인자가 없고 반환 값만 있다면 설명은 한줄로!
+  - 함수가 아무 값도 반환하지 않는다면 아무것도 쓰지 않기
+  - 함수 내에 예외 발생 포함시, 예외 발생 상황에 대한 설명을 포함해야함
+  - 가변인자, 키워드 인자를 받는다면, 목적 설명하기
+  - 함수에 디폴트 값이 있는 인자가 있다면, 언급해야 함
+  - 함수가 제너레이터라면, 이터레이션시 어떤 값이 발생하는지 작성해야 함
+  - 함수가 비동기 코루틴이라면, 독스트링에 언제 이 코루틴의 비동기 실행이 중단되는지 설명해야 함
+- 독스트링과 애너테이션이 제공하는 정보가 중복된다면 한쪽으로 몰아야 함
+
+
+### 85-패키지를 사용해 모듈을 체계화하고 안정적인 API를 제공해라
+- 코드가 많아지고 모듈이 많아지면 코드를 이해하기가 어려우므로, 코드를 좀 더 쉽게 이해할 수 잇도록 다른 계층을 추가하는데, 파이썬은 <b>패키지</b>를 제공함
+- <b>파이썬의 패키지는 대부분의 경우, __init__.py 라는 빈 파일을 추가함으로써 패키지를 정의함</b>
+~~~python
+# package directory structure
+mypackage/__init__.py
+mypackage/models.py
+mypackage/utils.py
+
+# main.py
+from mypackage import models
+from anaylsis.utils import log_base2_bucket
+from frontend.utils import stringify
+
+#- 패키지 안에 동일한 이름의 함수가 있는경우, --> as 사용
+from analysis.utils import inspect as analysis_inspect
+from frontend.utils import inspect as frontend_inspect
+
+analysis.utils.insert(value) #- as 사용 안할시, 더 좋음
+~~~
+- 모듈이나 패키지의 `__all__` 특별 애트리뷰트를 통해 API 소비자에게 노출할 것들을 제한
+- `__all__`의 값은 모듈에서 외부로 공개된 API로 export할 모든 이름이 들어있는 리스트
+- `from foo import *` 실행시, foo.__all__에 있는 애트리뷰트만 import 가능
+- __all__가 정의되어 있지 않으면 public attribute만 import 됨
+~~~python
+#- utils.py
+__all__ = ['simulate_collision']
+
+def _dot_products(a, b):
+    print(a, b)
+
+def simulate_collision(a, b):
+    print(a, b)
+
+#- inits.py
+__all__ = []
+
+from . modules import *
+__all__ += modules.__all__
+
+from . utils import *
+__all__ += utils.__all__
+~~~
+- `__all__`에 제외됐다는 말은 `from mypackage import *` 명령으로 임포트해도 임포트되지 않는다는 뜻
+- 모듈과 모듈 사이에 공유되어야 하는 API 제작시, all 기능이 불필요하거나, 사용하지 말아야 할 수 있음
+- `from foo import *`보다는 명시적으로 `from a import b`를 쓰자 
+
+### 86-배포 환경을 설정하기 위해 모듈 영역의 코드를 사용해라
+- 개발환경과 가동환경이 다를 때를 생각하여 좋은 방법은 시작시 프로그램을 일부 오버라이드해서 배포되는 환경에 따라 다른 기능을 제공하도록 하는 것
+- 다음의 코드는 개발환경(dev_main.py) vs production 환경(prod_main.py)에 따라, 실행되는 db가 다른 코드
+~~~python
+# dev_main.py
+TESTING = True  #- 해당 코드가 __main__에 들어감
+
+import db_connection
+db = db.connection.Database()
+
+# prod_main.py
+TESTING = False
+
+import db.connection
+db = db.connection.Database()
+
+# db_connection.py
+import __main__   #- ** dev_main, prod_main에 있는 TESTING 변수를 가져오기 위함
+
+class TestingDatabase:
+  ...
+
+class RealDatabase:
+  ...
+
+if __main__.TESTING:
+  Database = TestingDatabase
+else:
+  Database = RealDatabase
+~~~
+- 핵심은 db_connection.py 에서 모듈 범위에서 코드가 수행된다는 점
+- 배포 설정 환경이 복잡해지면, config 파일 등으로 옮겨야 함. configparser 내장 모듈 같은 도구를 사용하면 production 코드로부터 유지 보수 할 수 있음
+- 특히 협업할 떄 설정과 코드를 구분하는 것이 중요
+- 다른 측면으로, host platform에 따라 다르게 작성해야 한다는 것을 알면 모듈에서 최상위 모듈을 정의하기 전에 sys 모듈을 살펴보면됨
+~~~python
+# db_connection.py
+import sys
+class Win32Database:
+  ...
+class PosixDatabase:
+  ...
+
+if sys.platform.startswith('win32'):
+  Database = Win32Database
+else:
+  Database = PosixDatabase
+~~~
+
+### 87- 호출자를 API로부터 보호하기 위하여 최상위 Exception을 정의해라
+- API 정의시, 내부적으로 정의한 exception도 매우 중요
+- 파이썬 언어, 표준 라이브러리에는 이미 예외 계층 구조가 내장되어 있음. 이를 사용해도 되고, 직접 만들어 사용해도 됨
+- <b>내장 exception인 ValueError를 사용해도 되지만, API 같은 경우 새로운 예외 계층 구조를 정의하는 것이 훨씬 좋음</b>
+- 최상위 예외가 있으면, API 사용자들이 더 쉽게 오류를 잡아 낼 수 있음  
+  디음의 코드를 확인
+~~~python
+#- 최상위 예외를 포함한 경우 --> API 호출 위치 + API 내 오류 위치까지 확인가능
+#- 만약 API 내부적으로 오류가 정의되어 있지 않으면, 알기 어려움
+import my_module
+import logging
+
+try:
+    weight = my_module.determine_weight(1, -1)
+except my_module.Error:
+    logging.exception('예상치 못한 오류')
+
+>>> 
+ERROR:root:예상치 못한 오류
+Traceback (most recent call last):
+  File "<input>", line 5, in <module>
+  File "/Users/heojaehun/gitRepo/TIL/effectivePython/my_module.py", line 22, in determine_weight
+    raise InvaildVolumeError('부피는 0보다 커야함')
+my_module.InvaildVolumeError: 부피는 0보다 커야함
+~~~
+- 최상위 예제 구현시, 3가지 장점 존재 
+  - 사용자가 API 호출을 잘못 했을 때, 더 쉽게 이해 가능
+  - API 모듈 코드의 버그를 발견할 떄 도움됨 --> 정의되지 않은 예외 발생시 이것은 버그!  
+    `Exception` 으로 확인. 소비자쪽에서 try/except를 통해 모듈의 버그를 확인해야 함
+  - 미래의 API를 보호해줌. 추가적인 Exception 하위 클래스 추가 가능
+- `raise ValueError('hello world') from exc` --> valueError + 기존 발생한 Exception(exc)까지 포함한 예외 확인
+
+### 88 순환 의존성을 깨는 방법 알아두기
+- A, B라는 모듈에서 각각 B, A의 모듈을 import하는 상호 의존적인 경우 발생
+- 모듈을 import 하는 과정은 다음과 같음
+  - `sys.path`에서 모듈 위치를 검색
+  - 모듈의 코드를 로딩하고 컴파일 되는지 확인 
+  - 임포트할 모듈에 상응하는 빈 모듈 객체를 만듬
+  - 모듈을 `sys.modules`에 넣음
+  - 모듈 객체에 있는 코드를 실행해서 모듈의 내용을 정의
+- <b>여기서 중요한 점은, 모듈 레지스트리를 통해 모듈이 이미 import 했는지를 확인하고, 만약 이미 등록되어 있다면 cache에서 해당 객체를 사용함. 여기서 말하는 cache의 등록은 sys.modules에 넣는 것을 말함(4단계)</b>
+- 즉, 어떤 모듈의 애트리뷰트를 정의하는 코드(5단계)가 실제로 실행되기 전까지는 모듈의 애트리뷰트가 정의되지 않는다는 점임
+- 이런 문제 해결 방법은 코드 리펙터링을 통해 정의 부분을 의존 관계의 트리 맨 밑바닥으로 보내는 것
+- 또는 순환 import를 깨는 3가지 방법 수행
+  - import 순서를 바꾼다 -> PEP 8 가이드에 위배됨. 파일 뒷부분에 import를 넣으면 코드 순서를 약간만 바꿔도 망가짐. 추천X
+  - 임포트 시점에 부작용을 최소화한 모듈 사용 --> import 시점에 함수 실행 X  
+    하지만 함수 자체를 정의하지 못할 수도 있음. 또한 객체 정의 부분과 실행 부분이 나눠져 복잡해짐
+  - import문을 메서드 안에서 사용 --> <b>프로그램이 실행될 때 모듈 임포트가 일어나기 때문에 동적 임포트라고 함</b> -> 동적 임포트는 피하는 것이 좋음  
+  임포트 실행을 미루기 때문에 예기치 못하는 오류로 인해 문제 발생 여지가 있음. 하지만 이러한 감수를 전체 구조를 수정하는 것보단 낫다면 수행해야함
+- 동적 임포트는 리펙터링과 복잡도 증가를 최소화하면서 모듈 간의 순환 의존 관계를 깨는 가장 단순한 해법임
+
+### 89-리펙터링과 마이그레이션 방법을 알려주기 위해 warning을 사용해라
+- 내가 만든 API를 여러 호출 지점에서 사용하고 있다고 가정하고, 코드 수정을 알릴 때 `warning`을 사용할 수 있음
+- `warning` 내장 모듈을 사용해 사람들에게 의사를 전달할 때는 `warning` 사용
+- 다음의 stringIO를 이용해 발생하는 warning 등을 문자열 객체로 전달받을 수 있음
+~~~python
+import warnings
+import contextlib
+import io
+
+def fake_error():
+    warnings.warn("fake error", DeprecationWarning)
+
+fake_stderr = io.StringIO()
+with contextlib.redirect_stderr(fake_stderr):
+    fake_error()
+
+print(fake_stderr.getvalue())
+~~~
+- `warnings.wran` 함수 파라미터로 stacklevel를 사용하면, 호출 스택의 위치를 변경할 수 있음
+~~~Python
+warnings.warn("warning!!", DeprecationWarning, stacklevel=3)
+~~~
+- warnings은 경고 발생시 특정 작업을 수행하게 할 수 있는데, 한가지 방법은 모든 경고를 오류로 바꿔 예외 처리를 하게끔 하는 것
+- 모든 오류를 경고로 바꾸는 방법
+  - `warnings.simplefilter('error')`
+  - shell에서 `python -W error ex6.py`
+~~~python
+import warnings
+import contextlib
+import io
+
+warnings.simplefilter('error')
+try:
+    warnings.warn('이 사용법은 향후 금지될 예정입니다.')
+except DeprecationWarning:
+    print("DeprecationWarning이 실제로 발생함")
+    pass
+
+>>>
+UserWarning: 이 사용법은 향후 금지될 예정입니다.
+~~~
+- 오류를 무시하는 방법: `warnings.simplefilter('ignore')`
+- 프로덕션 배포 후 warning -> error로 발생하는 것은 위험하므로, logging 내장 모듈에 복제하는 것을 고려할 수 있음
+- 실제 사용시 발생할 수 있는 미묘한 경우를 테스트가 다 체크하지 못한 경우에 이런 기능을 사용하는 것이 좋음
+- API 라이브러리 관리자는 `contextManager`를 통해 `warnings.catch_warnings`를 저장하고, 경고 메세지 개수, 분류 등을 확인 가능
+~~~python
+with warnings.catch_warnings(record=True) as found_warnings:
+    found = warnings.warn('warning!', DeprecationWarning)
+
+assert len(found_warnings) == 1
+single_warnings = found_warnings[0]
+assert single_warnings.category == DeprecationWarning
+~~~
+
+### 90-typing 정적 분석을 통해 버그를 없애라
+- API는 문서를 보고 참조할 수도 있지만 typing 모듈을 통해 정적 분석 도구 지원
+- <b>typing 모듈은 타입 검사 기능은 지원하지 않음</b>
+- 대표적인 typing 지원 도구는 mypy, pyre 등이 있음
+- mypy와 함꼐 프로그램 실행 방법 `$ python3 -m mypy --strict example.py`
+- 함수 --> 타입 에너테이션 지정 방법
+~~~python
+def subtract(a: int, b: int) -> int:
+    return a - b
+~~~
+- 다음은 덕타입을 지원하는 제너릭 함수에 에너테이션을 붙인 예제
+~~~python
+from typing import Callable, List, TypeVar
+
+Value = TypeVar('Value')
+Func = Callable[[Value, Value], Value]
+
+def combine(func: Func, values:list[Value]) -> Value:
+    ...
+~~~
+- typing 모듈에 예외는 포함되지 않는다는 사실에 유의. 파이썬 typing 모듈은 예외를 인터페이스 정의의 일부분으로 간주하지 않음
+- `from __future__ import annotation`을 사용하면(3.7이상) 전방 참조 가능
+~~~python
+from __future__ import annotations
+
+class FirstClass:
+    def __init__(self, value: SecondClass) -> None:
+        self.value = value
+
+class SecondClass:
+    def __init__(self, value: int) -> None:
+        self.value = value
+
+
+second = SecondClass(5)
+first = FirstClass(second)
+~~~
+- 타입 힌트는 100% 사용하지 말고, 중요한 부분에만 사용하자

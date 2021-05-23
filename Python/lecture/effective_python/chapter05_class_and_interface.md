@@ -226,7 +226,6 @@ print(albert.average_grade())
 - ex) sort 메서드는 key인자로 훅을 받을 수 있음
 - 훅을 추상 클래스(abstract class)를 통해 정의해야 하는 언어도 있지만, 파이썬은 단순히 인자와 반환 값이 잘 정의된, 상태가 없는 함수를 훅으로 사용하는 경우가 많음
 - 함수는 클래스보다 정의하거나 기술하기가 훨씬 편하므로 훅으로 사용하기에는 이상적이며, 파이썬은 함수를 일급 시민 객체로 취급하기 때문에 함수를 훅으로 사용할 수 있음
-- 또한 파이썬은 함수를 first-class object로 취급하기 때문에 함수를 훅으로 사용할 수 있음
 - 예를들어, defaultdict 클래스에서 default에 해당하는 동작(defaultdict(list)에서 list)을 정의하여 함수로 만든다고 해보자
 ~~~python
 from collections import defaultdict
