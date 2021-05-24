@@ -600,11 +600,330 @@ class Gradebook:
 - `__call__` 특별 메서드를 사용하면 클래스의 인스턴스인 객체를 일반 파이썬 함수처럼 사용 가능
 - 상태를 유지하기 위한 함수가 필요한 경우, 클로저 함수 대신에 `__call__` 메서드가 있는 클래스를 정의할 지 고려해보자
 
-### 40- 객체를 제너릭하게 구성하려면 @classmethod를 통한 다형성을 활용해라
-- 파이썬은 클래스도 다형성을 지원하는데, 다형성을 지원하면 좋은 이유는 계층을 이루는 여러 클래스가 자신에게 맞는 유일한 메소드 버전을 구현할 수 있음
+### 39- 객체를 제너릭하게 구성하려면 @classmethod를 통한 다형성을 활용해라
+- 다음을 만족하는 코드를 구현해보기 - (Classmethod 활용 안하고)
+- thread를 활용해서 mapreduce 구현하기
+  - 데이터를 read 할 수 있는 공통클래스 `InputData` 를 기반으로 여러 하위 클래스 구조 생성
+  - map, reduce 함수를 구현하는 공통클래스 `Worker` 를 기반으로 여러 하위 클래스 구조 생성
+  - 두 공통 클래스를 연결시켜주는 함수 구현(`generate_inputs`, `create_workers`, `execute`)
+  - 최종 `mapreduce` 함수를 통해 실행
+  - `reduce` 함수는 file의 총 줄 수를 더하는 함수
+~~~python
+import os
+from threading import Thread
+import random
 
 
+class InputData:
+    def read(self):
+        raise NotImplementedError
 
+
+class PathInputData(InputData):
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def read(self):
+        with open(self.path) as f:
+            return f.read()
+
+
+class Worker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+    def map(self):
+        raise NotImplementedError
+
+    def reduce(self, other):
+        raise NotImplementedError
+
+
+class LineCountWorker(Worker):
+    def map(self):
+        data = self.input_data.read()
+        self.result = data.count('\n')
+
+    def reduce(self, other):
+        self.result += other.result
+
+
+def generate_inputs(data_dir):
+    for name in os.listdir(data_dir):
+        yield PathInputData(os.path.join(data_dir, name))
+
+
+def create_workers(input_list):
+    workers = []
+    for input_data in input_list:
+        workers.append(LineCountWorker(input_data))
+    return workers
+
+
+def execute(workers):
+    threads = [Thread(target=w.map) for w in workers]
+    for thread in threads: thread.start()
+    for thread in threads: thread.join()
+
+    first, * rest = workers
+    for worker in rest:
+        first.reduce(worker)
+    return first.result
+
+
+def mapreduce(data_dir):
+    input_list = generate_inputs(data_dir)
+    workers = create_workers(input_list)
+    return execute(workers)
+
+def write_test_files(tmpdir):
+    if not os.path.isdir(tmpdir):
+        os.mkdir(tmpdir)
+    for i in range(100):
+        with open(os.path.join(tmpdir, str(i)), 'w') as f:
+            f.write('\n' * random.randint(1, 100))
+
+
+tmpdir = 'test_dir'
+if not os.path.isdir(tmpdir):
+    os.mkdir(tmpdir)
+
+for i in range(100):
+    with open(os.path.join(tmpdir, str(i)), 'w') as f:
+        f.write('\n' * random.randint(0, 100))
+
+write_test_files(tmpdir)
+result = mapreduce(tmpdir)
+print(f"file들의 총 줄 수는 {result} 입니다.")
+~~~
+- 다음은 제너릭한 코드를 구현하기 위해 classmethod의 다형성을 활용한 예제  
+(위의 코드와 비교해가면서 확인하자)
+~~~python
+import os
+from threading import Thread
+from random import randint
+
+
+def execute(workers):
+    threads = [Thread(target=w.map) for w in workers]
+    for thread in threads: thread.start()
+    for thread in threads: thread.join()
+
+    first, *rest = workers
+    for worker in rest:
+        first.reduce(worker)
+    return first.result
+
+class GenericInputData:
+    def read(self):
+        raise NotImplementedError
+
+    @classmethod
+    def generate_inputs(cls, config):
+        raise NotImplementedError
+
+
+class PathInputData(GenericInputData):
+
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
+    def read(self):
+        with open(self.path, 'r') as f:
+            return f.read()
+
+    @classmethod
+    def generate_inputs(cls, config):
+        data_dir = config['data_dir']
+        for name in os.listdir(data_dir):
+            yield cls(os.path.join(data_dir, name))
+
+
+class GenericWorker:
+
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
+
+    def map(self):
+        raise NotImplementedError
+
+    def reduce(self, other):
+        raise NotImplementedError
+
+    @classmethod
+    def create_workers(cls, input_class, config):
+        workers = []
+        for input_data in input_class.generate_inputs(config):
+            workers.append(cls(input_data))
+        return workers
+
+
+class LineCountWorker(GenericWorker):
+
+    def map(self):
+        data = self.input_data.read()
+        self.result = data.count('\n')
+
+    def reduce(self, other):
+        self.result += other.result
+
+
+def mapreduce(worker_class, input_class, config):
+    workers = worker_class.create_workers(input_class, config)
+    return execute(workers)
+
+
+tmpdir = 'test_dir'
+if not os.path.isdir(tmpdir):
+    os.mkdir(tmpdir)
+
+for i in range(100):
+    with open(os.path.join(tmpdir, str(i)), 'w') as f:
+        f.write('\n' * randint(1, 100))
+
+
+config = {'data_dir':tmpdir}
+result = mapreduce(LineCountWorker, PathInputData, config)
+print(f"총 {result} 개의 줄이 있습니다.")
+~~~
+- <b>중요한 사실은 classmethod를 통해 `__init__`이 아닌 함수로 생성자를 만들어낼 수 있다는 점</b>
+- 제너릭한 함수를 만들어 낸다는 것은 함수의 input을 함수나 클래스로 받아 해당 클래스의 함수를 호출하는 구조를 잡아내는 것
+- 위의 코드에서 `input_class.generate_inputs`가 다형성의 예
+
+### 40-super로 부모 클래스를 초기화해라
+- 자식 클래스에서 부모 클래스를 초기화하는 일반적인 방법은 부모클래스의 `__init__`
+ 메서드를 직접 호출하는 것
+~~~python
+class MyBaseClass:
+    def __init__(self, value):
+        self.value = value
+
+
+class MyChildClass(MyBaseClass):
+    def __init__(self):
+        MyBaseClass.__init__(self, 5)
+~~~
+- 하지만 해당 방식으로 호출 할 때, 다이아몬드 상속 같은 경우, 원인을 알기가 매우 어려움
+- 이 때 `super`라는 내장 함수를 사용하면 다이아몬드 계층의 공통 상위 클래스를 단 한번만 호출함
+- 또한 파이썬에는 표준 메서드 결정 순서가 있는데, 이는 상위 클래스 초기화하는 순서를 정의하고, 이 때 C3 선형화 알고리즘을 사용함
+- 부모 클래스를 초기화 할 때는 `super` 내장 함수를 아무 인자 없이 호출해라
+
+### 41- 기능을 합성 할 때는 믹스인 클래스를 활용해라
+- 파이썬은 다중 상속을 지원하는 언어이지만, 다중 상속은 피하는 것이 좋으며 믹스인을 사용할지 고려해야 함
+- <b>믹스인은 자식 클래스가 사용할 메서드 몇 개만 정의하는 클래스</b>
+- 믹스인 클래스는 자체 애트리뷰트 정의가 없으므로, 믹스인 클래스의 `__init__` 메서드를 호출할 필요도 없음
+- `className.__dict__` 를 꼭 기억. 해당 클래스 인스턴스의 애트리뷰트를 dict로 전환
+- `isinstance` 를 이용해서, `list`, `dict`, `__dict__` 등을 비교해서 해당 케이스마다 적용이 가능
+- 믹스인의 장점은 제너릭 기능을 쉽게 연결할 수 있고, 오버라이드해서 변경 가능
+- 다음의 믹스인 코드 구조 기억하기
+~~~python
+class ToDictMixIn:
+    def to_dict(self):
+        return self._traverse_dict(self.__dict__)
+
+    def _traverse_dict(self, instance_dict):
+        output = {}
+        for key, value in instance_dict.items():
+            output[key] = self._traverse(key, value)
+        return output
+
+    def _traverse(self, key, value):
+        if isinstance(value, ToDictMixIn):
+            return value.to_dict()
+        elif isinstance(value, dict):
+            return self._traverse_dict(value)
+        elif isinstance(value, list):
+            return [self._traverse(key, i) for i in value]
+        elif hasattr(value, '__dict__'):
+            return self._traverse_dict(value.__dict__)
+        else:
+            return value
+~~~
+- 다음과 같이 믹스인에 있는 함수를 오버라이드 해서 사용 가능
+~~~python
+def _traverse(self, key, value):
+    if (isinstance(value, BinaryTreeWithParent) and key == 'parent'):
+        return value.value
+    else:
+        return super()._traverse(key, value)
+~~~
+- 믹스인은 서로 합성해서 사용 가능한데, 다음의 클래스를 기억하자. 해당 클래스의 정의되어 있지 않은 `to_dict` 함수가 정의(상속하거나 정의)되어 있어야 함을 가정하고, `__init__` 메서드가 키워드 인자를 받아야 한다는 것
+- 믹스인을 사용할 때 상하위 상속 계층에 이미 해당 믹스인을 적용한 클래스가 있어도 문제 없음  
+  이런 경우에도 super가 동작하는 방식으로 인해 믹스인을 적용한 클래스가 제대로 작동함
+- 믹스인은 필요에 따라 인스턴스 메서드는 물론 클래스 메서드도 포함될 수 있음
+- 믹스인을 합성하면 단순한 동작으로부터 더 복잡한 기능을 만들어낼 수 있음
+~~~python
+import json
+
+
+class jsonMixIn:
+
+    @classmethod
+    def from_json(cls, data):
+        kwargs = json.loads(data)
+        return cls(** kwargs)     #- 상속받을 하위 클래스는 키워드 인자를 받아야 함
+
+    #- 하위 클래스는 to_dict 메서드를 가지고 있어야 함
+    def to_json(self):
+        return json.dumps(self.to_dict())
+~~~
+
+### 42- 비공개 애트리뷰트보다는 공개 애트리뷰트를 사용해라
+- 파이썬에서 클래스의 애트리뷰트에 대한 가시성은 공개(public), 비공개(private), 두 가지밖에 없음
+- 인스턴스 뒤에 (.)을 붙이면 공개 애트리뷰트에 접근 가능
+- 밑줄 두 개(__)를 붙이면 비공개 필드가 됨. 비공개 필드는 해당 클래스 안에서만 접근 가능
+- <b>비공개 애트리뷰트의 동작은 애트리뷰트 이름을 바꾸는 단순한 방식으로 구현됨</b>  
+  명명 규칙만 달라지는 것인데, 예를 들어 `__private_field`라는 애트리뷰트 접근 코드를 `_MyChildObject__private_field`라는 이름으로 바꿔줌  
+  <b>즉 해당 명으로 접근하면 private도 인스턴스에서는 접근이 가능하다는 말</b>
+- 객체 애트리뷰트 딕셔너리를 확인하면 실제로 해당 명으로 들어가 있음을 확인 가능
+- 이렇게 private 애트리뷰트도 오픈되어 있는 이유는 파이썬 언어의 철학에서 옴
+~~~python
+class MyObject:
+    def __init__(self):
+        self.public_field = 5      #- public
+        self.__private_field = 10  #- private
+~~~
+- 비공개 애트리뷰트로 접근을 막으려고 시도하기보다는 보호된 필드를 사용하면서 문서에 적절한 가이드를 남기자
+- 우리가 코드 작성을 제어할 수 없는 하위 클래스에서 이름 충돌이 일어나는 경우를 막고 싶을 때만 비공개 애트리뷰트를 사용할 것을 권함
+
+### 43- 커스텀 컨테이너 타입은 collections.abc를 상속해라
+- 모든 파이썬 클래스는 함수의 애트리뷰트를 함께 캡슐화하는 일종의 컨테이너라 볼 수 있음
+- 클래스가 시퀀스처럼 작동하게 하려면 트리 노드를 깊이 우선 순회하는 커스텀 `__getItem__` 메서드를 구현하면 됨
+~~~python
+#- index --> list[index] 라고 생각하면 됨
+def __getitem__(self, index):
+    for i, item in enumerate(self._traverse()):
+        if i == index:
+            return item.value
+    raise IndexError(f"인텍서 - 범위 초과: {index}")
+~~~
+- `__getItem__`을 구현하는 것만으로는 리스트 인스턴스에서 기대할 수 있는 모든 시퀀스 의미 구조를 제공할 수 없다는데 있음
+- `len()` 함수는 `__len__` 이라는 특별 메서드를 구현해야 작동함
+~~~python
+def __len__(self):
+    for count, _ in enumerate(self._traverse(), 1):
+        pass
+    return count
+~~~
+- <b>내장 `collection.abc` 모듈 안에 컨테이너 타입에 정의해야 하는 전형적인 메서드를 모두 제공하는 추상 기반 클래스 정의가 여러가지 들어가 있음<b>
+- 이런 추상 기반 클래스의 하위 클래스를 만들고 필요한 메서드 구현을 잃어버리면 실수한 부분을 알려줌
+~~~python
+from collections.abc import Sequence
+
+class BadType(Sequence):
+    pass
+
+foo = BadType()
+>>>
+TypeError: Can't instantiate abstract class BadType with abstract methods __getitem__, __len__
+~~~
+- `Set`, `MutableMapping`과 같이 파이썬의 관례에 맞춰 구현해야 하는 특별 메서드가 훨씬 많은 더 복잡한 컨테이너 타입을 구현할 때는 이런 추상 기반 클래스가 주는 이점이 더 커짐
+- `collections.abc` 모듈 외에도, 파이썬에서는 객체 비교와 정렬을 위해 사용하는 다양한 특별 메서드들이 존재함
+- 컨테이너 클래스나 비컨테이너 클래스에서 모두 이런 특별 메서드를 구현할 수 있음
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
 - 파이썬 패키지 인덱스(PyPI)에는 풍부한 패키지가 들어가 있음(http://pypi.org)
@@ -910,3 +1229,14 @@ second = SecondClass(5)
 first = FirstClass(second)
 ~~~
 - 타입 힌트는 100% 사용하지 말고, 중요한 부분에만 사용하자
+
+## 용어 정리
+- refactoring
+  - 외부 동작을 바꾸지 않으면서, 내부 구조를 개선하는 일
+  - 코드가 작성된 후에 디자인을 개선하는 방법
+  - 모든 것을 미리 생각하기보다는 개발하면서 지속적으로 좋은 디자인을 찾음
+- 제너릭 함수
+  - 어떤 하나의 함수가 여러 타입의 인자를 받고, 인자의 타입에 따라 적절한 동작을 하는 함수 
+  - 클래스 내부에서 사용할 데이터 타입을 외부에서 지정하는 기법
+- 직렬화
+  - 파이썬 객체를 일련의 byte들로 변환하는 것을 직렬화, 그 반대로 decode하는 것을 역직렬화라고 함 

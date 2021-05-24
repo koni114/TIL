@@ -460,7 +460,7 @@ print(f"총 {result} 줄이 있습니다.")
 - 결과적으로 위의 코드는 제너릭하지 못하다는 문제가 있음
 - 다른 InputData나 Worker 하위 클래스를 사용하고 싶다면 각 하위 클래스에 맞게 generate_inputs, create_workers, mapreduce를 재작성해야 함
 - 이 문제의 핵심은 객체를 구성할 수 있는 제너릭한 방법이 필요하다는 것
-- 파이썬에서는 생성자 메서드가 __init__ 밖에 없다는 것이 문제인데, InputData의 모든 하위 클래스가 똑같은 생성자만 제공해야 한다는 것은 불합리함
+- 파이썬에서는 생성자 메서드가 `__init__` 밖에 없다는 것이 문제인데, InputData의 모든 하위 클래스가 똑같은 생성자만 제공해야 한다는 것은 불합리함
 - 이 문제를 해결하는 가장 좋은 방법은 클래스 메서드(Class method) 다형성을 사용하는 것
 - 클래스 메서드라는 아이디어를 맵리듀스에 사용했던 클래스에 적용해보자. 다음 코드는 InputData에 제너릭 @classmethod를 적용한 모습임. @classmethod가 적용된 클래스 메서드는 공통 인터페이스를 통해 새로운 InputData 인스턴스를 생성
 ~~~python
@@ -477,6 +477,10 @@ class GenericInputData:
 ~~~Python
 class PathInputData(GenericInputData):
 
+    def __init__(self, path):
+        super().__init__()
+        self.path = path
+
     def read(self):
         with open(self.path) as f:
             return f.read()
@@ -486,7 +490,6 @@ class PathInputData(GenericInputData):
     def generate_inputs(cls, config):
         data_dir = config['data_dir']
         for name in os.listdir(data_dir):
-
             yield cls(os.path.join(data_dir, name))
 ~~~
 - 비슷한 방식으로 GenericWorker 클래스 안에 create_workers 도우미 메서드를 추가할 수 있음
@@ -592,7 +595,7 @@ print(f"첫 번째 부모 클래스 순서에 따른 값은 (5 * 2)  + 5 : {foo.
 ~~~
 - 즉 클래스 정의에 나열한 부모 클래스의 순서와 부모 생성자를 호출한 순서가 달라서 생기는 문제는 발견하기 쉽지 않고, 코드를 처음 보고 이해하기 어려울 수 있음
 - 다이아몬드 상속은 어떤 클래스가 두 가지 서로 다른 클래스를 상속하는데, 두 상위 클래스의 상속 계층을 거슬러 올라가면 공통 클래스가 존재하는 경우를 말함
-- 다이아몬드 상속이 이뤄지면, 공통 조상 클래스의 `__init__` 메서드가 여러 번 호출될 수 있기 떄문에 예기치 않은 방식으로 작동할 수 있음
+- 다이아몬드 상속이 이뤄지면, 공통 조상 클래스의 `__init__` 메서드가 여러 번 호출될 수 있기 때문에 예기치 않은 방식으로 작동할 수 있음
 - 다음의 코드는 다이아몬드 상속을 구현한 코드 예제다
 ~~~python
 class TimesSeven(MyBaseClass):
@@ -655,7 +658,7 @@ print(mro_str)
 - 중요한 것은 상속 다이아몬드 정점에 도착하면, 각 초기화 메서드는 각 클래스의 `__init__`이 호출된 순서의 역순으로 작업을 수행하게 됨
 - `super` 함수에는 두 가지 파라미터를 넘길 수 있는데, 첫 번쨰 파라미터는 우리가 접근하고 싶은 MRO 뷰를 제공할 부모 타입이고, 두 번째 파라미터는 첫 번째 파라미터로 지정한 타입의 MRO 뷰에 접근할 때 사용할 인스턴스
 - 다음과 같이 사용가능하지만, object 인스턴스를 초기화 할때는 두 파라미터를 지정할 필요가 없음. 우리가 클래스 정의 안에서 아무 인자도 지정하지 않고 super를 호출하면, 파이썬 컴파일러가 자동으로 올바른 파라미터를 넣어줌
-- `super`에 파라미터를 넣는 유일한 경우는 자식 클래스에서 부모 클래스의 특저 기능에 접근해야 하는 경우뿐
+- `super`에 파라미터를 넣는 유일한 경우는 자식 클래스에서 부모 클래스의 특정 기능에 접근해야 하는 경우뿐
 ~~~python
 class ExplicitTrisect(MyBaseClass):
     def __init__(self, value):
@@ -666,7 +669,7 @@ class ExplicitTrisect(MyBaseClass):
 - 파이썬은 표준 메서드 결정 순서(MRO)를 활용해 상위 클래스 초기화 순서와 다이아몬드 상속 문제를 해결함
 - 부모 클래스를 초기화할 때는 super 내장 함수를 아무 인자 없이 호출해라 
 
-### 41- 기능을 합성할 떄는 믹스인 클래스를 활용해라
+### 41- 기능을 합성할 때는 믹스인 클래스를 활용해라
 - 파이썬은 다중 상속을 지원하는 언어이지만, 다중 상속을 피하는 것이 좋으며 믹스인을 사용할지 고려해보자 
 - 믹스인은 자식 클래스가 사용할 메서드 몇 개만 정의하는 클래스
 - 믹스인 클래스는 자체 에트리뷰트 정의가 없으므로 믹스인 클래스의 `__init__` 메서드를 호출할 필요도 없음
