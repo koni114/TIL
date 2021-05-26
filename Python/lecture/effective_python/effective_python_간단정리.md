@@ -1319,6 +1319,140 @@ class ValidatePolygon(type):
 - `__init_subclass__` 정의에서 `super().__init_subclass__`를 호출해 여러 계층에 걸쳐 클래스를 검증하고 다중 상속을 제대로 처리하도록 해라
 
 ### 49- __init__subclass__를 사용해 클래스 확장을 등록해라
+- 다음 코드는 직렬화와 역직렬화를 수행하는 코드를 구현  
+  이 때 다양한 CASE로 직렬화를 수행하지만, 이를 역직렬화하는 함수는 공통으로 구현
+- `__init__subclass__`를 사용해서 특별 메서드를 이용
+~~~python
+#- 역직렬화를 공통 함수로 가져가게끔 할 수 있는 전략
+#- 직렬화 할 때, 'class':key를 생성
+#- register_class 함수를 통해 registry 인스턴스 딕셔너리에 저장
+#- 역직렬화 수행시, registry 안에 있는 함수에 해당 클래스 사용해서 수행
+#- 역직렬화 된 값은 다시 클래스로 할당해 __repr__ 결과값으로 출력되게끔 함
+
+import json
+
+registry = {}
+
+
+def register_class(target_class):
+    registry[target_class.__name__] = target_class
+
+
+def deserialize(data):
+    params = json.loads(data)
+    name = params['class']
+    target_class = registry[name]
+    return target_class(*params['args'])
+
+
+class BetterSerializable:
+    def __init__(self, * args):
+        self.args = args
+
+    def serialize(self):
+        return json.dumps({
+            'class': self.__class__.__name__,
+            'args': self.args
+        })
+
+    def __repr__(self):
+        name = self.__class__.__name__
+        params = ','.join(str(x) for x in self.args)
+        return f"{name}({params})"
+
+
+class BetterRegisteredSerializable(BetterSerializable):
+    def __init_subclass__(cls):
+        super().__init_subclass__()
+        register_class(cls)
+
+
+class Vector1D(BetterRegisteredSerializable):
+    def __init__(self, magnitude):
+        super().__init__(magnitude)
+        self.magnitude = magnitude
+
+
+before = Vector1D(6)
+data = before.serialize()
+deserialize(data)
+~~~
+- 클래스 등록(`registry`)는 파이썬 프로그램을 모듈화 할 때 유용한 패턴
+- 메타클래스를 사용하면 프로그램 안에서 기반 클래스를 상속한 하위 클래스가 정의될 때마다 등록 코드를 자동으로 실행 가능
+- 메타클래스를 클래스 등록에 사용하면 클래스 등록 함수를 호출하지 않아서 생기는 오류를 피할 수 있음
+- 표준적인 메타클래스 방식보다 `__init__subclass__`가 더 다음. 깔끔하고 초보자가 이해하기 쉬움
+
+### 50-`__set__name__` 으로 클래스 애트리뷰트를 표시해라
+- 메타클래스의 기능 중, 클래스 정의 이후와 클래스 사용 시점 이전에 프로퍼티를 변경하거나 표시할 수 있는 기능
+- 애트리뷰트가 포함된 클래스 내부에서 애트리뷰트를 좀 더 관찰하고자 디스크립터를 쓸 때 이런 접근 방식 활용
+- `getattr(instance, name, 'defaultValue')`, `setattr(instance, name, value)`
+- 디스크립터 클래스를 사용함으로써 Field 인스턴스를 할당받은 애트리뷰트 값이 변화할 때, `setattr` 내장 함수를 통해 인스턴스별 상태를 직접 인스턴스 딕셔너리에 저장할 수 있고, 나중에 `getattr` 인스턴스의 상태를 읽을 수 있음
+- return시 호출 애트리뷰트 명이 아닌 다른 명으로 (`_value`) 호출하지 않으면 무한재귀 현상 발생
+~~~python
+class Field:
+    def __init__(self, name):
+        self.name = name
+        self.internal_name = "_" + self.name
+
+    def __get__(self, instance, instance_type):
+        # print("instance : ", instance)
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_name, '')
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+
+
+class Customer:
+    first_name = Field('first_name')
+    last_name = Field('last_name')
+    prefix = Field('prefix')
+    suffix = Field('suffix')
+~~~
+- 위의 코드에서 `first_name = Field('first_name')` -> `first_name = Field()` 로 변경하기 위한 메타클래스 정의
+~~~python
+class Meta(type):
+    def __new__(meta, name, bases, class_dict):
+        for key, value in class_dict.items():
+            if isinstance(value, Field):
+                print(f"key : {key}, value : {value}")
+                value.key = key
+                value.internal_name = "_" + key
+            cls = type.__new__(meta, name, bases, class_dict)
+            return cls
+
+
+class DatabaseRow(metaclass=Meta):
+    pass
+
+
+class Field:
+    def __init__(self):
+        self.name = None
+        self.internal_name = None
+
+    def __get__(self, instance, instance_type):
+        # print("instance : ", instance)
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_name, '')
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+
+
+class BetterCustomer(DatabaseRow):
+    first_name = Field()
+    last_name = Field()
+    prefix = Field()
+    suffix = Field()
+~~~
+- 하지만 `DatabaseRow` 메타클래스 상속을 잊거나, 불가피하게 상속받지 못하는 경우가 있을 수 있는데, 이 때 `__set__name__`(파이썬 3.6이상) 메서드 사용 가능
+- 클래스가 정의될 때마다 파이썬은 해당 클래스 안에 들어있는 디스크립터 인스턴스인 `__set__name__`을 호출함
+- `__set__name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음
+
+
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
 - 파이썬 패키지 인덱스(PyPI)에는 풍부한 패키지가 들어가 있음(http://pypi.org)

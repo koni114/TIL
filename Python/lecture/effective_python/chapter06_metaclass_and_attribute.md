@@ -1036,6 +1036,7 @@ class EvenBetterPoint2D(BetterSerializable):
         super().__init__(x, y)
         self.x = x
         self.y = y
+        
 
 register_class(EvenBetterPoint2D)
 
@@ -1069,6 +1070,12 @@ class RegisteredSerializable(BetterSerializable, metaclass=Meta)
 #### __init_subclass__ 특별 클래스 메서드를 사용하기
 - 더 좋은 접근 방법은 `__init_subclass__` 특별 클래스 메서드를 이용하는 것
 ~~~python
+class BetterRegisteredSerializable(BetterSerializable):
+    def __init_subclass__(cls):
+        super().__init_subclass__(cls)
+        register_class(cls)
+
+
 class Vector1D(BetterRegisteredSerializable):
     def __init_(self, magnitude):
         super().__init__(magnitude)
@@ -1182,10 +1189,272 @@ class BetterCustomer(DatabaseRow):
 - 매타클래스와 새 `DatabaseRow` 기반 클래스와 새 `Field` 디스크립터를 사용한 결과, 데이터베이스 로우에 대응하는 클래스 정의에는 이전과 달리 중복이 없음. 동작은 이전과 같음
 - 이 방법의 문제점은 `DatabaseRow`를 상속하는 것을 잊어버리거나 클래스 계층 구조로 인한 제약 때문에 어쩔 수 없이 DatabaseRow를 상속할 수 없는 경우, 여러분이 정의하는 클래스가 Field 클래스를 프로퍼티에 사용할 수 없다는 것임
 - DatabaseRow를 상속하지 않으면 코드가 깨짐! 
-- <b>이 문제를 해결할 수 있는 방법은 _set_name__ 특별 메서드를 사용하는 것</b>
-- 클래스가 정의될 때마다 파이썬은 해당 클래스 안에 들어있는 디스크립터 인스턴스의 `_set_name__`을 호출함
-- `_set_name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음
-- 다음 코드는 메타클래스 정의를 아예 피하고, `_set_name__`에서 처리!
+- <b>이 문제를 해결할 수 있는 방법은 _set_name__(파이썬 3.6이상) 특별 메서드를 사용하는 것</b>
+- 클래스가 정의될 때마다 파이썬은 해당 클래스 안에 들어있는 디스크립터 인스턴스의 `__set_name__`을 호출함
+- <b>`__set_name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음</b>
+- 다음 코드는 메타클래스 정의를 아예 피하고, `__set_name__`에서 처리!
+~~~python
+class Field:
+    def __init__(self):
+        self.name = None
+        self.internal_name = None
+
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.internal_name = "_" + name
+
+    def __get__(self, instance, instance_type):
+        # print("instance : ", instance)
+        if instance is None:
+            return self
+        return getattr(instance, self.internal_name, '')
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+
+
+class FixedCustomer:
+    first_name = Field()
+
+cust = FixedCustomer()
+print(cust.__dict__)
+cust.first_name = '메르센'
+print(cust.__dict__)
+
+>>>
+{}
+{'_first_name': '메르센'}
+~~~
+
+#### 기억해야 할 내용
+- 메타클래스를 사용하면 어떤 클래스가 완전히 정의되기 전에(`t= className()`) 클래스의 애트리뷰트를 변경할 수 있음
+- 디스크립터와 메타클래스를 조합하면 강력한 실행 시점 코드 검사와 선언적인 동작을 만들 수 있음
+- `__set_name__` 특별 메서드를 디스크립터에 정의하면 디스크립터가 포함된 클래스의 프로퍼티 이름을 처리할 수 있음
+- 디스크립터가 변경된 클래스의 인스턴스 딕셔너리에 데이터를 저장하게 만들면 메모리 누수를 피할 수 있고, weakref 내장 메서드를 사용하지 않아도 됨 
+
+### 51-합성 가능한 클래스 확장이 필요하면 메타클래스보다는 클래스 데코레이터를 사용해라
+- 메타클래스를 사용하면 클래스 생성을 다양한 방법으로 커스텀화할 수 있지만, 여전히 메타클래스로 처리할 수 없는 경우가 있음
+- 예를 들어 어떤 클래스의 모든 메서드를 감싸서 메서드에 전달되는 인자, 반환 값, 발생한 예외를 모두 출력하고 싶다고 하자
+- 다음 코드는 이런 디버깅 데코레이터를 정의함 
+~~~python 
+from functools import wraps
+
+
+def trace_func(func):
+    if hasattr(func, 'tracing'): #- 단 한 번만 데코레이터 적용
+        return func
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = None
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except Exception as e:
+            result = e
+            raise
+        finally:
+            print(f"{func.__name__}({args!r}, {kwargs!r}) -> "
+                  f"{result!r}")
+
+    wrapper.tracing = True
+    return wrapper
+
+
+class TraceDict(dict):
+    @trace_func
+    def __init__(self, *args, ** kwargs):
+        super().__init__(* args, ** kwargs)
+
+    @trace_func
+    def __setitem__(self, * args, ** kwargs):
+        return super().__setitem__(* args, ** kwargs)
+
+    @trace_func
+    def __getitem__(self, * args, ** kwargs):
+        return super().__getitem__(* args, ** kwargs)
+
+
+trace_dict = TraceDict([('안녕', 1)])
+trace_dict['거기'] = 2
+trace_dict['안녕']
+try:
+    trace_dict['존재하지 않음']
+except KeyError:
+    pass
+~~~
+- 이 코드의 문제점은 꾸미려는 모든 메서드를 `@trace_func` 데코레이터를 써서 재정의해야 한다는 점
+- 이런 불필요한 중복으로 인해 가독성도 나빠지고, 실수를 저지르기도 쉬워짐
+- 향후에 dict 상위 메서드를 추가하면, TraceDict에서 그 메서드를 재정의하기 전까지는 데코레이터 적용이 되지 않음
+- 이 문제를 해결하는 방법은 메타클래스를 사용해 클래스에 속한 모든 메서드를 자동으로 감싸는 것. 다음 코드는 새로 정의되는 타입의 모든 함수나 메서드를 trace_func 데코레이터로 감싸는 동작을 구현함
+~~~python
+import types
+from functools import wraps
+
+
+def trace_func(func):
+    if hasattr(func, 'tracing'): #- 단 한 번만 데코레이터 적용
+        return func
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = None
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except Exception as e:
+            result = e
+            raise
+        finally:
+            print(f"{func.__name__}({args!r}, {kwargs!r}) -> "
+                  f"{result!r}")
+
+    wrapper.tracing = True
+    return wrapper
+
+
+trace_types = (
+    types.MethodType,
+    types.FunctionType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    types.MethodDescriptorType,
+    types.ClassMethodDescriptorType)
+
+
+class TraceMeta(type):
+    def __new__(meta, name, bases, class_dict):
+        klass = type.__new__(meta, name, bases, class_dict)
+
+        for key in dir(klass):
+            value = getattr(klass, key)
+            if isinstance(value, trace_types):
+                wrapped = trace_func(value)
+                setattr(klass, key, wrapped)
+        return klass
+
+
+class TraceDict(dict, metaclass=TraceMeta):
+    pass
+
+trace_dict = TraceDict([('안녕', 1)])
+trace_dict['거기'] = 2
+trace_dict['안녕']
+try:
+    trace_dict['존재하지 않음']
+except KeyError:
+    pass
+
+>>>
+__new__((<class '__main__.TraceDict'>, [('안녕', 1)]), {}) -> {}
+__getitem__(({'안녕': 1, '거기': 2}, '안녕'), {}) -> 1
+__getitem__(({'안녕': 1, '거기': 2}, '존재하지 않음'), {}) -> KeyError('존재하지 않음')
+~~~
+- 이 코드는 잘 작동하는데, 상위 클래스가 메타클래스를 이미 정의한 경우, TraceMeta를 사용하면 어떤 일이 벌어질까?
+~~~python
+class OtherMeta(type):
+    pass
+
+class SimpleDict(dict, metaclass=OtherMeta):
+    pass
+
+class TraceDict(SimpleDict, metaclass=TraceMeta):
+    pass
+
+>>>
+TypeError: metaclass conflict: the metaclass of a derived class must be a (non-strict) subclass of the metaclasses of all its bases
+~~~
+- TraceMeta를 OtherMeta가 상속하지 않았으므로, 오류가 발생. 이론적으로는 메타클래스 상속을 통해 TraceMeta를 OtherMeta가 상속하게 하면 문제를 해결할 수 있음
+~~~python
+class TraceMeta(type):
+    ...
+
+class OtherMeta(TraceMeta):
+    pass
+
+class SimpleDict(dict, metaclass=OtherMeta):
+    pass
+
+
+class TraceDict(SimpleDict, metaclass=TraceMeta):
+    pass
+~~~
+- 하지만 라이브러리에 있는 메타클래스를 사용하는 경우에는 코드를 변경할 수 없기 때문에 이 방법을 사용할 수 없음. 또한 TraceMeta 같은 유틸리티 메타클래스를 여럿 사용하고 싶은 경우에도 사용할 수 없음
+- 메타클래스를 사용하는 접근 방식은 적용 대상 클래스에 대한 제약이 너무 많음
+- 이런 문제를 해결하고자 파이썬은 <b>클래스 데코레이터</b>를 지원함. 클래스 데코레이터는 함수 데코레이터처럼 사용할 수 있음
+- 클래스 선언 앞에 @ 기호와 데코레이터 함수를 적으면 됨. 이때 데코레이터 함수는 인자로 받은 클래스를 적절히 변경해서 재생성해야 함
+~~~python
+def my_class_decorator(Klass):
+    Klass.extra_param = '안녕'
+    return Klass
+
+@my_class_decorator
+class MyClass:
+    pass
+
+print(MyClass)
+print(MyClass.extra_param)
+>>>
+<class '__main__.MyClass'>
+안녕
+~~~
+- 앞의 예제에서 본 `TraceMeta.__new__` 메서드의 핵심 부분을 별도의 함수로 옮겨서 어떤 클래스에 대한 모든 메서드와 함수에 `trace_func`을 적용하는 클래스 데코레이터를 만들 수 있음
+- 이 구현은 메타클래스를 사용하는 버전보다 훨씬 짧음
+~~~python
+def trace(klass):
+    for key in dir(klass):
+        value = getattr(klass, key)
+        if isinstance(value, trace_types):
+            wrapped = trace_func(value)
+            setattr(klass, key, wrapped)
+    return klass
+
+@trace
+class TraceDict(dict):
+    pass
+
+trace_dict = TraceDict([('안녕', 1)])
+trace_dict['거기'] = 2
+trace_dict['안녕']
+try:
+    trace_dict['존재하지않음']
+except KeyError:
+    pass
+
+>>>
+__new__((<class '__main__.TraceDict'>, [('안녕', 1)]), {}) -> {}
+__getitem__(({'안녕': 1, '거기': 2}, '안녕'), {}) -> 1
+__getitem__(({'안녕': 1, '거기': 2}, '존재하지않음'), {}) -> KeyError('존재하지않음')
+~~~ 
+- 데코레이션을 적용할 클래스에 이미 메타클래스가 있어도 데코레이터를 사용할 수 있음
+~~~python
+class OtherMeta(type):
+    pass
+
+
+@trace
+class TraceDict(dict, metaclass=OtherMeta):
+    pass
+
+trace_dict = TraceDict([('안녕', 1)])
+trace_dict['거기'] = 1
+trace_dict['안녕']
+try:
+    trace_dict['존재하지 않음']
+except KeyError:
+    pass #- 키 오류가 발생할 것으로 예상함
+
+>>>
+__new__((<class '__main__.TraceDict'>, [('안녕', 1)]), {}) -> {}
+__getitem__(({'안녕': 1, '거기': 1}, '안녕'), {}) -> 1
+__getitem__(({'안녕': 1, '거기': 1}, '존재하지 않음'), {}) -> KeyError('존재하지 않음')
+~~~
+- <b>클래스를 확장하면서 합성이 가능한 방법을 찾고 있다면 클래스 데코레이터가 가장 적합한 도구</b>
+
+#### 기억해야 할 내용
+- 클래스 데코레이터는 class 인스턴스를 파라미터로 받아 이 클래스를 변경한 클래스나 새로운 클래스를 반환해주는 간단한 함수임
+- 준비 코드를 최소화하면서 클래스 내부의 모든 메서드나 애트리뷰트를 변경하고 싶을 때 클래스 데코레이터가 유용함
+- 메타클래스는 서로 쉽게 합성할 수 있지만, 여러 클래스 데코레이터를 충돌 없이 사용해 똑같은 클래스를 확장할 수 있음
 
 ## 용어 정리
 - 훅(hook)
