@@ -909,7 +909,7 @@ def __len__(self):
         pass
     return count
 ~~~
-- <b>내장 `collection.abc` 모듈 안에 컨테이너 타입에 정의해야 하는 전형적인 메서드를 모두 제공하는 추상 기반 클래스 정의가 여러가지 들어가 있음<b>
+- <b>내장 `collection.abc` 모듈 안에 컨테이너 타입에 정의해야 하는 전형적인 메서드를 모두 제공하는 추상 기반 클래스 정의가 여러가지 들어가 있음</b>
 - 이런 추상 기반 클래스의 하위 클래스를 만들고 필요한 메서드 구현을 잃어버리면 실수한 부분을 알려줌
 ~~~python
 from collections.abc import Sequence
@@ -924,6 +924,401 @@ TypeError: Can't instantiate abstract class BadType with abstract methods __geti
 - `Set`, `MutableMapping`과 같이 파이썬의 관례에 맞춰 구현해야 하는 특별 메서드가 훨씬 많은 더 복잡한 컨테이너 타입을 구현할 때는 이런 추상 기반 클래스가 주는 이점이 더 커짐
 - `collections.abc` 모듈 외에도, 파이썬에서는 객체 비교와 정렬을 위해 사용하는 다양한 특별 메서드들이 존재함
 - 컨테이너 클래스나 비컨테이너 클래스에서 모두 이런 특별 메서드를 구현할 수 있음
+
+### 44-세터와 게터 메서드 대신 평범한 애트리뷰트를 사용해라
+- `@property`, `@func.setter`를 사용해서 함수를 선언하면, 세터와 게터 기능이 제공됨
+- 위의 두 데코레이션을 사용하면, 값을 할당하거나 가져갈 때 제약을 걸 수 있고, 예외처리가 가능함
+- `@property`를 사용해 부모 클래스의 애트리뷰트도 제한할 수 있음
+- `@property`를 사용할 때는 단순히 get, set 구현 이외의 동작(특히 heavy code)은 일반 메소드를 사용해야 함  
+예를 들어 시간이 오래 걸리는 help function, I/O, DB query등의 질의는 사용X
+- 또한 해당 애트리뷰트를 제외한 다른 애트리뷰트를 정의하거나 할당하면 디버깅이 어려워짐
+- `@property`의 가장 큰 단점은 하위 클래스 사이에서만 공유가 가능하며, 다른 클래스와 공유는 불가능. 이럴 때는 descriptor를 제공
+- 다음은 `@property`를 통한 코드 예시
+~~~python
+class Resister:
+    def __init__(self, ohms):
+        self.ohms = ohms
+        self.voltage = 0
+        self.current = 0
+
+
+class FixedResistance(Resister):
+    def __init__(self, ohms):
+        super().__init__(ohms)
+
+    @property
+    def ohms(self):
+        return self._ohms #- self.ohms라고 하면 무한 recurive에 빠짐
+
+    @ohms.setter
+    def ohms(self, ohms):
+        #- 부모 객체인 경우, error 발생
+        if hasattr(self, '_ohms'):
+            raise ValueError('ohms는 불변 객체입니다.')
+        self._ohms = ohms
+
+
+test = FixedResistance(0)
+test.voltage = 10
+test.ohms = 20              #- ValueError 
+~~~
+
+### 45-애트리뷰트를 리펙터링하는 대신 @property를 사용해라
+- `@property`의 고급 사용법으로 간단한 수치 애트리뷰트를 특정 변수 할당이나 호출에 따라 계산해 제공하는 방법이 있음
+- <b>기존 클래스를 호출하는 코드를 전혀 바꾸지 않아도, 클래스 애트리뷰트의 기존 동작을 변경할 수 있기 때문에 유용함</b>
+- `@property`는 인터페이스를 점차 개선해나가는 과정에서 중간 필요한 기능들을 제공하는 수단으로 유용
+- 다음의 코드는 leaky bucket(리키 버킷) 흐름 제어 알고리즘을 구현한 것  
+  `Bucket` 클래는 남은 가용 용량(quota)와 잔존 시간을 표현함
+~~~python
+from datetime import datetime, timedelta
+
+
+class Bucket:
+    '''
+    시간을 일정한 간격으로 구분하고, 가용 용량을 전부 소비하거나, period가 지났을 떄
+    가용 용량을 reset됨
+
+    시간이 reset되면 알아서 quota를 채워주는 것이 아님.
+    '''
+    def __init__(self, period):
+        '''args
+        timedelta: 시간에 대해서 period를 입력받아 datetime 형태로 반환
+                    datetime 자료형과 사칙연산이 가능
+        quota: 사용 가용 용량
+        '''
+        self.period_delta = timedelta(seconds=period)
+        self.reset_time = datetime.now()
+        self.quota = 0
+
+    def __repr__(self):
+        return f"Bucket(quota= {self.quota})"
+
+
+def fill(bucket, amount):
+    '''bucket에 용량을 채워주는 함수
+
+    현재 시간과 instance reset time의 차가 period보다 크면
+    시간과 quota reset
+    그렇지 않으면 quota에 += amount
+
+    args
+        bucket: bucket class instance
+        amount: 가용하고자 하는 양
+    '''
+    now = datetime.now()
+    if now - bucket.reset_time > bucket.period_delta:
+        bucket.reset_time = now
+        bucket.quota = 0
+    bucket.quota += amount
+
+
+def deduct(bucket, amount):
+    '''bucket에 용량 할당 가능 여부 확인 함수
+
+    now - reset_time > period  --> False(quota = 0이 되므로)
+    bucket.quota - amount < 0  --> False
+    '''
+    now = datetime.now()
+    if (now - bucket.reset_time) > bucket.period_delta:
+        return False
+    if bucket.quota - amount < 0:
+        return False
+    else:
+        bucket.quota -= amount
+        return True
+
+
+bucket = Bucket(60)
+fill(bucket, 100)
+print(bucket)
+
+if deduct(bucket, 99):
+    print("99 용량 사용")
+else:
+    print("가용 용량이 작아서 99 용량을 처리할 수 없음")
+
+if deduct(bucket, 3):
+    print('3 용량 사용')
+else:
+    print("가용 용량이 작아 사용할 수가 없습니다.")
+print(bucket)
+~~~
+- 위 코드의 문제점 
+  - 버킷 시작시 가용 용량이 얼마인지 알 수 없음
+  - 버킷에 새로운 가용 용량을 할당하기 전까지는 defualt는 항상 False를 반환
+  - `deduct`를 호출하는 쪽에서 자신이 차단된 이유를 명확히 파악하기 어려움
+- 위 코드의 문제점을 해결하고자 재설정된 가용 용량인 `max_quota`와 이번 주기 버킷에서 소비한 용량의 합계인 `quota_consumed`를 추적하도록 클래스를 변경 가능
+- 이 때 `@property`를 사용해서 간략한 코드로 구현 가능!
+~~~python
+from datetime import datetime, timedelta
+
+def fill(bucket, amount):
+    #- bucket : bucket class
+    #- amount : 가용 용량
+    now = datetime.now()
+    #- 지나간 시간이 period보다 길면, 가용용량과 시간 reset 시킴
+    if now - bucket.reset_time > bucket.period_delta:
+        bucket.quota = 0
+        bucket.reset_time = now
+    bucket.quota += amount
+
+
+#- 필요한 용량 할당 가능 여부 확인
+def deduct(bucket, amount):
+    now = datetime.now()
+    if (now - bucket.reset_time) > bucket.period_delta:
+        print("time check")
+        return False
+    if bucket.quota - amount < 0:
+        print(f"bucket.quata:{bucket.quota} - {amount}")
+        return False
+    else:
+        bucket.quota -= amount
+        return True #- bucket의 가용 용량이 충분하므로, 필요한 분량을 사용함
+
+class NewBucket:
+    def __init__(self, period):
+        '''
+        args
+            max_quota: 재설정 가용 용량(주기 동안 채워 넣은 양)
+            quota_cosumed: 주기 동안 소비된 양
+        '''
+        self.period_delta = timedelta(seconds=period)
+        self.reset_time = datetime.now()
+        self.max_quota = 0
+        self.quota_consumed = 0
+
+    def __repr__(self):
+        return (f"NewBucket(max_quota={self.max_quota}), "
+                f"quota_consumed={self.quota_consumed}")
+
+    @property
+    def quota(self):
+        return self.max_quota - self.quota_consumed
+
+    @quota.setter
+    def quota(self, amount):
+        '''
+
+        amount == 0: 새로운 주기가 되고 가용 용량을 재설정
+        delta <0 & quota_consumed == 0 d --> 새로운 주기가 되고 가용 용량을 추가하는 경우
+        '''
+        delta = self.max_quota - amount
+        if amount == 0:
+            self.quota_consumed = 0
+            self.max_quota =0
+        elif delta < 0:
+            assert self.quota_consumed == 0
+            self.max_quota += amount
+        else:
+            assert self.max_quota > self.quota_consumed
+            self.quota_consumed += delta
+
+bucket = NewBucket(60)   #- 60초 setting
+print("최초 bucket:", bucket)
+fill(bucket, 100)
+print("보충 후:", bucket)
+
+
+if deduct(bucket, 99):
+    print("99 용량 사용")
+else:
+    print("가용 용량이 작아 99 용량을 처리할 수 없음")
+
+print(bucket)
+
+>>>
+최초 bucket: NewBucket(max_quota=0), quota_consumed=0
+보충 후: NewBucket(max_quota=100), quota_consumed=0
+99 용량 사용
+여전히  NewBucket(max_quota=100), quota_consumed=99
+~~~
+- 가장 좋은 점은 <b>Bucket.quota</b>를 사용하는 코드를 변경할 필요도 없고 이 클래스의 구현이 변경됐음을 알 필요도 없음
+- 객체가 처음부터 제대로 인터페이스를 제공하지 않거나 아무 기능도 없는 데이터 컨테이너 역할만 하는 경우가 실전에서 자주 발생
+- 시간이 지나면서 코드가 커지거나, 프로그램이 다루는 영역이 넓어지거나, 장기적으로 코드를 깔끔하게 유지할 생각이 없는 프로그래머들이 코드에 기여하는 등의 경우 이런 일이 발생
+- <b>너무 @property를 과용하지는 말고, 많아지면 클래스를 리펙터링 해야함</b>
+
+### 46-재사용 가능한 @property 메서드를 만들려면 디스크립터를 사용해라
+- `@property`의 문제점
+  - 가장 큰 문제점은 재사용성인데, 같은 클래스에 속하는 여러 애트리뷰트로 사용이 안되고, 서로 무관한 클래스 사이에서 `@property` 데코레이터를 적용한 메서드를 재사용할 수도 없음 
+- 예를 들어 학생의 특정 과목 점수가 백분율(1 ~ 100사이) 값인지를 검증하는 코드를 구현할 때, `@property`를 사용해서 구현이 가능함, 하지만 과목 개수가 늘어날 때마다 일일이 `@property`와 `@func.setter`함수를 구현해야하고, 수정이 있을 때마다 각 메서드를 전부 수정해 주어야 함
+- 이런 경우 파이썬에서 적용할 수 있는 좋은 방법은 디스크립터(descriptor)를 사용하는 것
+- 디스크립터 프로토콜은 파이썬 언어에서 애트리뷰트 접근을 해석하는 방법을 정의함
+- <b>디스크립터 클래스는 `__get__` 과 `__set__`</b> 함수를 제공하고, 이 두 메서드를 사용하면 별다른 준비 코드 없이 검증을 편하게 할 수 있음
+- 같은 로직을 한 클래스 안에 속한 여러 다른 애트리뷰트에 적용할 수 있으므로, 디스크립터가 믹스인보다 낫다
+- 다음 코드는 Grade의 인스턴스인 클래스 애트리뷰트가 들어있는 Exam 클래스를 생략 정의함  
+~~~python
+class Grade:
+    def __get__(self, instance, instance_type):
+        ...
+
+    def __set__(self, instance, value):
+        ...
+
+
+class Exam:
+    math_grade = Grade()
+    writing_grade = Grade()
+    science_grade = Grade()
+
+
+exam = Exam()
+exam.writing_grade = 40
+#- 다음과 같이 해석됨
+Exam.__dict__['writing_grade'].__set__(exam, 40)
+
+exam.writing_grade
+#- 다음과 같이 해석됨
+Exam.__dict__['writing_grade'].__get__(exam, Exam)
+~~~
+- 이런 동작을 이끌어 내는 것은 `__getattribute__` 메서드임
+- Exam 인스턴스 `writing_grade` 라는 이름의 애트리뷰트가 없으면, Exam 클래스의 애트리뷰트를 대신 사용. 이 클래스의 애트리뷰트가 `__get__`, `__set__` 메서드가 정의된 객체라면 디스크립터 프로토콜을 따라야 한다고 결정
+- 다음과 같이 디스크립터를 정의할 수 있는데, 문제는 Grade 인스턴스를 공유할 시 문제 발생
+~~~python
+class Grade:
+    def __init__(self):
+        self._value = 0
+
+    def __get__(self, instance, instance_type):
+        return self._value
+
+    def __set__(self, instance, value):
+        if not (0 <= value <= 100):
+            raise ValueError("점수는 0과 100사이 입니다.")
+        self._value = value
+
+first_exam = Exam()
+first_exam.writing_grade = 82
+first_exam.science_grade = 99
+print("쓰기 : ", first_exam.writing_grade)
+print("과학 : ", first_exam.science_grade)
+
+#- 문제는 여기서 발생
+second_exam = Exam()
+second_exam.writing_grade = 75
+print(f"두 번쨰 쓰기 점수 : {second_exam.writing_grade} 맞음")
+print(f"첫 번쨰 쓰기 점수 : {first_exam.writing_grade} 틀림: 82점이어야 함")
+
+>>>
+쓰기 :  82
+과학 :  99
+두 번쨰 쓰기 점수 : 75 맞음
+첫 번쨰 쓰기 점수 : 75 틀림: 82점이어야 함
+~~~
+- 프로그램이 실행되는 동안, Exam 클래스가 처음 정의될 때, 이 애트리뷰트에 대한 Grade 인스턴스가 단 한번만 생성됨
+- Exam 인스턴스가 생성될 때마다 Grade 인스턴스가 생성되지는 않음
+- 이를 해결하려면 Grade 클래스가 각각 Exam 인스턴스에 대해 값을 따로 찾게 해야함
+  인스턴스별 상태(ex) `dict[instance]`)를 딕셔너리에 저장하면 이런 구현이 가능
+~~~python 
+class Grade:
+    def __init__(self):
+        self._values = {}
+
+    def __get__(self, instance, instance_type):
+        if instance is None:
+            return self
+        return self._values.get(instance, 0)
+
+    def __set__(self, instance, value):
+        if not (0 <= value <= 100):
+            raise ValueError("점수는 0과 100 사이에 존재해야함")
+        else:
+            self._values[instance] = value
+~~~
+- 위의 코드는 메모리를 누수시킴. `values` 딕셔너리는 프로그램이 실행되는 동안 `__set__` 호출에 전달된 모든 Exam 인스턴스에 대한 참조 저장함
+- 따라서 참조 카운터가 0이 될 수 없으며, 따라서 garbage collection이 인스턴스 메모리를 재활용 못함
+- 이 문제를 해결하기 위해 파이썬 `weakref` 내장 모듈을 사용할 수 있음
+- 이 모듈은 `WeakKeyDictionary`라는 특별한 클래스를 제공하며, `_values`의 딕셔너리 대신 이 클래스 사용 가능
+- `WeakKeyDictionary`는 약한 참조를 사용하므로, gc가 언제든지 재활용 가능
+- `self._values = WeakkeyDictionary()`
+
+### 47-지연 계산 애트리뷰트가 필요하면 `__getattr__`, `__getattribute__`, `__setattr__`을 사용해라
+- 파이썬은 훅을 활용하면 시스템을 서로 접합하는 제너릭 코드를 쉽게 작성할 수 있음
+- 이러한 제너릭 코드를 작성하기 위해 앞서 배운 평범한 인스턴스 애트리뷰트나, `@property`, 디스크립터는 미리 애트리뷰트를 정의해야 하므로 사용할 수 없음
+- 이런 용도에는 <b>`__getattr__`이라는 특별 메서드 사용하면 됨</b>. 이 특별 메소드는 객체의 인스턴스 딕셔너리에 찾을 수 없는 애트리뷰트에 접근할 때마다 `__getattr__`이 호출됨
+- `__getattr__(self, name)`, `setattr(self, name, value)`로 들어감
+~~~python
+class LazyRecord:
+    def __init__(self):
+        self.exists = 5
+
+    #- name: attribute
+    def __getattr__(self, name):
+        value = f"{name}을 위한 값"
+        setattr(self, name, value)
+~~~
+- 항상 조심해야 할 것은 무한 재귀를 조심해서 코드를 구현하자
+~~~python
+class LoggingLazyRecord(LazyRecord):
+
+    def __getattr__(self, name):
+        print(f"*호출: __getattr__({name!r})"
+                f"인스턴스 딕셔너리 채워 넣음")
+        result = super().__getattr__(name)
+        print(f"*반환: {result!r}")
+        return result
+~~~
+- 이런 기능은 예를 들어 스키마가 없는 데이터에 지연 계산으로 접근하는 등의 활용이 필요할 때 아주 유용
+- `__getattribute__` 특별 메서드는 DB의 트렌젝션 코드를 구현할 때 처럼 항상 애트리뷰트에 접근할 때 사용가능
+- `__getattr__`과 `__getattribute__`에서 존재하지 않는 프로퍼티를 사용할 때 발생하는 표준적인 예외가 Attribute error임
+- 파이썬에서 기본 기능을 구현할 때는 `hasattr` 또는 `getattr` 내장 함수를 통해 프로퍼티 값을 꺼내오는 기능 사용가능
+- 위의 두 함수는 `__getattr__` 호출 전에 인스턴스 딕셔너리에 존재하는지 확인. 없으면 `__getattr__` 호출 
+- `__getattribute__`와 `__setattr__` 함수의 문제점은 원하지 않을 때도 항상 호출을 한다는 점  
+다음과 같이 어떤 객체와 관련된 키가 있을 때만 접근하고 싶다고 하자
+~~~python
+class Parent:
+    def __init__(self, data):
+        self._data = data    #- 생성자 초기 입력 dict
+
+    def __getattribute__(self, name):
+        data_dict = super().__getattribute__('_data')
+        return data_dict.get(name, 0)
+~~~
+- <b>__getattribute__와 __setattr__ 에서 무한 재귀를 피하려면 super()에 있는 메서드를 사용해 인스턴스 애트리뷰트에 접근하자</b>
+
+### 48- `__init__subclass__`를 사용해 하위 클래스를 검증해라
+- 메타클래스를 정의하지 않고 하위 클래스를 검증하는 방법(python 3.6이상)으로 `__init__subclass__` 특별 메서드 사용 가능
+~~~python
+class BetterPolygon:
+    sides = None
+
+    def __init_subclass__(cls):
+        if cls.sides < 3:
+            raise ValueError("side는 3 이상이어야 합니다.")
+
+    @classmethod
+    def interior_angles(cls):
+        return (cls.sides - 2) * 180
+~~~
+- `__init__subclass__` 메소드 말고도 Meta class의 `__new__`를 이용해서 하위 클래스 애트리뷰트 설정 가능
+- 메타클래스는 type을 상속해서 정의
+- 메타클래스는 `__new__` 메서드를 통해 자신과 연관된 클래스의 내용을 받음
+- 다음의 메타클래스 정의를 보여주는 코드
+- 클래스 이름(name), 클래스가 상속하고 있는 부모 클래스들(bases), class 본문에 정의된 모든 클래스 애트리뷰트(class_dict)에 접근 가능
+- 모든 클래스는 object를 상속하고 있지만, 메타클래스가 받는 부모 클래스의 튜플 안에는 object가 들어있지 않음
+- <b>클래스 정의 전에 클래스의 파라미터 검증이 필요하다면, `__new__` 에 기능 추가</b>
+~~~python
+class MetaClass(type):
+    def __new__(meta, name, bases, class_dict):
+        print(f"실행 : {name}, 메타 {meta}.__new__")
+        print(f"기반 클래스들 : {bases}")
+        print(class_dict)
+        return type.__new__(meta, name, bases, class_dict)
+
+#- 다음과 같이 하위 클래스의 애트리뷰트 검증 가능 - Meta class 이용
+class ValidatePolygon(type):
+    def __new__(meta, name, bases, class_dict):
+        if bases:
+            if class_dict['sides']  < 3:
+                raise ValueError('다각형 변은 3개 이상이어야 함')
+        return type.__new__(meta, name, bases, class_dict)
+~~~
+- 메타클래스의 단점은 여러개의 메타클래스를 지정받을 수 없음
+- `__new__` 는 클래스의 본문이 처리된 직후 수행됨. 즉 메타클래스를 사용하면 정의된 직후, 인스턴스 선언 전에 정의를 변경할 수 있음
+- 메타클래스를 사용하면 너무 복잡해질 수 있으므로, `__init__subclass__`를 사용 권장
+- `__init_subclass__` 정의에서 `super().__init_subclass__`를 호출해 여러 계층에 걸쳐 클래스를 검증하고 다중 상속을 제대로 처리하도록 해라
+
+### 49- __init__subclass__를 사용해 클래스 확장을 등록해라
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
 - 파이썬 패키지 인덱스(PyPI)에는 풍부한 패키지가 들어가 있음(http://pypi.org)
@@ -1240,3 +1635,5 @@ first = FirstClass(second)
   - 클래스 내부에서 사용할 데이터 타입을 외부에서 지정하는 기법
 - 직렬화
   - 파이썬 객체를 일련의 byte들로 변환하는 것을 직렬화, 그 반대로 decode하는 것을 역직렬화라고 함 
+- 메타 클래스(meta-class)
+  - 메타 클래스는 사용하면 class문을 가로채서 클래스가 정의될 때마다 특별한 동작을 제공할 수 있음 

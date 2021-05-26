@@ -132,7 +132,7 @@ $ python3 -m pip list
 - 예를 들어 함수 def문 바로 다음에 독스트링을 사용해 문서를 추가할 수 있음
 ~~~python
 def palindrome(word):
-    """주어진 단어가 회문인 경우 True를 반환함"""
+    '''주어진 단어가 회문인 경우 True를 반환함'''
     return word == word[::-1]
 
 assert palindrome('tacocat')
@@ -169,7 +169,7 @@ server> b
 ~~~python
 # words.py
 #!/usr/bin/env python3
-"""단어의 언어 패턴을 찾을 떄 쓸 수 있는 라이브러리.
+'''단어의 언어 패턴을 찾을 떄 쓸 수 있는 라이브러리.
 
 여러 단어가 서로 어떤 연관관계가 있는지 검사하는게 어려울 때가 있다!
 이 모듈은 단어가 가지는 특별한 특성을 쉽게 결정할 수 있게 해준다.
@@ -178,7 +178,7 @@ server> b
 - palindrome: 주어진 단어가 회문(palindrome, 앞으로 읽어도 뒤부터 읽어도 똑같은 경우)인지 결정한다.
 - check_anagram: 주어진 단어가 어구전철(anagrams, 똑같은 글자들로 순서만 바뀐 경우)인지 결정한다.
 ...
-"""
+'''
 ~~~
 - 모듈이 command line 용도라면, 도구를 실행해 사용하는 방법을 독스트링에 제공하면 좋음
 
@@ -190,7 +190,7 @@ server> b
 - 다음은 클래스 독스트링의 예
 ~~~python
 class Player:
- """게임 플레이어를 표현한다
+ '''게임 플레이어를 표현한다
     
     하위클래스는 `tick` 메서드를 오버라이드해서 플레이어의 파워 레벨 등에 맞는
     움직임 애니메이션을 제공할 수 있다
@@ -198,7 +198,7 @@ class Player:
     공개 애트리뷰트:
     - power: 사용하지 않은 파워업들(0과 1사이의 float)
     - coins: 현재 레벨에서 발견한 코인 개수(integer)
-    """
+    '''
     ...
 
 ~~~
@@ -209,7 +209,7 @@ class Player:
 - 다음은 함수 독스트링 예제
 ~~~python
 def find_anagrams(word, dictionary):
-    """주어진 단어의 모든 어구전철을 찾는다.
+    '''주어진 단어의 모든 어구전철을 찾는다.
     이 함수는 '딕셔너리' 컨테이너의 원소 검사만큼 빠른 속도로 실행된다.
     
     Args:
@@ -218,7 +218,7 @@ def find_anagrams(word, dictionary):
     
     Returns:
         찾은 어구전철들로 이뤄진 리스트. 아무것도 찾지 못한 경우 Empty.
-    """
+    '''
     ...
 ~~~
 - 함수 독스트링을 작성할 때 몇 가지 중요한 규칙을 고려해야 하는데, 그중에서 알아둬야 할 내용은 다음과 같음
@@ -249,14 +249,14 @@ def find_anagrams(word:str,
 ~~~python
 def find_anagrams(word: str,
                   dictionary: Container[str]) -> List[str]:
-    """주어진 단어의 모든 어구전철을 찾는다.
+    '''주어진 단어의 모든 어구전철을 찾는다.
     이 함수는 '딕셔너리' 컨테이너의 원소 검사만큼 빠른 속도로 실행된다.
     Args:
         word: 대상 단어.
         dictionary: 모든 단어가 들어있는 컬렉션.
     Returns:
         찾은 어구전철들.
-    """
+    '''
     ...
 ~~~
 - 인스턴스 필드, 클래스, 애트리뷰트, 메서드 등에서도 마찬가지로 타입 애너테이션과 독스트링의 정보 중복을 피해야 함. 타입 정보는 가능하면 어느 한쪽을 몰아서 유지하는 것이 가장 좋음
@@ -496,15 +496,15 @@ def determine_weight(volume, density):
 ~~~python 
 # my_module.py
 class Error(Exception):
-    """이 모듈에서 발생할 모든 예외의 상위 클래스."""
+    '''이 모듈에서 발생할 모든 예외의 상위 클래스'''
 
 
 class InvalidDensityError(Error):
-    """밀도 값이 잘못된 경우."""
+    '''밀도 값이 잘못된 경우'''
 
 
 class InvalidVolumeError(Error):
-    """부피 값이 잘못된 경우."""
+    '''부피 값이 잘못된 경우'''
 
 
 def determine_weight(volume, density):
