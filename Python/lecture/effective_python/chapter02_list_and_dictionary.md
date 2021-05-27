@@ -287,7 +287,7 @@ votes = {
 
 def populate_ranks(votes, ranks):
     names = list(votes.keys())                   
-    names.sort(key=votes.get, reverse=True)
+    names.sort(key=votes.get, reverse=True) #- votes.get('name') 이 들어간 결과 value를 정렬한다는 의미
     for i, name in enumerate(names, 1):
         ranks[name] = i
 

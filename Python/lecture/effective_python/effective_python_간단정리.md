@@ -6,9 +6,17 @@
 - str 인스턴스에는 사람이 사용하는 언어의 문자를 표현하는 유니코드 코드 포인트가 들어있음
 - 중요한 것은 str 인스턴스에는 직접 대응하는 이진 인코딩이 없고, bytes에는 직접 대응하는 텍스트 인코딩이 없음
 - 두 개를 구분하는 help function을 만들어서 적용해야 함
+~~~python
+def to_str(str_or_bytes):
+    if isinstance(str_or_bytes, bytes):
+        return str_or_bytes.decode('utf-8')
+    else:
+        return str_or_bytes
+~~~
 - `bytes`와 `str`는 연산이 불가능함
 
 ### 2-str-format 보다는 f-문자열을 사용하자
+- f-문자열은 간결하지만 위치 지정자 안에 파이썬 식을 포함시킬 수 있어 강력함
 ~~~python
 f_string = f'{key:<5} = {value:.2f}'
 f'내가 고른 숫자는 {number: .{places}f}'
@@ -65,6 +73,22 @@ if count := fresh_fruit.get('레몬', 0):
 - 두 번째 인덱스는 포함되지 않음
 - 범위를 지정한 인덱싱은 인덱싱의 범위가 넘어가도 무시됨
 - [:]만 사용하면 리스트가 그대로 복사됨
+~~~python
+a = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+b = a
+print("이전 a", a)
+print("이전 b", b)
+a[:] = [101, 102, 103]
+print("이후 a", a)
+print("이전 b", b) #- 중요! 
+
+>>>
+이전 a ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+이전 b ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+이후 a [101, 102, 103]
+이전 b [101, 102, 103]
+~~~
+
 
 ### 12- 스트라이드와 슬라이스를 한 식에 같이 쓰지 말라 
 - 스트라이트: 리스트를 일정한 간격을 두고 슬라이싱 할 수 있는 구문
@@ -1450,8 +1474,117 @@ class BetterCustomer(DatabaseRow):
 ~~~
 - 하지만 `DatabaseRow` 메타클래스 상속을 잊거나, 불가피하게 상속받지 못하는 경우가 있을 수 있는데, 이 때 `__set__name__`(파이썬 3.6이상) 메서드 사용 가능
 - 클래스가 정의될 때마다 파이썬은 해당 클래스 안에 들어있는 디스크립터 인스턴스인 `__set__name__`을 호출함
-- `__set__name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음
+- <b>`__set__name__`은 디스크립터 인스턴스를 소유 중인 클래스와 디스크립터 인스턴스가 대입될 애트리뷰트 이름을 인자로 받음</b>
+~~~python
+class Field:
+    '''
+    __set_name__:
+        name --> LHS에 존재하는 애트리뷰트
+    '''
+    def __init__(self):
+        self.name = None
+        self.internal_name = None
 
+    def __set_name__(self, owner, name):
+        self.name = name
+        self.internal_name = "_" + name
+
+    def __get__(self, instance, instance_type):
+        if instance is None:
+            return self
+        return getattr(self, self.internal_name, "")
+
+    def __set__(self, instance, value):
+        setattr(instance, self.internal_name, value)
+
+
+class FixedCustomer(Field):
+    first_name = Field()
+
+test = FixedCustomer()
+print(test.__dict__)
+test.first_name = '메르센'
+print(test.__dict__)
+~~~
+
+
+### 51-합성 가능한 클래스 확장이 필요하면 메타클래스보다는 클래스 데코레이터를 사용해라
+- 메타클래스 사용시 처리하지 못하는 경우가 있는데, 예를 들어 클래스의 모든 함수 및 메서드에 전달되는인자, 반환 값, 발생한 예외를 출력하고 싶다고 했을 때, 여러 메타클래스를 사용하기도 어렵고, 클래스에 대한 제약이 너무 많음
+- <b>이 때 파이썬은 클래스 데코레이터을 지원함. 클래스 데코레이터는 함수 데코레이터처럼 사용할 수 있음</b>
+- 클래스 선언 앞에 @ 기호와 데코레이터 함수를 적으면 됨. 이때 데코레이터 함수는 인자로 받은 클래스를 적절히 변경해서 재생성해야 함
+~~~python
+def my_class_decorator(klass):
+    klass.extra_param = 'check'
+    return klass
+
+@my_class_decorator
+class MyClass:
+    pass
+
+print(MyClass)
+print(MyClass.extra_param)
+
+>>>
+<class '__main__.MyClass'>
+check
+~~~
+- 다음과 같이 클래스 데코레이터를 사용해서 전체 코드를 구현할 수 있음
+~~~python
+import types
+from functools import wraps
+
+
+def trace_func(func):
+    if hasattr(func, 'tracing'):
+        return func
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        result = None
+        try:
+            result = func(*args, **kwargs)
+            return result
+        except Exception as e:
+            result = e
+            raise
+        finally:
+            print(f"{func.__name__}({args!r}, {kwargs!r}) -> "
+                  f"{result!r}")
+
+    wrapper.tracing = True
+    return wrapper
+
+
+trace_types = (
+    types.MethodType,
+    types.FunctionType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    types.MethodDescriptorType,
+    types.ClassMethodDescriptorType)
+
+
+def trace(klass):
+    for key in dir(klass):
+        value = getattr(klass, key)
+        if isinstance(value, trace_types):
+            wrapped = trace_func(value)
+            setattr(klass, key, wrapped)
+    return klass
+
+
+@trace
+class TraceDict(dict):
+    pass
+
+trace_dict = TraceDict([('안녕', 1)])
+trace_dict['거기'] = 2
+trace_dict['안녕']
+
+>>>
+__new__((<class '__main__.TraceDict'>, [('안녕', 1)]), {}) -> {}
+__getitem__(({'안녕': 1, '거기': 2}, '안녕'), {}) -> 1
+~~~
 
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
