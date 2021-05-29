@@ -194,11 +194,12 @@ handle = pictures[path]
   - 함수를 호출하는 부분과 반환 값을 언패킹 하는 부분이 길어 가독성이 나빠짐 
 - 더 많은 값을 언패킹 해야 한다면, `namedtuple` 이나 class를 선언하여 반환하자
 
+
 ### 20-None을 반환하기보다는 예외를 발생시켜라
 - 함수 내 오류 발생시 None을 return하면 반환 값을 잘못 해석하는 경우가 있음(`if not result`)
-- 위의 해결 방안 2가지
+- 위의 해결 방안 2가지  
   - 반환 값을 길이가 2인 튜플로 분리하는 것(`(True, a/b), (False, None)`)  
-  - <b>더 좋은 방법은 `Exception`을 통해 호출한 쪽으로 던져서(`raise`) 호출자가 처리하게 하는 것</b>
+  - <b>더 좋은 방법은 `Exception`을 통해 호출한 쪽으로 던져서(`raise`) 호출자가 처리하게 하는 것</b>  
 ~~~python
 def careful_divide(a, b):
     try:
@@ -215,6 +216,7 @@ except ValueError:
 else:
     print("결과는 %.1f 입니다." % result)
 ~~~
+
 ### 21- 변수 영역과 클로저의 상호작용 방식을 이해해라
 - 숫자로 이루어진 list를 정렬하는데, 정렬한 리스트의 앞쪽에는 우선 순위를 부여한 몇몇 숫자를 위치시켜야 한다고 가정
 - `numbers`: 숫자 `group`: 우선순위에 포함되는 group
@@ -1638,7 +1640,7 @@ $ python3 -m pip install -r /tmp/project/requirement.txt
 ~~~python
 #- 함수 docstring
 def test():
-  """주어진 함수는 test 용도입니다."""
+  '''주어진 함수는 test 용도입니다.'''
   return None
 print(repr(palindrome.__doc__))
 ~~~

@@ -123,10 +123,10 @@ else:
 - 함수의 반환값이 항상 float이라고 지정할 수 있고, 그에 따라 None이 결코 반환되지 않음을 알릴 수 있음
 ~~~python
 def careful_divide(a: float, b: float) -> float:
-    """a를 b로 나눈다
+    '''a를 b로 나눈다
     Raises:
         ValueError: b가 0이어서 나눗셈을 할 수 없을 때
-    """
+    '''
     try:
         return a / b
     except ZeroDivisionError as e:
@@ -297,6 +297,9 @@ def my_func(*args):
 
 it = my_generator()
 my_func(*it)
+
+>>>
+(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
 ~~~
 - args를 받는 함수는 인자 목록에서 가변적인 부분에 들어가는 인자의 개수가 처리하기 좋을 정도로 충분히 작다는 사실을 이미 알고 있는 경우에 적합
 - *args의 두 번째 문제점은 함수에 새로운 위치 인자를 추가하면 해당 함수를 호출하는 모든 코드를 변경해야만 한다는 것
@@ -410,13 +413,13 @@ log("다시 안녕!")
 - 이를 해결하는 방법은 <b>디폴트로 None을 지정하고 실제 동작을 docstring에 문서화 하는 것</b>
 ~~~python
 def log(message, when=None):
-    """메세지와 타임스탬프를 로그에 남김
+    '''메세지와 타임스탬프를 로그에 남김
 
     Args:
         message: 출력할 메세지
         when: 메세지가 발생한 시각(datetime),
           디폴트 값은 현재 시간,
-    """
+    '''
     if when is None:
         when = datetime.now()
     print(f"{when} : {message}")
