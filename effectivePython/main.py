@@ -1,19 +1,50 @@
-from functools import wraps
+import itertools
 
-def trace(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        print(f"{func.__name__}{kwargs!r} -> {result!r}")
-        return result
-    return wrapper
+# itertools.chain
 
-@trace
-def fibonacci(n):
-    '''n번째 피보나치 수를 반환함'''
-    if n in (0, 1):
-        return n
-    return fibonacci(n-1) + fibonacci(n-2)
+c = itertools.chain([1,2,3], [4,5,6])
+print(list(c))
 
-hello = fibonacci(10)
-print(fibonacci)
+# itertools.repeat
+c = itertools.repeat([1,2,3], 2)
+print(list(c))
+
+# itertools.cycle
+c = itertools.cycle([1,2])
+for _ in range(10):
+    print(next(c))
+
+# itertools.tee
+it1, it2, it3 = itertools.tee([1,2,3], 3)
+print(list(it1))
+
+# itertools.zip_longest
+a = [1,2]
+b = ['a', 'b', 'c']
+list(itertools.zip_longest(a, b, fillvalue='haha'))
+
+# itertools.islice
+values = list(range(10))
+list(itertools.islice(values, 2, 8, 2))
+
+# itertools.takewhile
+less_than_seven = lambda x: x < 7
+list(itertools.takewhile(less_than_seven, values))
+
+
+# itertools.dropwhile
+less_than_seven = lambda x: x < 7
+list(itertools.dropwhile(less_than_seven, values))
+
+# itertools.filterfalse
+list(itertools.filterfalse(less_than_seven, values))
+
+# itertools.accumulate
+
+# itertools.product
+
+# itertools.permutations
+list(itertools.permutations([1,2,3,4,5], 2))
+# itertools.combinations
+
+# itertools.combinations_with_replacement

@@ -251,13 +251,13 @@ def normalize_defensive(numbers):
         raise TypeError("컨테이너를 제공해야 합니다.")
     total = sum(numbers)
     result = []
-    for value in get_iter():
+    for value in numbers:
         percent = 100 * value / total
         result.append(percent)
     return result    
 ~~~
 - 결과적으로 `normalize_defensive`는 리스트와 ReadVisits에 대해 모두 제대로 작동함.  
-  <b>리스트나 ReadVisits 모두 이터레이터 프로토콜을 따르는 이터러블 컨테이너 --> iterable 객체</b>이기 떄문!
+  <b>리스트나 ReadVisits 모두 이터레이터 프로토콜을 따르는 이터러블 컨테이너 --> iterable 객체</b>이기 때문!
 ~~~python
 percentages = normalize_defensive(numbers=visits)
 percentages = normalize_defensive(numbers=ReadVisits('test.txt'))
@@ -307,13 +307,13 @@ next(roots)
 - 결과적으로 아주 큰 입력 스트림에 대해 여러 기능을 합성해 적용해야 한다면, 제너레이터 식을 선택해라
 - 다만 제너레이터가 반환하는 이터레이터에는 상태가 있기 때문에 이터레이터를 한 번만 사용해야 함
 
-### 기억해야 할 내용
+#### 기억해야 할 내용
 - 입력이 크면 메모리를 너무 많이 사용하기 때문에 리스트 컴프리헨션은 문제를 일으킬 수 있음
 - 제너레이터 식은 이터레이터처럼 한 번에 원소를 하나씩 출력하기 때문에 메모리 문제를 피할 수 있음
 - 제너레이터 식이 반환한 이터레이터를 다른 제너레이터 식의 하위 식으로 사용함으로써 제너레이터 식을 서로 합성할 수 있음
 - 서로 연결된 제너레이터 식은 매우 빠르게 실행되며 메모리도 효율적으로 사용됨
 
-## 33-yield from을 사용해 여러 제너레이터를 합성해라
+### 33-yield from을 사용해 여러 제너레이터를 합성해라
 - 제너레이터는 강점이 많아 다양한 프로그램에서 여러 단계에 걸쳐 한 줄기로 사용되고 있음
 - 예를 들어 제너레이터를 사용해 화면의 이미지를 움직이게 하는 그래픽 프로그램이 있다고 하자. 원하는 시각적인 효과를 얻으려면 처음에는 이미지가 빠르게 이동하고, 잠시 멈춘 다음 다시 이미지가 느리게 이동해야 함
 ~~~python
@@ -399,7 +399,7 @@ print(f"{reduction:.1%} 시간이 적게 듬")
 
 #### 기억해야 할 내용
 - `yield from`식을 사용하면 여러 내장 제너레이터를 모아 제너레이터 하나로 합성할 수 있음
-- 직접 내포된 제너레이터를 이터레이션하면서 각 제너레이터의 출력을 내보내는 것보다 yield from을 사용하는 것이 성능면에서 더 좋음
+- 직접 내포된 제너레이터를 이터레이션하면서 각 제너레이터의 출력을 내보내는 것보다 `yield from`을 사용하는 것이 성능면에서 더 좋음
 
 ### 34-send로 제너레이터에 데이터를 주입하지 말라
 - 앞서 제너레이터 함수를 통해 이터레이션이 가능한 출력 값을 만들어 낼 수 있음을 확인했는데, 이러한 데이터 채널은 단방향임
@@ -452,7 +452,7 @@ try:
 except StopIteration:
     pass
 ~~~
-- for 루프나 next 내장 함수로 제너레이터를 이터레이션하지 않고 send 메서드를 호출하면, 제너레이터가 재개될 떄 yield가 send에 전달된 파라미터 값을 반환함
+- for 루프나 next 내장 함수로 제너레이터를 이터레이션하지 않고 send 메서드를 호출하면, 제너레이터가 재개될 때 yield가 send에 전달된 파라미터 값을 반환함
 - 하지만 방금 시작한 제너레이터는 아직 yield 식에 도달하지 못했기 때문에 최초로 send를 호출할 때 인자로 전달할 수 있는 유일한 값은 None뿐임
 ~~~python
 it = iter(my_generator())
@@ -574,7 +574,7 @@ def run_cascading():
 - send와 yield from 식을 함께 사용하면 제너레이터의 출력에 None이 불쑥불쑥 나타내는 의외의 결과를 얻을 수 있음
 - 합성할 제너레이터들의 입력으로 이터레이터를 전달하는 방식이 send를 사용하는 방식보다 더 낫다. send는 가급적 사용하지 말라
 
-### 제너레이터 안에서 throw로 상태를 변화시키지 말라
+### 35-제너레이터 안에서 throw로 상태를 변화시키지 말라
 - 제너레이터의 고급 기능으로 yield from 식과 send 메서드 외에, 제너레이터 안에서 Exception을 다시 던질 수 있는 throw 메서드가 있음
 - `throw` 는 어떤 제너레이터에 대해 throw가 호출되면 이 제너레이터는 값을 내놓은 `yield`로부터 평소처럼 제너레이터 실행을 계속하는 대신, throw가 제공한 Exception을 다시 던짐
 - 다음 코드는 이런 동작 방식을 보여줌
@@ -637,6 +637,22 @@ MyError 발생
 - 그 후에는 timer를 구동시키는 run 함수를 정의할 수 있음
 - run 함수는 throw를 사용해 타이머를 재설정하는 예외를 주입하거나, 제너레이터를 출력에 대해 announce 함수를 호출
 ~~~python
+class Reset(Exception):
+    pass
+
+def timer(period):
+    current = period
+    while current:
+        current -= 1
+        try:
+            yield current
+        except Reset:
+            current = period
+
+def check_for_reset():
+    ...
+
+
 def announce(remaining):
     print(f"{remaining} 틱 남음")
 

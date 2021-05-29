@@ -314,6 +314,7 @@ def decode(data, default={}):
 - 파이썬 데코레이터는 실행 시점에 다른 함수를 변경할 수 있게 해줌
 - 데코레이터를 사용하면 instrospection을 사용하는 도구가 잘못 작동할 수 있음
 - 직접 데코레이터를 구현할 때 introspection에서 문제가 생기지 않길 바란다면 wraps 데코레이터 사용하기
+- <b>wrap를 wrapper 함수에 적용하면, wraps가 데코레이터 내부에 들어가는 함수에서 중요한 메타데이터를 복사해서 wrapper 함수에 적용해줌</b>
 ~~~python
 from functools import wraps
 
@@ -1906,3 +1907,5 @@ first = FirstClass(second)
   - 파이썬 객체를 일련의 byte들로 변환하는 것을 직렬화, 그 반대로 decode하는 것을 역직렬화라고 함 
 - 메타 클래스(meta-class)
   - 메타 클래스는 사용하면 class문을 가로채서 클래스가 정의될 때마다 특별한 동작을 제공할 수 있음 
+- 제너레이터
+  - 함수가 점진적으로 반환하는 값으로 이뤄지는 스트림을 만들어줌
