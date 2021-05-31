@@ -262,6 +262,7 @@ with log_level(logging.DEBUG, 'my-log') as logger:
     logger.debug(f"대상 : {logger.name}!")
     logging.debug("이 메세지는 출력되지 않음")
 
+
 >>>
 DEBUG:my-log:대상 : my-log!
 ~~~
@@ -330,7 +331,10 @@ utc_now = time.mktime(time_tuple)
 - 하지만 원도우 같은 플랫폼에서는 time 제공하는 시간대 관련 기능 중 몇 가지를 사용할 수 없음
 - 예를 들어 다음 코드는 한국 표준 시간(KST)을 사용해 출발 시간을 구문 분석함
 ~~~python
-import os     
+import os
+os.environ['TZ'] = 'KST-09'
+time.tzset()
+     
 parse_format = '%Y-%m-%d %H:%M:%S %Z'  # %Z는 시간대를 뜻함
 depart_icn = '2020-08-27 19:13:04 KST'
 time_tuple = time.strptime(depart_icn, parse_format)
@@ -415,7 +419,7 @@ print(nepal_dt)
 - datetime과 pytz를 사용하면 호스트 컴퓨터가 실행 중인 운영체제와 관계없이 어떤 환경에서도 일관성 있게 시간을 변환할 수 있음
 
 ### 기억해야 할 내용
-- 여러 다른 시간대를 변환할 떄는 time 모듈을 쓰지 말라
+- 여러 다른 시간대를 변환할 때는 time 모듈을 쓰지 말라
 - 여러 다른 시간대를 신뢰할 수 있게 변환하고 싶으면 datetime과 pytz 모듈을 함게 사용해라
 - 항상 시간을 UTC로 표시하고, 최종적으로 표현하기 직전에 지역 시간으로 변환해라
 
@@ -634,7 +638,7 @@ Traceback ...
 AttributeError: ...
 ~~~
 - 이 예외가 발생하는 것은 피클된 데이터 안에 직렬화한 클래스의 임포트 경로가 들어 있기 때문
-- 이 경우에도 `copyreg` 를 쓰는 것이 해결 방법이 될 수 있음. `copyreg`를 쓰면 객체를 언피클할 떄 사용할 함수에 대해 안정적인 식별자를 지정할 수 있음
+- 이 경우에도 `copyreg` 를 쓰는 것이 해결 방법이 될 수 있음. `copyreg`를 쓰면 객체를 언피클할 때 사용할 함수에 대해 안정적인 식별자를 지정할 수 있음
 - 이로 인해 여러 다른 클래스에서 다른 이름으로 피클된 데이터를 역직렬화 할 때 서로 전환할 수 있음
 - 이 기능은 한 번 더 간접 계층을 추가해줌
 ~~~python
@@ -685,6 +689,9 @@ print(round(cost, 2))
 - `Decimal`을 사용하면 반올림 처리도 원하는 대로 더 정확히 할 수 있음
 - 예를 들어, 미국과 남극 사이의 통화료 문제를 `Decimal`을 사용해 처리하면 근사치가 아니라 정확한 요금을 구할 수 있음
 ~~~python
+from decimal import Decimal
+
+
 rate = Decimal('1.45')
 seconds = Decimal(3*60 + 42)
 cost = rate * seconds / Decimal(60)
@@ -772,7 +779,7 @@ def insertion_sort(data):
     result = []
     for value in data:
         insert_value(result, value)
-        return result
+    return result
 
 
 def insert_value(array, value):
@@ -847,7 +854,7 @@ from bisect import bisect_left
 
 def insert_value(array, value):
     i = bisect_left(array, value)
-    array.insert(i, value
+    array.insert(i, value)
 ~~~
 - 프로파일러를 다시 실행해서 새로운 프로파일러 통계 표를 얻음
 - 이전의 insert_value 함수에 비해 새로 정의한 함수의 누적 실행 시간이 거의 100배 가까이 줄어듬
@@ -1041,15 +1048,14 @@ for count in (1_000, 2_000, 3_000, 4_000, 5_000):
 - 내부적으로 원소가 추가됨에 따라 리스트 타입이 원소를 저장하기 위해 가용량을 늘리는 부가 비용이 약간 발생하지만 이 비용은 매우 적고 append를 반복 호출하므로 여러 append 호출이 이 비용을 분할상환해줌   
 - 다음 코드는 큐의 맨 앞에서 원소를 제거하는 pop(0)를 벤치마크함
 ~~~python
-import collections
-
-def deque_append_benchmark(count):
+#
+def list_pop_benchmark(count):
     def prepare():
-        return collections.deque()
+        return list(range(count))
 
     def run(queue):
-        for i in range(count):
-            queue.append(i)
+        while queue:
+            queue.pop(0)
 
     tests = timeit.repeat(
         setup='queue = prepare()',
@@ -1057,11 +1063,13 @@ def deque_append_benchmark(count):
         globals=locals(),
         repeat=1000,
         number=1)
+
     return print_results(count, tests)
 
-baseline = deque_append_benchmark(500)
+baseline = list_pop_benchmark(500)
+
 for count in (1_000, 2_000, 3_000, 4_000, 5_000):
-    comparison = deque_append_benchmark(count)
+    comparison = list_pop_benchmark(count)
     print_delta(baseline, comparison)
 ~~~
 - 놀랍게도, 리스트에서 pop(0)를 사용해 웤소를 큐에서 빼내는데 걸리는 시간이 큐 길이가 늘어남에 따라 큐 길이의 제곱에 비례해 늘어나는 것을 볼 수 있음
@@ -1100,7 +1108,7 @@ for count in (1_000, 2_000, 3_000, 4_000, 5_000):
 - 생산자는 append를 호출해 원소를 추가하고 소비자는 pop(0)을 사용해 원소를 받게 만들면 리스트 타입을 FIFO 큐로 사용할 수 있음. 하지만 리스트를 FIFO 큐로 사용하면, 큐 길이가 늘어남에 따라 pop(0)의 성능이 선형보다 더 크게 나빠지기 때문에 문제가 될 수 있음
 - collections 내장 모듈에 있는 deque 클래스는 큐 길이와 상관없이 상수 시간만에 append와 popleft를 수행하기 때문에 FIFO 큐 구현에 이상적임
 
-### 72-정렬된 시퀀스를 검색할 떄에는 bisect를 사용해라
+### 72-정렬된 시퀀스를 검색할 때에는 bisect를 사용해라
 - 보통 프로그램이 구체적으로 처리해야 하는 정보의 유형이 무엇이든, 리스트에서 index 함수를 사용해 특정 값을 찾아내려면 리스트 길이에 선형으로 비례하는 시간이 필요
 ~~~python
 data = list(range(10**5))
@@ -1200,7 +1208,7 @@ class Book:
 ~~~
 - 만기일(due_date)를 넘긴 경우에는 연체 사실을 통지하는 메세지를 보내는 시스템이 필요
 - 안타깝지만 책의 최대 대출 기간이 얼마나 최근에 발간된 책인지, 얼마나 유명한 책인지 등의 요소에 따라 달라지므로, 이 경우에는 FIFO 큐를 사용할 수 없음
-- 예를 들어 오늘 대출한 책이 내일 대출한 책보다 만기일이 더 늦을 수 있음. 당므 코드에서는 표준 리스트를 사용하고 새로운 Book이 도착할 떄마다 원소를 정렬해서 이런 기능을 구현함
+- 예를 들어 오늘 대출한 책이 내일 대출한 책보다 만기일이 더 늦을 수 있음. 다음 코드에서는 표준 리스트를 사용하고 새로운 Book이 도착할 때마다 원소를 정렬해서 이런 기능을 구현함
 ~~~python
 def add_book(queue, book):
     queue.append(book)

@@ -1589,12 +1589,493 @@ __new__((<class '__main__.TraceDict'>, [('안녕', 1)]), {}) -> {}
 __getitem__(({'안녕': 1, '거기': 2}, '안녕'), {}) -> 1
 ~~~
 
+### 65- try/except/finally의 각 블록을 잘 활용해라
+- `finally`
+  - 예외가 필요하더라도, 정리 코드가 필요할 때 사용(ex) 파일 핸들을 안전하게 닫기 위하여) 
+- 복합적인 문장 안에 모든 요소를 다 사용하고 싶다면, `try/except/else/finally`를 사용하자
+- `else` 블록을 사용하면, try 블록에 들어갈 코드를 최소화 할 수 있으며, try 블록에 들어가는 코드가 줄어들면 발생할 여지가 있는 예외를 서로 구분할 수 있으므로 가독성이 좋아짐
+~~~python
+UNDEFINED = object()
+
+def divide_json(path):
+    print("파일 열기")
+    handle = open(path, 'r+')
+    try:
+        print("* 데이터 읽기")
+        data = handle.read()
+        print("* JSON 데이터 읽기")
+        op = json.loads(data)      #- valueError가 발생할 수 있음
+        print("* 계산 수행")
+        value = (
+            op['numerator'] / op['denominator'])
+    except ZeroDivisionError as e:
+        print("* ZeroDivisionError 처리")
+        return UNDEFINED
+    else:
+        print("* 계산 결과 쓰기")
+        op['result'] = value
+        result = json.dumps(op)
+        handle.seek(0)        #- 파일의 커서 위치를 0(맨처음)으로 이동
+        handle.write(result)
+        return value
+    finally:
+        print("* close() 호출")
+        handle.close()
+~~~
+
+### 66-재사용 가능한 try/finally 동작을 원한다면 contextlib와 with문을 사용해라
+- 파이썬의 `with` 문은 코드가 특별한 컨텍스트(context) 안에서 실행되는 경우를 표현
+- 예를 들어 mutually exclusive mutax lock을 with 문에서 사용하면 lock을 소유했을 때만 코드 블록이 실행되는 것을 의미함 
+~~~python
+from threading import Lock
+lock = Lock()
+with lock:
+    ...
+
+#- 위의 with 문은 아래 코드문과 동일함
+lock.acquire()
+try:
+    #
+    ...
+finally:
+    lock.release()
+~~~
+- 이 경우에는 with 문 쪽이 더 나음. `try/finally` 구조를 반복적으로 사용할 필요가 없고 코드를 빠트릴 염려가 없기 때문
+- `contextlib` 내장 모듈을 사용하면 우리가 만든 객체나 함수를 `with` 문에 쉽게 쓸 수 있음
+- `contextlib` 모듈은 `with` 에 쓸 수 있는 함수를 간단히 만들 수 있는 `contextmanager` 데코레이터를 제공함
+- 다음은 특정 CASE에서 logging level을 변경시켜 Logging 하기 위하여 `contextmanager`를 구현한 코드 예제
+~~~python
+import logging
+from contextlib import contextmanager
+
+def my_function():
+    logging.debug('디버깅 데이터')
+    logging.error('이 부분은 오류 로그')
+    logging.debug('추가 디버깅 데이터')
+
+
+@contextmanager
+def debug_logging(level):
+    logger = logging.getLogger()
+    old_level = logger.getEffectiveLevel()
+    logger.setLevel(level)
+    try:
+        yield
+    finally:
+        logger.setLevel(old_level)
+
+
+with debug_logging(logging.DEBUG):
+    print("* 내부")
+    my_function()
+
+print("* 외부")
+my_function()
+~~~
+- `with`문에 전달된 컨텍스트 매니저가 객체를 반환할 수도 있음. 이렇게 반환된 객체는 with 복합문의 지역 변수로 활용됨
+- 가장 큰 활용의 예로, `with`문에 open을 전달하면 `as`를 통해 대상으로 지정된 파일 핸들을 전달, `with` 블록을 나갈 때 핸들을 닫음
+~~~python
+filename = 'test.txt'
+with open(filename, 'w') as handle:
+    handle.write('데이터 입니다.')
+~~~
+- 이 코드에서 문제가 될 수 있는 부분을 강조함으로써, 파일 핸들이 열린 채로 실행되는 코드의 양을 줄이도록 우리를 복돋음
+- `contextmanager` 데코레이터를 적용한 함수에서 `as` 에게 대상변수를 넘기기 위한 방법은 `yield` 를 선언해서 넘기면 됨
+~~~python
+@contextmanager
+def log_level(level, name):
+    logger = logging.getLogger(name)
+    old_level = logger.getEffectiveLevel()
+    logger.setLevel(level)
+    try:
+        yield logger
+    finally:
+        logger.setLevel(old_level)
+
+with log_level(logging.DEBUG, 'my_log') as logger:
+    logger.debug(f"대상 : {logger.name} !")
+    logging.debug('이 메세지는 출력되지 않음')
+
+>>>
+DEBUG:my_log:대상 : my_log !
+~~~
+
+#### 핵심 내용
+- `with` 문을 사용하면, `try/finally` 블록을 통해 사용해야 하는 로직을 재활용하면서 시각적인 잡음도 줄일 수 있음
+- `contextlib` 내장 모듈이 제공하는 `contextmanager` 데코레이터를 사용하면 with 문에 사용가능
+- 컨텍스트 매니저가 `yield` 하는 값은 `with` 문의 `as` 부분에 전달됨. 이를 활용하면 특별한 컨텍스트 내부에서 실행되는 코드 안에서 직접 그 컨텍스트에 접근할 수 있음
+
+### 67-지역 시간에는 time 보다는 datetime 을 활용해라
+- 협정 세계시(Coordinated Universal Time, UTC)는 시간대와 독립적으로 시간을 나타낼 때 쓰는 표준. 유닉스 기준 시간이 몇 초 흘렀는지를 계산하는데, 현재 위치를 기준으로 시간을 계산하는 인간에게는 적합하지 않음
+- 파이썬에서 시간대를 변환하는 방법은 `time` 내장 모듈을 사용하거나, `datetime` 모듈을 사용하는데, `datetime` 모듈을 사용하자
+
+#### time 모듈
+- time 모듈이 플랫폼에 따라 다르게 작동함
+- time 모듈의 동작은 호스트 운영체제의 C 함수가 어떻게 작동하는지에 따라 달라짐
+- 따라서 파이썬에서는 time 모듈의 동작을 신뢰할 수 없으며, 여러 시간대에서 time 모듈이 일관성 있게 동작한다고 보장할 수 없으므로, 여러 시간대를 다뤄야 하는 경우에는 time 모듈 사용하면 안됨
+
+#### datetime 모듈
+- `datetime`도 마찬가지로 여러 시간대에 속한 시간을 상호 변환할 수 있음
+~~~python
+from datetime import datetime, timezone
+
+now = datetime(2021, 5, 29, 10, 10, 4)
+now_utc = now.replace(tzinfo=timezone.utc)
+now_local = now_utc.astimezone()
+print(now_local)
+
+>>>
+2021-05-29 19:10:04+09:00
+
+#- local time -> UTC Timezone
+time_str = '2021-05-29 14:09:10'
+time_format = '%Y-%m-%d %H:%M:%S'
+now = datetime.strptime(time_str, time_format)
+time_tuple = now.timetuple()
+utc_now = time.mktime(time_tuple)
+
+~~~
+- `datetime` 모듈은 한 지역 시간을 다른 지역 시간으로 바꾸는 신뢰할 수 있는 기능을 제공
+- `datetime`은 `tzinfo` 클래스와 이 클래스 안에 있는 메서드에 대해서만 시간대 관련 기능을 제공
+- 파이썬 기본 설치에는 UTC를 제외한 시간대 정의가 들어있지 않음
+- `pytz` 패키지를 설치하여, default로 제공되지 않는 시간대 정보를 추가할 수 있음
+- `pytz`에는 우리에게 필요한 모든 시간대 정보에 대한 완전한 데이터베이스가 들어있음
+- <b>`datetime`과 pytz를 사용하면 호스트 컴퓨터가 실행 중인 운영체제와 관계없이 어떤 환경에서도 일관성 있게 시간을 변환할 수 있음</b>
+
+### 68- copyreg를 사용해 pickle을 더 신뢰성 있게 만들어라
+- `pickle` 내장 모듈을 사용하면 파이썬 객체를 바이트 스트림으로 직렬화하거나, 바이트 스트림을 객체로 역직렬화 할 수 있음
+- `pickle`의 문제점은 `pickle`로 저장 후, 클래스를 변경하고 다시 로드하면 저장된 클래스 애트리뷰트 그대로 저장되어 있음
+- `copyreg` 내장 모듈을 사용하면 이런 문제를 쉽게 해결할 수 있음. 파이썬 객체를 직렬화, 역직렬화할 때 사용할 함수를 등록할 수 있으므로 pickle 동작을 제어할 수 있고, 그에 따라 `pickle` 동작의 신뢰성을 높일 수 있음
+~~~python
+import pickle
+
+class GameState:
+    def __init__(self, level=0, lives=4, points=0, magic=10):
+        self.level = level
+        self.lives = lives
+        self.points = points
+        
+
+
+def pickle_game_state(game_state):
+    kwargs = game_state.__dict__
+    return unpickle_game_state, (kwargs, )
+
+
+def unpickle_game_state(kwargs):
+    return GameState(**kwargs)
+
+import copyreg
+copyreg.pickle(GameState, pickle_game_state)
+
+state = GameState()
+state.points += 1000
+serialized = pickle.dumps(state)
+state_after = pickle.loads(serialized)
+print(state_after.__dict__)
+~~~
+- 위의 예제에서, 필드를 제거하면 오류 발생. 이때 `copyreg` 함수에게 전달하는 함수에 버전 파라미터를 추가하면 이 문제 해결 가능
+- <b>클래스가 바뀔 때마다 버전을 지정하여 `unpickle_game_state`를 수정하면 됨</b>
+- 만약 클래스 이름을 변경하거나, 클래스를 다른 모듈로 옮기는 방식으로 코드를 리펙터링 하는 경우가 있는데, 이 때 pickle이 깨지는 현상 발생
+- 이 때 `copyreg`를 사용하여, 사용할 함수에 대해 클래스를 재지정 할 수 있음
+~~~python
+copyreg.pickle(BetterGameState, pickle_game_state)
+~~~
+- `unpickle_game_state` 함수가 위치하는 모듈의 경로는 바꿀 수 없음을 기억하자  
+  어떤 함수를 사용해 데이터를 직렬화하고 나면, 해당 함수를 똑같은 임포트 경로에서 사용할 수 있어야 함
+
+## 69-정확도가 매우 중요한 경우에는 decimal을 사용해라
+- `double precision` 부동소수점 타입은 IEEE 754 표준을 따르고, 파이썬 언어는 허수 값을 포함하는 표준 복소수 타입도 제공함
+- 하지만 IEEE 754 부동소수점 수의 내부 표현법으로 인해 결과는 올바른 값보다 약간 작음
+~~~python 
+rate = 1.45
+seconds = 3*60 + 42
+cost = rate * seconds / 60
+print(cost)
+>>>
+5.364999999999999
+~~~
+- 이에 대한 해결책으로 `decimal` 내장 모듈에 들어있는 `Decimal` 클래스를 사용하는 것
+- `Decimal` 클래스는 디폴트로 소수점 이하 28번째 자리까지 고정소수점 수 연산을 제공
+- `Decimal`에 인스턴스를 지정하는 방법은 크게 두 가지인데, 첫 번째는 문자열로 지정하는 방법과, 두 번째는 int, float으로 지정하는 방법이 있음
+- 정확한 답이 필요하다면, str로 지정해서 넣어라(정수를 넘길 때는 문제 X)
+~~~python
+print(Decimal('1.45'))
+print(Decimal(1.45))
+
+>>>
+1.45
+1.4499999999999999555910790149937383830547332763671875
+~~~
+- `Decimal` 클래스에는 원하는 소수점 이하 자리까지 근삿값을 계산하는 내장함수가 들어있음
+~~~python
+from decimal import ROUND_UP
+Decimal('0.01').quantize(Decimal('0.01'), rounding=ROUND_UP)
+print(f"반올림 전 {small_cost}, 반올림 후 : {rounded}")
+~~~
+
+### 70- 최적화하기 전에 프로파일링을 해라
+- 파이썬은 프로그램이 각 부분이 실행 시간을 얼마나 차지하는지 결정할 수 있게 해주는 프로파일러를 제공
+- 프로파일러가 있기 때문에 프로그램에서 가장 문제가 되는 부분을 집중적으로 최적화하고 프로그램에서 속도에 영향을 미치지 않는 부분은 무시할 수 있음
+- 파이썬에는 두 가지 내장 프로파일러가 있음. 하나는 순수하게 파이썬으로 작성되었고, 하나는 C 확장 모듈로 되어 있음
+- <b>cProfile 내장 모듈이 더 낫다. 이유는 프로파일 대상 프로그램의 성능에 최소롤 영향을 미치기 때문</b>
+- 순수 파이썬 버전은 부가 비용이 많이 들어 결과가 왜곡될 수 있음
+- <b>파이썬 프로그램을 프로파일링 할 때는 외부 시스템 성능이 아니라, 코드 자체 성능을 측정하도록 유의해야 함</b>
+- 프로파일러 통계에서 각 열의 의미
+  - `ncalls`: 프로파일링 기간 동안 함수가 몇 번 호출됐는지 보여줌
+  - `tottime`: 프로파일링 기간 동안 대상 함수를 실행하는데 걸린 시간의 합계를 보여줌
+  - `tottime percall`: 프로파일링 기간 동안 호출될 때마다 걸린 시간 평균
+  - `cumtime`: 함수 실행시 걸린 누적 시간을 보여줌. 해당 함수를 호출한 다른 함수를 실행하는데 걸린 시간이 모두 포함됨
+  - `cumtime percall`: 프로파일링 기간동안 함수가 호출될 때마다 누적 시간 평균을 보여줌
+- 해당 함수가 많이 호출된 이유에 대해서는 알기 어려운데, 파이썬 프로파일러는 각 함수를 프로파일링한 정보에 대해 그 함수를 호출한 함수들이 얼마나 기여했는지를 보여주는 `print_caller` 메서드를 제공
+~~~python
+from cProfile import Profile
+from random import randint
+from pstats import Stats
+
+
+def insertion_sort(data):
+    result = []
+    for value in data:
+        insert_value(result, value)
+    return result
+
+
+def insert_value(array, value):
+    for i, existing in enumerate(array):
+        if existing > value:
+            array.insert(i, value)
+            return
+    array.append(value)
+
+
+max_size = 10 ** 4
+data = [randint(1, max_size) for _ in range(max_size)]
+test = lambda: insertion_sort(data)
+
+profiler = Profile()
+profiler.runcall(test)
+stats = Stats(profiler)
+stats.sort_stats('cumulative')
+stats.print_stats()
+stats.print_callers()
+~~~
+
+### 71-생산자-소비자 큐로 deque를 사용해라
+- 다음의 코드는 email 송수신 하는 시스템을 생산자-소비자 queue를 구현한 것
+~~~python
+from random import randint
+
+
+class Email:
+    def __init__(self, sender, receiver, message):
+        self.sender = sender
+        self.receiver = receiver
+        self.message = message
+
+
+class NotEmailError(Exception):
+    pass
+
+
+def try_receive_email():
+    pass
+
+
+def produce_email(queue):
+    while True:
+        try:
+            email = try_receive_email()
+        except NotEmailError:
+            return
+        else:
+            queue.append(email)
+
+
+def consume_one_email(queue):
+    if not queue:
+        return
+    else:
+        email = queue.pop(0)
+    print(f"read email: {email}")
+
+
+def loop(queue, keep_running):
+    while keep_running:
+        produce_email(queue)
+        consume_one_email(queue)
+
+def my_end_func():
+    return randint(1, 100) > 1
+
+
+loop([], my_end_func())
+~~~
+- Email을 `produce_email`, `consume_one_email`로 구분해서 처리하는 이유는 지연 시간과 단위 시간당 스루풋 사이의 상충 관계로 귀결됨
+- 생산자-소비자 문제를 큐로 리스트를 사용해도 어느 정도까지는 잘 동작하지만, 크기가 늘어나면 리스트 타입의 성능은 선형보다 나빠짐
+- 리스트의 원소에 대해 `pop(0)`를 사용해 원소를 큐에서 빼내는데 걸리는 시간이 큐 길이가 늘어남에 따라 큐 길이의 제곱에 비례해 늘어나는 것을 볼 수 있음
+- `pop(0)`를 하면 리스트의 모든 남은 원소를 제 위치로 옮겨야 해서, 전체 리스트 내용을 다시 제대입하기 떄문
+- 리스트의 모든 원소에 대해 `pop(0)`를 호출하므로 대략 len(queue) * len(queue) 연산을 수행해야 모든 대기열 원소를 소비할 수 있음
+- `deque(데크)`는 시작과 끝 지점에 원소를 빼거나 넣는데 걸리는 시간이 상수 시간이 걸림 
+
+### 72-정렬된 시퀀스 검색을 할 때는 bisect를 사용해라
+- 보통 리스트에서 `index` 함수를 사용해 특정 값을 찾아내려면 리스트 길이에 선형으로 비례하는 시간이 필요
+- 파이썬 내장 `bisect` 모듈은 순서가 정해져 있는 리스트에 대해 이런 유형의 검사를 효과적으로 수행
+- `bisect_left` 함수를 사용하면 정렬된 원소로 이루어진 시퀀스에 대해 이진 검색을 효율적으로 수행할 수 있음
+- `bisect_left`가 반환하는 인덱스는 리스트에 찾는 값이 존재하는 경우 이 원소의 인덱스이며, 리스트에 찾는 값의 원소가 존재하지 않는 경우 정렬 순서상 해당 값을 삽입해야 할 자리의 인덱스
+- `bisect` 모듈이 사용하는 이진 검색 알고리즘의 복잡도는 log복잡도  
+이는 100만개의 리스트를 bisect로 정렬하는 속도와, 20인 리스트를 list.index로 정렬하는 속도가 동일하다는 의미
+- `bisect`는 리스트 타입 뿐만 아니라, 시퀀스처럼 작동하는 모든 파이썬 객체에 대해 bisect 모듈의 기능을 사용할 수 있다는 점
+~~~python
+from bisect import bisect_left
+from collections import deque
+
+data = list(range(10**5))
+bisect_left(data, 91234)
+
+d = deque([i for i in range(100000)])
+bisect_left(d, 91234)
+~~~
+
+### 73- 우선순위 큐로 heapq를 사용하는 방법을 알아두라
+- 프로그램에서 원소 간의 상대적인 중요도에 따라 원소를 정렬해야 하는 경우가 있음. 이런 경우에는 우선순위 큐가 적합함
+- 예를 들어, 도서관에서 대출한 책을 관리하는 프로그램을 작성할 때, 제출 기한을 넘긴 경우 통지하는 시스템을 만든다고 해보자
+- 만약 리스트를 기반으로 만든다면, 책을 추가 할 때마다 제출 기한으로 정렬해야하는 추가비용 발생
+- 또한 제출기한 전에 반납된 책을 제거 비용도 선형보다 커짐
+- 이러한 문제를 우선순위 큐를 통해 해결할 수 있는데, 파이썬은 원소가 들어있는 리스트에 대해 우선순위 큐를 효율적으로 구현하는 내장 `heapq` 모듈 제공
+- heap은 여러 아이템을 유지하되 새로운 원소를 추가하거나 가장 작은 원소를 제거할 때 로그 복잡도가 드는 데이터 구조
+- 우선순위 큐에 들어갈 원소들이 서로 비교 가능하고 원소 사이에 자연스러운 정렬 순서가 존재해야 heapq 모듈이 제대로 작동 가능
+- `functools` 내장 모듈이 제공하는 `total_ordering` 클래스 데코레이터를 사용하고 `__lt__` 특별 메서드를 구현하면 빠르게 Book 클래스를 비교 가능
+~~~python
+@functools.total_ordering
+class Book:
+    def __init__(self, title, due_date):
+        self.title = title
+        self.due_date = due_date
+
+    def __lt__(self, other):
+        return self.due_date < other.due_date
+
+    def __repr__(self):
+        return f"Book('{self.title}', '{self.due_date}')"
+~~~
+- `heappush`, `heappop` 함수를 통해 구현
+
+### 74-bytes를 복사하지 않고 다루려면 memoryview와 bytearray를 사용해라
+- 파이썬이 CPU 위주의 계산 작업을 추가적인 노력없이 병렬화해줄 수는 없지만, 스루풋이 높은 병렬 I/O를 다양한 방식으로 지원할 수는 있음
+- 그럼에도 불구하고 I/O 도구를 잘못 사용해서 파이썬 언어가 I/O 위주의 부하에 대해서도 너무 느리다는 결론으로 이어지기 쉬움
+- 기반 데이터를 bytes 인스턴스로 슬라이싱하려면 메모리를 복사해야 하는데, 이 과정이 CPU 시간을 점유한다는 점
+~~~python
+chunk = video_data[byte_offset:byte_offset+size] #- 메모리를 복사함ㄴ
+~~~
+- `memoryview`를 사용하면 문제를 해결할 수 있는데, CPython의 고성능 버퍼 프로토콜을 프로그램에 노출시켜줌
+- 버퍼 프로토콜은 런타임과 C 확장이 bytes와 같은 객체를 통하지 않고 하부 데이터 버퍼에 접근할 수 있게 해주는 저수준 C API임
+- `memoryview` 인스턴스의 가장 좋은 점은 슬라이싱을 하면 데이터를 복사하지 않고 새로운 memoryview 인스턴스를 만들어 준다는 점
+~~~python
+data = '동해물과 abc 백두산이 마르고 닳도록'.encode('utf8')
+view = memoryview(data)
+chunk = view[12:19]
+print(chunk)
+print("크기 : ", chunk.nbytes)
+print("뷰의 데이터 :", chunk.tobytes())
+print("내부 데이터 :", chunk.obj)
+
+>>>
+<memory at 0x7f889fcaf6d0>
+크기 :  7
+뷰의 데이터 : b' abc \xeb\xb0'
+내부 데이터 : b'\xeb\x8f\x99\xed\x95\xb4\xeb\xac\xbc\xea\xb3\xbc abc \xeb\xb0\xb1\xeb\x91\x90\xec\x82\xb0\xec\x9d\xb4 \xeb\xa7\x88\xeb\xa5\xb4\xea\xb3\xa0 \xeb\x8b\xb3\xeb\x8f\x84\xeb\xa1\x9d'
+~~~
+- 복사가 없는(zero-copy) 연산을 활성화함으로써 memoryview는 Numpy 같은 수치 계산 확장이나 이 예제 프로그램과 같은 I/O 위주 프로그램이 커다란 메모리를 빠르게 처리해야 하는 경우에 성능을 엄청나게 향상 시킬 수 있음
+- bytes 인스턴스의 단점 중 하나는 읽기 전용이라 인덱스를 이용해 변경이 불가능한데, 이를 `bytesarray` 타입을 사용해서 해결 가능
+- `bytesarray`는 bytes에서 원하는 값을 바꿀 수 있는 가변(mutable) 버전과 같음
+~~~python
+my_array = bytearray('hello 안녕'.encode('utf-8'))
+my_array[0] = 0x79
+print(my_array)
+~~~
+- `bytearray`도 `memoryview`를 통해 감쌀 수 있음. `memoryview`를 슬라이싱해서 객체를 만들고, 이 객체에 데이터를 대입하면 하부의 `bytearray` 버퍼에 데이터가 대입됨
+~~~python
+my_array = bytearray('row, row, row, your boat'.encode('utf8'))
+my_view = memoryview(my_array)
+write_view = my_view[3:13]
+write_view[:] = b'-10 bytes-'
+print(my_array)
+
+>>>
+bytearray(b'row-10 bytes-, your boat')
+~~~
+- `socket.recv_into`나 `RawIOBase.readinto`와 같은 여러 파이썬 라이브러리 메서드가 버퍼 프로토콜을 사용해 데이터를 빠르게 받아드리거나 읽을 수 있음
+- 이런 메서드를 사용하면 새로 메모리를 할당하고 데이터를 복사할 필요가 없어짐
+~~~Python
+video_array = bytearray(video_cache)
+write_view = memoryview(video_array)
+chunk = write_view[byte_offset: byte_offset + size]
+
+socket.recv_into(chunk)
+~~~
+
+### 테스트와 디버깅 
+- 파이썬은 컴파일 시점에 정적 검사(static type checking)을 수행하지 않음
+- 파이썬 인터프리터가 컴파일 시점에 프로그램이 제대로 작동할 것이라고 확인할 수 있는 요소가 전혀 없음
+- 파이썬은 optional하게 type annotation을 지원하며, 이를 활용해 정적 분석을 수행함으로써 여러 가지 오류를 감지 할 수 있음
+- 컴파일 시점의 정적 검사는 모든 것을 해결해 주지는 못함. 즉 테스트 코드를 작성하여 충분히 테스트를 해보아야 함
+- 다른 언어보다도 파이썬에서 테스트를 통해 코드의 올바름을 검증하는 것이 중요한 것은 사실
+- <b>파이썬의 동적 기능을 사용해 프로그램의 동작을 다른 동작으로 오버라이드함으로써 테스트를 구현하고 프로그램이 예상대로 작동하는지 확인 가능</b>
+
+### 75-디버깅 출력에는 repr 문자열을 사용해라
+- `print` 함수는 인자로 받은 대상을 사람이 읽을 수 있는 문자열로 표시함  
+  예를 들어 기본 문자열을 출력하면 주변에 따옴표를 표시하지 않고 내용을 출력함
+~~~python
+print('foo 뭐시기')
+
+>>>
+foo 뭐시기
+~~~
+- 다른 대부분의 출력 방식도 마찬가지인데, 문제는 어떤 값을 사람이 읽을 수 있는 형식의 문자열로 바꿔도 이 값의 실제 타입과 구체적인 구성을 명확히 알기 어렵다는 것
+- 예를 들어 print의 기본 출력을 사용하면 5라는 수와 '5'라는 문자열 구분이 안됨
+- `repr` 내장 함수는 객체의 출력 가능한 표현을 반환하는데, 이는 객체를 가장 명확하게 이해할 수 있는 문자열 표현이어야 함
+~~~python
+a = '\x07'
+print(a)         #- 공백 출력
+print(repr(a))   #- '\x07' 출력
+~~~
+- `repr`이 돌려준 값을 eval 내장 함수에 넘기면 repr에 넘겼던 객체와 같은 객체가 생겨야 함
+- `print`를 사용해 디버깅 할 때도 값을 출력하기 전에 repr를 호출해서 다른 경우에도 명확히 차이를 볼 수 있게 만들어야 함
+- 클래스 같은 경우 `__repr__` 특별 메서드를 정의해서 인스턴스의 출력 가능한 표현을 원하는 대로 만들 수 있음
+
+### 76-TestCase 하위 클래스를 사용해 프로그램에서 행동 방식을 검증해라
+- 파이썬에서 테스트를 작성하는 표준적인 방법은 `unittest` 내장 모듈을 쓰는 것
+- 테스트를 정의하려면 `test_utils.py`, `utils_test.py` 둘 중 하나의 이름의 파일을 만들어야 함
+- 위의 파일에 원하는 동작이 들어있는 테스트를 추가함
+~~~python 
+from unittest import TestCase, main
+from utils import to_str
+
+
+class UtilsTestCase(TestCase):
+    def test_so_str_bytes(self):
+        self.assertEqual('hello', to_str(b'hello'))
+
+    def test_to_str_str(self):
+        self.assertEqual('hello', to_str('hello'))
+
+    def test_failing(self):
+        self.assertEqual('incorrect', to_str('hello'))
+
+~~~
+- <b>테스트는 TestCase의 하위 클래스로 구성됨. 각각의 테스트 케이스는 `test_` 라는 단어로 시작하는 메서드들임</b>
+- 어떤 테스트 메서드가 아무런 Exception도 발생시키지 않고 실행이 끝나면 성공한 것으로 간주
+- 테스트 중 일부가 실패하더라도 TestCase 하위 클래스는 최초로 문제가 발생한 지점에서 실행 중단을 하지 않고, 나머지 테스트 메서드를 실행해서 우리가 테스트 전체에 대해 전반적인 그림을 그릴 수 있게 해줌
+- 
+
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라
 - 파이썬 패키지 인덱스(PyPI)에는 풍부한 패키지가 들어가 있음(http://pypi.org)
 - `pip`를 사용하면 새로운 모듈을 쉽게 설치할 수 있음
 - `python3 pip install pandas`
 - 패키지를 지속적으로 추적하고 관리할 수 있게 venv와 같이 쓰는 것이 중요
+
 
 ### 83- 가상 환경을 의존해 의존 관계를 격리하고 반복 생성할 수 있게 해라
 - `pip`로 설치한 패키지들은 기본적으로 전역 위치에 저장됨  
@@ -1909,3 +2390,5 @@ first = FirstClass(second)
   - 메타 클래스는 사용하면 class문을 가로채서 클래스가 정의될 때마다 특별한 동작을 제공할 수 있음 
 - 제너레이터
   - 함수가 점진적으로 반환하는 값으로 이뤄지는 스트림을 만들어줌
+- 오프셋(offset)
+  - 두 번째 주소를 만들기 위해 기준이 되는 주소에 더해진 값을 의미 
