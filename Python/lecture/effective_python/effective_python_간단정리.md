@@ -2066,8 +2066,166 @@ class UtilsTestCase(TestCase):
 ~~~
 - <b>테스트는 TestCase의 하위 클래스로 구성됨. 각각의 테스트 케이스는 `test_` 라는 단어로 시작하는 메서드들임</b>
 - 어떤 테스트 메서드가 아무런 Exception도 발생시키지 않고 실행이 끝나면 성공한 것으로 간주
-- 테스트 중 일부가 실패하더라도 TestCase 하위 클래스는 최초로 문제가 발생한 지점에서 실행 중단을 하지 않고, 나머지 테스트 메서드를 실행해서 우리가 테스트 전체에 대해 전반적인 그림을 그릴 수 있게 해줌
-- 
+- 테스트 중 일부가 실패하더라도 TestCase 하위 클래스는 최초로 문제가 발생한 지점에서 실행 중단을 하지 않음
+- 한 테스트만 수행해보고 싶은 경우 `python unils_test.py ClassName.methodName` 으로 실행
+- 테스트 메서드 내부에 있는 breakpoint에서 직접 디버거를 호출해 테스트가 실패한 원인을 깊게 파고들 수 있음 
+- `assertEqual`은 두 값이 같은지 비교하고, `assertTrue`는 주어진 불린 식이 참인지 검증 
+- 이런 메서드들은 테스트가 왜 실패했는지 알려주므로, 모든 입력과 출력을 표시해주므로 파이썬 내장 assert 문보다 더 나음
+- 예외가 발생하는지 검증하기 위해 `with` 문 안에서 `contextmanager`로 사용할 수 있는 `assertRaises` 메서드도 있음
+~~~python
+class UtilErrorTestCase(TestCase):
+    def test_to_str_ban(self):
+        with self.assertRaises(UnicodeError):
+            to_str(object())
+~~~
+- 테스트 코드의 가독성을 위해 testCase 하위 클래스 안에 help function 작성 가능   
+  help function 이름이 test로 시작하면 안됨
+- help function은 TestCase가 제공하는 assert method를 호출하지 않고, `fail` method를 호출해서 어떤 가정이나 조건을 만족하지 않았음을 명확하게 표현할 수도 있음
+~~~python 
+ try:
+            next(expected_it)
+        except StopIteration:
+            pass
+        else:
+            self.fail('실제보다 예상한 제너레이터가 더 김')
+~~~
+- 보통 한 모듈 안에 포함된 모든 테스트 함수를 한 `TestCase` 하위 클래스에 정의함
+- `TestCase` 클래스가 제공하는 `subTest` 도우미 메서드를 사용하면 한 테스트 메서드 안에 여러 테스트를 정의할 수 있음
+- `subTest`를 사용하면 하위 테스트 케이스 중 하나가 실패해도 다른 테스트 케이스를 계속 진행 가능 
+
+### 77-setUp, tearDown, setUpModule, tearDownModule을 사용해 각각의 테스트를 격리해라
+- `TestCase` 클래스는 테스트 메서드를 실행하기 전에 테스트 환경을 구축해야 하는 경우가 자주 있는데, 이러한 테스트 과정을 테스트 하네스라고 함
+- 테스트 하네스를 구현하려면 `TestCase` 하위 클래스 안에서 `setUp`, `tearDown` 메서드를 오버라이드 해야함
+- `setUp`은 테스트 메서드를 실행 전 호출,  `tearDown` 테스트 메서드 실행 후 호출  
+  두 메서드 활용시 테스트를 서로 격리된 상태에서 실행할 수 있음
+- 예를 들어 테스트를 위해 임시 디렉토리를 생성하고, 테스트 종료 후 지울 수 있음
+~~~python
+from unittest import TestCase, main
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+class EnvironmentTest(TestCase):
+    def setUp(self):
+        self.test_dir = TemporaryDirectory()
+        self.test_path = Path(self.test_dir.name)
+
+    def teardown(self):
+        self.test_dir.cleanup()
+
+    def test_modify_name(self):
+        with open(self.test_path / 'data_bin', 'w') as f:
+            ...
+~~~
+- 프로그램이 복잡해지면, 코드를 독립적으로 실행하는 대신, 모듈 사이의 end-to-end 상호작용을 검증하는 테스트가 필요할 수도 있음
+- 단위 테스트와 통합 테스트는 둘 다 반드시 필요함
+- 통합 테스트에 필요한 테스트 환경을 구축할 때 계산 비용이 너무 비싸거나, 너무 오랜 시간 소요될 경우가 있는데 이를 위해 `unittest` 모듈은 모듈 단위의 테스트 하네스 초기화를 지원함  
+해당 자원을 단 한번만 초기화하고, 초기화를 반복하지 않고도 testCase의 클래스 내 메서드 테스트가 가능
+- 위의 초기화는 `setUpModule`과 `tearDownModule` 메서드를 정의해 동작을 수행함
+
+### 78-목(mock)을 사용해 의존 관계가 복잡한 코드를 테스트해라
+- 테스트를 작성할 때 공통 기능으로, 사용하기에 너무 느리거나 어려운 함수와 클래스의 mock을 만들어 사용하는 기능이 있음
+- mock은 자신이 흉내내려는 대상에 의존하는 다른 함수들이 어떤 요청을 보내면 어떤 응답을 보내야 할지 알고, 요청에 따라 적절한 응답을 돌려줌
+- 파이썬 `unittest.mock` 내장 모듈을 사용하면 `mock`을 만들고 테스트 할 수 있음
+- 다음 코드는 DB에 접속하지 않고 `get_animals` 함수를 시뮬레이션 하는 Mock 인스턴스
+~~~python
+mock = Mock(spec=get_animals)
+expected = [
+    ('점박이', datetime(2020, 6, 5, 11, 15)),
+    ('털보', datetime(2020, 6, 5, 12, 30)),
+    ('조조', datetime(2020, 6, 5, 12, 45))
+]
+mock.return_value = expected
+~~~
+- `mock`의 `return_value` 애트리뷰트는 mock이 호출되었을 때 반환할 값
+- `spec=` 인자는 mock이 흉내 내야하는 대상 
+- 다음과 같이 mock 활용 가능
+~~~python
+database = object()
+result = mock(database, '미어캣')
+assert result == expected
+~~~
+- `assert_called_once_with` 라는 메서드를 제공해서 인자가 목에게 제대로 전달했는지 확인
+~~~python
+mock.assert_called_once_with(database, '미어캣')
+mock.assert_called_once_with(database, '기린')   #- AssertionError
+
+from unittest.mock import ANY
+mock.assert_called_with(ANY, '미어캣')
+~~~
+- Mock 클래스에는 예외 발생을 쉽게 모킹할 수 있는 도구도 제공함
+~~~python
+mock = Mock(spec=get_animals)
+mock.side_effect = MyError('에구머니나! 큰 문제 발생')
+result = mock(database, '미어캣')
+mock.assert_called_with(database, '미어캣')
+~~~
+- mock을 활용하여 test code 제작시 mock 함수를 주입하는 방법 중 `unittest.mock.patch` 관련 함수들로 mock 주입 가능 
+- `patch`를 사용해 `get_animals`를 mock으로 대치 가능  
+  다양한 모듈, 클래스, 애트리뷰트에 대해 patch 사용 가능
+- `with`문, 데코레이터, `TestCase` 클래스 안의 `setUp`, `tearDown` 메서드에서 사용할 수도 있음
+- C 확장 모듈 같은 경우는 변경 불가능
+~~~python
+from unittest.mock import patch
+def get_animals(database, species):
+    # 데이터베이스에 질의함
+    ...
+    # (이름, 급양 시간) 튜플 리스트를 반환함
+
+print('패치 외부  :', get_animals)
+
+with patch('__main__.get_animals'):
+    print("패치 내부 :", get_animals)
+
+>>>
+패치 외부  : <function get_animals at 0x7ff84e783e60>
+패치 내부 : <MagicMock name='get_animals' id='140704445275984'>
+
+#- error
+with patch('datetime.datetime.utcnow'):
+    datetime.utcnow.return_value = fake_now
+
+#- 다음과 같이 help function을 만들어 적용
+def get_do_rounds_time():
+    return datetime.utcnow()
+
+with patch('__main__.get_do_rounds_time'):
+    ...
+~~~
+- 테스트가 끝나면 `patch.multiple`을 사용한 with 문 안에서 목 호출이 제대로 이뤄졌는지 검증할 수 있음
+
+
+### 80-pdb를 사용해 대화형으로 디버깅해라
+- 프로그램 개발시 디버깅으로 `print` 함수를 사용하거나, `unittest` 모듈을 사용해서 테스트케이스를 작성하는 것에 추가적으로 파이썬 내장 대화형 디버거를 사용해 볼 수 있음
+- 대화형 내장 디버거를 사용하면 프로그램의 상태를 들여다보고, 지역 변수를 출력하고, 파이썬 프로그램을 한 번에 한 문장씩 실행할 수 있음
+- 파이썬은 문제를 조사할 위치에 디버거를 초기화 할 수 있도록 `breakpoint()`를 추가하여 디버거 수행
+- 프로그램을 시작한 터미널에서는 대화형 파이썬 셀이 시작됨
+- 다음은 pdb 프롬포트에서 유용한 함수들
+  - `where` : 현재 실행 중인 프로그램 호출 스택 출력
+  - `up` : 실행 호출 스택에서 현재 관찰 중인 함수를 호출한 쪽으로 호출 스택을 한 단계 이동
+  - `down` : 실행 호출 스택에서 한 수준 아래로 호출 스택 영역 이동
+- 다음 다섯가지 디버거 명령을 통해 실행을 다양한 방식으로 제어 가능
+  - `step`: 프로그램 다음 줄 실행 후 디버거 실행. 다음 줄에 함수 호출 부분이 있다면, 해당 함수로 들어가 첫 번째 줄에서 디버거 실행
+  - `next`: 프로그램 다음 줄 실행 후 디버거 실행. 다음 줄에 함수 호출 부분이 있다면, 해당 함수 실행하고 반환 후 디버거 실행
+  - `return`: 현재 함수가 반환될 때까지 프로그램을 계속 실행
+  - `contunue`: 다음 중단점에 도달할 때까지 프로그램 실행. 중단점에 도달하지 못하면 프로그램 실행이 끝날 때까지 프로그램 실행
+  - `quit`: 디버거에서 나가면서 프로그램 중단시킴
+- 디버거 시작하는 다른 방법은 사후 디버깅이 있음. 예외가 발생하거나 프로그램 문제 발생시 디버깅 가능
+- `$ python3 -m pdb -c continue main.py` 명령어 사용
+- 또는 예외 발생시 `import pdb; pdb.pm()` 을 호출하면 사후 디버깅 사용 가능
+- 파이썬 기본 구현인 CPython은 메모리 관리를 위해 `reference counting`을 사용
+- 어떤 객체를 가리키는 참조가 모두 없어지면 참조된 객체도 메모리에서 삭제되고 메모리 공간을 다른 데이터에 내줄수 있음
+
+
+### 81- 프로그램이 메모리를 사용하는 방식과 메모리 누수를 이해하기 위해 tracemalloc을 사용해라
+- 파이썬 기본 구현인 CPython은 메모리 관리를 위해 <b>reference counting</b>을 사용
+- 어떤 객체를 가리키는 참조가 모두 없어지면 참조된 객체도 메모리에서 삭제되고 메모리 공간을 다른 데이터에 내어줄 수 있음
+- CPython에는 cycle detector가 들어 있으므로 자기 자신을 참조하는 객체의 메모리도 언젠가는 garbage collection 됨
+- 즉 이론적으로는 대부분의 프로그래머가 memory allocation 이나 해제하는 것을 신경쓰지 않아도 됨 
+- 하지만 실전에서는 더이상 참조하지 않는 메모리를 계속 유지해 메모리를 소진하게 되는 경우가 있음
+- 메모리 사용 디버깅 방법
+- `gc` 내장 모듈을 사용해 모든 객체 나열할 수 있음. 문제는 어떻게 할당됐는지 모름
+- 파이썬 3.4부터는 이런 문제를 해결해주는 `tracemalloc` 이라는 내장 모듈이 새로 도입
 
 
 ### 82- 커뮤니티에서 만든 모듈을 어디서 찾을 수 있을지 알아두라

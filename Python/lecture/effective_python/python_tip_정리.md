@@ -49,4 +49,12 @@
 - FIFO는 `deque(데크)`, indexing은 `bisect_left`를 사용하자  
   `deque`에서 `pop(0)`은 상수시간만큼 소요되며, `bisect_left`는 log 복잡도만큼 소요됨
 - 원소가 들어있는 리스트에 대해 우선순위 큐를 효율적으로 구현하는 내장 `heapq` 모듈 제공
-- 
+- `TestCase`를 상속 받는 하위 클래스를 정의하고, 모듈명을 `utils_test.py`, `test_utils.py` 를 사용해서 테스트 케이스 구축 가능
+- `TestCase` 하위 클래스 테스트 사전, 사후 준비에 필요한 함수
+  - `setUpModule`: 모듈 set up 
+  - `tearDownModule` : 모듈 exit
+  - `setUp` : 테스트 준비
+  - `tearDown` : 테스트 종료 후 정리
+- 테스트 하네스란 테스트 환경을 구축하거나 정리하는 과정을 말함
+- `mock`은 자신이 흉내내려는 대상에 의존하는 다른 함수들이 어떤 요청을 보내면 어떤 응답을 보내야 할지 알고, 요청에 따라 적절한 응답을 돌려줌
+- `assert_called_once_with(database, '미어캣')` : mock에 입력된 인자를 검증, ANY를 사용하면 아무거나 상관 없다는 얘기
