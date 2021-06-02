@@ -227,7 +227,7 @@ def sort_priority(numbers, group):
             return 0, x
         else:
             return 1, x
-    return numbers.sort(key=helper)
+    numbers.sort(key=helper)
 ~~~
 - 위의 함수가 정상적이게 작동하는 이유는 세가지
   - 파이썬은 클로저를 지원: `group` 변수에 접근 가능
@@ -333,8 +333,9 @@ def trace(func):
 - 제너레이터는 함수가 순차적으로 반환하는 값으로 이뤄지는 <b>스트림</b>을 만들어줌
 - map 함수에서 사용하는 lambda function은 시각적으로 좋지 않음
 ~~~python
-cp1 = [x ** 2 for x in range(10)]       #- comprehension
-map1 = map(lambda x: x ** 2, range(10)) #- map 
+comp1 = [x ** 2 for x in range(10) if x % 2 == 0]
+map1 = list(map(lambda x: x ** 2, filter(lambda x: x % 2 == 0, range(10))))
+assert comp1 == map1
 ~~~
 
 ### 28- 컴프리헨션 내부에 제어 하위 식을 3개 이상 사용하자 마라
@@ -725,6 +726,7 @@ write_test_files(tmpdir)
 result = mapreduce(tmpdir)
 print(f"file들의 총 줄 수는 {result} 입니다.")
 ~~~
+- 다른 InputData나 Worker 하위 클래스를 사용하고 싶다면 각 하위 클래스에 맞게 generate_inputs, create_workers, mapreduce를 재작성해야 함
 - 다음은 제너릭한 코드를 구현하기 위해 classmethod의 다형성을 활용한 예제  
 (위의 코드와 비교해가면서 확인하자)
 ~~~python
