@@ -727,6 +727,7 @@ result = mapreduce(tmpdir)
 print(f"file들의 총 줄 수는 {result} 입니다.")
 ~~~
 - 다른 InputData나 Worker 하위 클래스를 사용하고 싶다면 각 하위 클래스에 맞게 generate_inputs, create_workers, mapreduce를 재작성해야 함
+- 즉 객체를 구성할 수 있는 제너릭한 방법이 필요하다는 것ㄴ
 - 다음은 제너릭한 코드를 구현하기 위해 classmethod의 다형성을 활용한 예제  
 (위의 코드와 비교해가면서 확인하자)
 ~~~python
@@ -1304,9 +1305,12 @@ class Parent:
         return data_dict.get(name, 0)
 ~~~
 - <b>__getattribute__와 __setattr__ 에서 무한 재귀를 피하려면 super()에 있는 메서드를 사용해 인스턴스 애트리뷰트에 접근하자</b>
+- `__setattr__`은 애트리뷰트에 값을 입력할 때마다 호출되어 사용됨
+
 
 ### 48- `__init__subclass__`를 사용해 하위 클래스를 검증해라
 - 메타클래스를 정의하지 않고 하위 클래스를 검증하는 방법(python 3.6이상)으로 `__init__subclass__` 특별 메서드 사용 가능
+- 
 ~~~python
 class BetterPolygon:
     sides = None
@@ -1346,6 +1350,7 @@ class ValidatePolygon(type):
 - `__new__` 는 클래스의 본문이 처리된 직후 수행됨. 즉 메타클래스를 사용하면 정의된 직후, 인스턴스 선언 전에 정의를 변경할 수 있음
 - 메타클래스를 사용하면 너무 복잡해질 수 있으므로, `__init__subclass__`를 사용 권장
 - `__init_subclass__` 정의에서 `super().__init_subclass__`를 호출해 여러 계층에 걸쳐 클래스를 검증하고 다중 상속을 제대로 처리하도록 해라
+- `__init_subclass__` 특별메서드는 클래스 인스턴스가 만들어지기 직전에 코드 검증
 
 ### 49- __init__subclass__를 사용해 클래스 확장을 등록해라
 - 다음 코드는 직렬화와 역직렬화를 수행하는 코드를 구현  
@@ -1503,7 +1508,7 @@ class Field:
         setattr(instance, self.internal_name, value)
 
 
-class FixedCustomer(Field):
+class FixedCustomer:
     first_name = Field()
 
 test = FixedCustomer()
@@ -1829,7 +1834,7 @@ print(f"반올림 전 {small_cost}, 반올림 후 : {rounded}")
   - `tottime percall`: 프로파일링 기간 동안 호출될 때마다 걸린 시간 평균
   - `cumtime`: 함수 실행시 걸린 누적 시간을 보여줌. 해당 함수를 호출한 다른 함수를 실행하는데 걸린 시간이 모두 포함됨
   - `cumtime percall`: 프로파일링 기간동안 함수가 호출될 때마다 누적 시간 평균을 보여줌
-- 해당 함수가 많이 호출된 이유에 대해서는 알기 어려운데, 파이썬 프로파일러는 각 함수를 프로파일링한 정보에 대해 그 함수를 호출한 함수들이 얼마나 기여했는지를 보여주는 `print_caller` 메서드를 제공
+- 해당 함수가 많이 호출된 이유에 대해서는 알기 어려운데, 파이썬 프로파일러는 각 함수를 프로파일링한 정보에 대해 그 함수를 호출한 함수들이 얼마나 기여했는지를 보여주는 `print_callers` 메서드를 제공
 ~~~python
 from cProfile import Profile
 from random import randint
@@ -2059,7 +2064,7 @@ class UtilsTestCase(TestCase):
     def test_so_str_bytes(self):
         self.assertEqual('hello', to_str(b'hello'))
 
-    def test_to_str_str(self):
+    def test_str_to_str(self):
         self.assertEqual('hello', to_str('hello'))
 
     def test_failing(self):
@@ -2077,19 +2082,19 @@ class UtilsTestCase(TestCase):
 ~~~python
 class UtilErrorTestCase(TestCase):
     def test_to_str_ban(self):
-        with self.assertRaises(UnicodeError):
+        with self.assertRaises(UnicodeError): #- UnicodeError 발생하는 경우 OK return
             to_str(object())
 ~~~
 - 테스트 코드의 가독성을 위해 testCase 하위 클래스 안에 help function 작성 가능   
   help function 이름이 test로 시작하면 안됨
-- help function은 TestCase가 제공하는 assert method를 호출하지 않고, `fail` method를 호출해서 어떤 가정이나 조건을 만족하지 않았음을 명확하게 표현할 수도 있음
+- help function은 TestCase가 제공하는 assert method를 호출하지 않고, `fail` method를 호출하여 해당 로직이 잘못됐음을 표현
 ~~~python 
- try:
-            next(expected_it)
-        except StopIteration:
-            pass
-        else:
-            self.fail('실제보다 예상한 제너레이터가 더 김')
+try:
+    next(expected_it)
+except StopIteration:
+    pass
+else:
+    self.fail('실제보다 예상한 제너레이터가 더 김')
 ~~~
 - 보통 한 모듈 안에 포함된 모든 테스트 함수를 한 `TestCase` 하위 클래스에 정의함
 - `TestCase` 클래스가 제공하는 `subTest` 도우미 메서드를 사용하면 한 테스트 메서드 안에 여러 테스트를 정의할 수 있음
@@ -2210,7 +2215,7 @@ with patch('__main__.get_do_rounds_time'):
   - `step`: 프로그램 다음 줄 실행 후 디버거 실행. 다음 줄에 함수 호출 부분이 있다면, 해당 함수로 들어가 첫 번째 줄에서 디버거 실행
   - `next`: 프로그램 다음 줄 실행 후 디버거 실행. 다음 줄에 함수 호출 부분이 있다면, 해당 함수 실행하고 반환 후 디버거 실행
   - `return`: 현재 함수가 반환될 때까지 프로그램을 계속 실행
-  - `contunue`: 다음 중단점에 도달할 때까지 프로그램 실행. 중단점에 도달하지 못하면 프로그램 실행이 끝날 때까지 프로그램 실행
+  - `continue`: 다음 중단점에 도달할 때까지 프로그램 실행. 중단점에 도달하지 못하면 프로그램 실행이 끝날 때까지 프로그램 실행
   - `quit`: 디버거에서 나가면서 프로그램 중단시킴
 - 디버거 시작하는 다른 방법은 사후 디버깅이 있음. 예외가 발생하거나 프로그램 문제 발생시 디버깅 가능
 - `$ python3 -m pdb -c continue main.py` 명령어 사용
@@ -2241,7 +2246,7 @@ with patch('__main__.get_do_rounds_time'):
 - `pip`로 설치한 패키지들은 기본적으로 전역 위치에 저장됨  
   이로 인해 우리 시스템에서 실행되는 모든 파이썬 프로그램이 모듈의 영향을 받게 됨
 - 패키지 설치 후 이 패키지가 의존하는 다른 패키지 목록을 볼 수 있음  
-  `python3 -m show Sphinx`
+  ` python3 -m pip show Sphinx`
 - 파이썬에서는 전역적으로 모듈은 한 버전만 설치 가능
 - 이런 의존 관계를 해소하고자 <b>venv라는 도구를 사용</b>. venv라는 가상 환경을 제공하는데, 파이썬 3.4부터 파이썬 설치시 pip와 venv 모듈을 default로 제공함
 - venv를 사용하면 좋은 점
@@ -2352,13 +2357,13 @@ __all__ += utils.__all__
 TESTING = True  #- 해당 코드가 __main__에 들어감
 
 import db_connection
-db = db.connection.Database()
+db = db_connection.Database()
 
 # prod_main.py
 TESTING = False
 
-import db.connection
-db = db.connection.Database()
+import db_connection
+db = db_connection.Database()
 
 # db_connection.py
 import __main__   #- ** dev_main, prod_main에 있는 TESTING 변수를 가져오기 위함
