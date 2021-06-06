@@ -235,6 +235,16 @@ dfWithDate.createOrReplaceTempView("dfWithDate")
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.col
 
+#- Window.partitionBy("CustomerId", "date")
+#  --> CustomerId, date 컬럼을 기준으로 그룹화 한다는 의미.
+#  --> 즉 윈도우 계산을 할 때, 해당 컬럼을 기준으로 그룹핑 된 데이터셋 단위로 윈도우 계산
+
+# - orderBy(desc("Quantity"))
+#   --> 그룹핑된 데이터셋을 Quantity 컬럼을 기준으로 내림차순 하겠다는 의미
+
+# - rowsBetween : 첫 로우 부터 현재 로우까지 확인.
+#   --> 즉, 그룹화된 데이터셋의 처음 값 부터 현재 로우까지 중 집계값을 계산하겠다는 의미
+
 val windowSpec = Window
 .partitionBy("CustomerId", "date")
 .orderBy(col("Quantity").desc)
