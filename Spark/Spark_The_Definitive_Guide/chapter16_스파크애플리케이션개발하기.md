@@ -115,6 +115,37 @@ target/scala-2.11/example_2.11-0.1_SNAPSHOT.jar "hello"
 ~~~
 
 ### 16.1.2 파이썬 애플리케이션 작성하기
+- command line을 사용해 애플리케이션을 작성하는 방식과 매우 유사
+- Spakr에는 빌드 개념이 없으며, PySpark 애플리케이션은 파이썬 스크립트에 지나지 않음
+- <b>그래서 애플리케이션을 실행하려면 클러스터에서 스크립트를 실행하기만 하면 됨</b>
+- 보통 코드 재사용을 위해 여러 파이썬 파일을 하나의 Egg나 ZIP 파일 형태로 압축
+- `spark-submit`의 --py-files 인수로 .py, .zip, .egg 파일을 지정하면 애플리케이션과 함께 배포할 수 있음
+- 코드를 실행하려면 스칼라나 자바의 메인 클래스 역할을 하는 파이썬 파일을 작성해야 함  
+  즉 `SparkSession`을 생성하는 실행 가능한 스크립트 파일을 만들어야 함
+- 다음은 `spark-submit`의 `main` 인수로 지정할 클래스의 코드 예제
+~~~python
+from __future__ import print_function
+
+if __name__ == '__main__':
+
+    from pyspark.sql import SparkSession
+
+    spark = SparkSession.builder\
+        .master("local")\
+        .appName("World Count")\
+        .config("spark.some.config.option", "some-value")\
+        .getOrCreate()
+
+    print(spark.range(5000).where("id > 500").selectExpr("sum(id)").collect())
+~~~
+- 위 코드가 실행되면 애플리케이션에서 활용할 수 있는 SparkSession 객체가 생성됨
+- <b>모든 파이썬 클래스에서 SparkSession 객체를 생성하는 것보다 런타임 환경에서 변수를 생성해 파이썬 클래스에 전달하는 방식을 사용하는 것이 더 좋음</b>
+
+#### 애플리케이션 실행하기
+- 코드 작성이 끝났다면 실행을 위해 코드를 클러스터에 전달해야 함
+- 다음과 같이 `spark-submit` 명령을 호출함  
+  spark-submit은 spark 설치 file에 존재함
+
 ### 16.1.3 자바 애플리케이션 작성하기
 
 ## 16.2 Spark 애플리케이션 테스트
