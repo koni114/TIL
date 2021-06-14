@@ -143,3 +143,6 @@ ex) 함수의 인자, 리턴값 등 ..
   - `yield`는 `yield`라고 적은 곳에서 잠시 함수 실행을 멈추고 호출한 곳에 값을 전달
 - generator expression
   - yield 방식으로 실제 호출할 때 관련 데이터 리턴(lazy operation) 
+
+
+
