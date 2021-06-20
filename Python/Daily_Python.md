@@ -1,6 +1,6 @@
-## Daily_R
+## Daily_Python
 
-### Daily_R Contents summary
+### Daily_Python Contents summary
 ```
 ├── Daily_Pythons
         └── 2021.03.30.ipynb

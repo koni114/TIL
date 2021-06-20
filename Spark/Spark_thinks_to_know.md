@@ -1,4 +1,4 @@
-# Spark 관련 꼭 암기해야할 사항들
+## Spark 관련 꼭 암기해야할 사항들
 ## theory
 ### chapter02
 - Spark Application은 SparkSession이라는 driver process를 통해 제어

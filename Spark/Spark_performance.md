@@ -23,3 +23,5 @@
 
 ### local collection vs 분산처리
 - 개발환경에서는 차이가 안날 수 있지만, 분산 환경에서는 collection 수행시, driver 노드에 데이터가 수집되어, out of memory 현상 등이 발생할 수 있어 주의해야 함
+
+
