@@ -24,4 +24,36 @@
 ### local collection vs 분산처리
 - 개발환경에서는 차이가 안날 수 있지만, 분산 환경에서는 collection 수행시, driver 노드에 데이터가 수집되어, out of memory 현상 등이 발생할 수 있어 주의해야 함
 
+### dataFrame load 속도 향상
+- csv --> parquet으로 변환하여 저장하면, dataFrame load 속도를 3~4배 향상 가능
+
+### dataframe을 list 변환 속도 향상
+- `df.collect()` --> `df.head(n)` 으로 변경시 변환 속도 향상
+
+### executor core 할당 수
+- `spark.executor.cores` --> 4 ~ 6
+- 노드 별 여유 코어를 남기는 것이 좋음
+- 코어를 5개 이하로 하는 것이 최적
+- 테스트를 해보면 6개가 더 빠르긴 함
+
+### executor 할당 메모리
+- `spark.executor.memory` --> 16G ~ 24G
+- 코어에 비례해서 메모리 설정
+- 메모리 또한 여유 메모리를 남기는 것이 좋음
+
+### 분산병렬처리를 위한 Task
+- `spark.default.parallelism` --> 60
+- 서버 코어 개수 * 2~3 설정 예시) 20(코어 수) * 3 = 60
+
+### 데이터 저장/통신을 위한 serialization library 설정
+- `spark.serializer org.apache.spark.serializer.KryoSerializer`
+- 빠른 성능을 제공하는 Serialization library
+
+### serialization library read/write max buffer 사이즈
+- `spark.kryoserializer.buffer.max` --> 1024
+
+### spark dataFrame <-> pandas dataFrame
+- `spark.sql.execution.arrow.enabled` -> true
+- 1G 파일 기준시, 20배 성능 향상 효과  
+
 
