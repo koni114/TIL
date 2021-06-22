@@ -4,3 +4,9 @@
 import module
 import importlib
 importlib.reload(module)
+
+#- datetime으로 시간 계산하기
+
+from datetime import datetime, timedelta
+now = datetime.now()
+now_after_100 = now + timedelta(days=100)
