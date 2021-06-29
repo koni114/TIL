@@ -335,6 +335,9 @@ stock = pd.Series([92300, 94300, 92100, 92400, 92600])
 stock.index = dates
 
 #- 인덱스 초기화
+#- drop -> index drop 여부
+#- inplace -> 기존의 stock 변수에서 index 를 제거 할지 여부.
+#-         -> inplace=False 이면, 기존 stock 변수의 index 는 사라지지 않음
 stock.reset_index(drop=True, inplace=True)
 
 #- 시리즈 정보 확인

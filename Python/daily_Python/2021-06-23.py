@@ -107,3 +107,5 @@ date_str = "11 October, 2020"
 datetime_obj = datetime.strptime(date_str, "%d %B, %Y")
 print("date = ", datetime_obj)
 print(type(datetime_obj))
+
+pd.read_csv('./test_data/sampledata/')
