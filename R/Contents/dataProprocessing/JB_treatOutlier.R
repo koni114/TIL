@@ -72,5 +72,5 @@ outlier(titanic$Age,opposite=TRUE)
 # 03. score function
 # t-분포, z-분포 기반으로 신뢰구간 기준 밖으로 벗어난 점을 True로 return
 x = rnorm(10)
-scores(x, type="z", prob=0.95) 
-scores(x, type="t", prob=0.95) 
+outliers::scores(x, type="z", prob=0.95) 
+outliers::scores(x, type="t", prob=0.95) 
