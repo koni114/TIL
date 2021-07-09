@@ -256,9 +256,9 @@ trainY  <- trainData[, Yvar]
 modelResult <-caret::train(x           = trainX, 
                            y           = trainY, 
                            method      = 'xgbTree',   # 'rf', 'svmLinear', 'svmRadial', 'glmboost', 'xgbTree'
-                                                       # 'adaboost', C5.0, knn
+                                                      # 'adaboost', C5.0, knn
                            na.action   = na.omit, 
-                           metric      = 'Rsquared',   # 'Accuracy', 'Kappa', 'ROC', 'Sens', 'RMSE', 'Rsquared'
+                           metric      = 'Rsquared',  # 'Accuracy', 'Kappa', 'ROC', 'Sens', 'RMSE', 'Rsquared'
                            trControl   = trainCtrlStr,
                           # tuneGrid    = grid.DF,
                            tuneLength  = 5)
