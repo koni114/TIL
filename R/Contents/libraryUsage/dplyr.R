@@ -136,6 +136,8 @@ all_equal(target, current, # two data frame to compare
           )
 
 # 12. cumall(), cumany() : 그룹 별로 조건 확인 후, slicing 하고 싶을 때 ----
+# ** cumall() -> 조건 중이 모두 성립해야 선택
+# ** cumany() -> 그룹별 조건이 하나라도 성립하는 순간 이후의 모든 값은 선택됨.(따라서 오름차순, 내림차순으로 정렬 후 사용해야 함)
 # 12.1. cumall() : 그룹 별 해당 조건이 하나라도 일치하지 않으면 전부 제외 -> filter 함수 내부적으로 사용
 iris %>% group_by(Species) %>% filter(cumall(Sepal.Length > 3.0)) # 모든 종에 대해서, 3.0 보다 크므로 전부 출력 
                                                                   
