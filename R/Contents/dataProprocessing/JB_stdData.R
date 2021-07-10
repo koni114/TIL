@@ -7,7 +7,7 @@
 test <- sample(100)
 unlist()
 ##############################
-# 1. scale 변환 = 정규화변환 #
+# 1. scale 변환 = 표준화 변환 #
 ##############################
 ## x - mean(x) / sd(x) 
 iris_std <- lapply(iris, function(x){
@@ -18,9 +18,9 @@ iris_std <- lapply(iris, function(x){
   }
 }) %>% data.frame
 
-###############
-# 2. 0-1 변환 #
-###############
+#############################
+# 2. 정규화 변환 = 0-1 변환 #
+##############################
 ## x - min(x) / max(x) - min(x)
 iris_01 <- lapply(iris, function(x){
   if(is.numeric(x)){
