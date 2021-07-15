@@ -16,7 +16,7 @@ send.mail(from = sender,
           smtp = list(host.name = "smtp.gmail.com", 
                       port = 465, 
                       user.name = "swallow9212@gmail.com",            
-                      passwd="Wogns62412!",
+                      passwd="***",
                       ssl = TRUE),
           authenticate  = TRUE,
           send = TRUE)
