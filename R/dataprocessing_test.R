@@ -149,7 +149,7 @@ str(lubridate::ymd('2021-01-01', '20210102'))
 #- 24. 
 today <- Sys.Date()
 today + lubridate::years(1)  #- 년 추가
-today + lubridate::month(1)  #- 월 추가
+today + months(1)            #- 월 추가
 today + lubridate::days(1)   #- 일 추가
 
 #- 25.
