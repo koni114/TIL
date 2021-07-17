@@ -239,7 +239,11 @@ quantile(iris$Sepal.Length, 0.9, na.rm = T)
 quantile(iris$Sepal.Length, 0.1, na.rm = T)
 
 #- 41. zoo::rollapply
-
+zoo::rollapply(
+  iris$Sepal.Length,
+  5,
+  mean
+)
 
 #- 정규표현식 test
 #- 대소문자 구분 안한다는 메타 문자는? 
