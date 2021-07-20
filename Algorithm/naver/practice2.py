@@ -48,3 +48,29 @@ def solution(word):
     return answer
 
 solution('I')
+
+#- solution 2
+from collections import defaultdict
+target = ["A", "E", "I", "O", "U"]
+res = []
+dict_result = {}
+idx = 0
+def traverse(L, tot):
+    global idx
+    dict_result[tot] = idx
+    idx += 1
+    if L == 5:
+        return
+    else:
+        for i in range(5):
+            traverse(L+1, tot+target[i])
+
+traverse(0, '')
+
+def sol(str):
+    return dict_result[str]
+
+sol('A')
+sol('I')
+sol('EIO')
+sol('AAAAE')
