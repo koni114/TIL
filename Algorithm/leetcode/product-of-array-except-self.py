@@ -8,20 +8,35 @@ import math
 from typing import List
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
-        result = []
-        p = 1
-        for i in range(0, len(nums)):
-            result.append(p)
-            p = p * nums[i]
-        p = 1
-        for i in range(len(nums) -1, 0, -1):
-            result[i] = result[i] * p
-            p = p * nums[i]
+        result = [1] * len(nums)
+        left_value, right_value = 1, 1
+        for idx in range(1, len(nums)):
+            rev_idx = len(nums) - idx - 1
+            left_value = left_value * nums[idx-1]
+            right_value = right_value * nums[rev_idx+1]
+            result[idx] *= left_value
+            result[rev_idx] *= right_value
         return result
 
 s = Solution()
-s.productExceptSelf([-1, 1, 0, -3, 3])
+s.productExceptSelf([-1, 1])
 
+#- 책 풀이
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        out = []
+        p = 1
+        for i in range(0, len(nums)):
+            out.append(p)
+            p = p * nums[i]
 
+        p = 1
+        for i in range(len(nums)-1, -1, -1):
+            out[i] = out[i] * p
+            p = p * nums[i]
+        return out
+
+s = Solution()
+s.productExceptSelf([1, -1])
 
 

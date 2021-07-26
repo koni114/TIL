@@ -450,3 +450,44 @@ else:
 - 적어도 낮은 쪽은 그만큼 항상 채워질 것이기 때문에, 좌우 어떤 쪽이든 낮은 쪽은 높은 쪽을 향해서 포인터가 가운데로 점점 이동함
 - 오른쪽이 크다면 left += 1로 왼쪽이 이동하고, 그렇지 않다면 right -= 1로 오른쪽이 이동함
 
+### 자신을 제외한 배열의 곱
+- 배열을 입력받아 output[i]가 자신을 제외한 나머지 요소의 곱셈 결과가 되도록 출력
+~~~python
+#- n 만에 풀 수 있는 문제
+from typing import List
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        result = [1] * len(nums)
+        left_value, right_value = 1, 1
+        for idx in range(1, len(nums)):
+            rev_idx = len(nums) - idx - 1
+            left_value = left_value * nums[idx-1]
+            right_value = right_value * nums[rev_idx+1]
+            result[idx] *= left_value
+            result[rev_idx] *= right_value
+        return result
+~~~
+
+### 파이썬 최댓값과 최솟값
+- 최댓값과 최솟값의 초깃값을 지정하는 방법은 여러가지가 있음
+- 가장 쉬운 방법은 `sys`를 활용하는 것. 이 모듈을 사용하면 시스템이 지정할 수 있는 가장 높은 값, 낮은 값을 활용할 수 있음
+~~~Python
+mx = -sys.maxsize
+mn = sys.maxsize
+~~~
+- 또는 `float()` 를 활용해 무한대 값을 지정하는 방법도 있음
+~~~python
+mx = -sys.maxsize
+mn = sys.maxsize
+~~~
+
+## chapter08 연결 리스트
+- 연결 리스트는 데이터 요소의 선형 집합으로, 데이터의 순서가 메모리에 물리적인 순서대로 저장되지는 않음
+- 컴퓨터 과학에서 배열과 함께 가장 기본이 되는 대표적인 선형 자료구조 중 하나로, 다양한 추상 자료형 구현의 기반이 됨
+- 동적으로 새로운 노드를 삽입, 삭제하기가 편리
+- 연결 구조를 통해 물리 메모리를 연속적으로 사용하지 않아도 되기 때문에 관리도 쉬움
+- 데이터를 구조체로 묶어서 포인터로 연결한다는 개념은 여러 가지 방법으로 다양하게 활용
+- 실제 컴퓨터의 물리 메모리에는 구조체 각각이 그림 8-1과 같이 서로 연결된 형태로 구성되어 있음
+- 메모리 어딘가에 여기저기 흩뿌려진 형상을 띔
+- <b>연결 리스트는 특정 인덱스에 접근하기 위해서는 전체를 순서대로 읽어야 하므로 상수 시간 안에 접근할 수 없음. 즉 탐색에는 O(n)이 소요됨</b>
+- 반면 시작, 끝 지점에 아이템을 추가하거나 삭제하는 것은 O(1)에 가능
