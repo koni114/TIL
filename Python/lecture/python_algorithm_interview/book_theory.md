@@ -250,6 +250,7 @@ a is copy.deepcopy(a)
 - 추상 자료형은 ADT라고 부르며 자료형에 대한 수학적 모델을 지칭함  
   해당 유형의 자료에 대한 연산들을 명기한 것  
   ADT는 행동만을 정의할 뿐, 실제 구현 방법은 명시하지 않음. OOP에서 추상화를 떠올리면 쉽게 이해가 가는데 필수적인 속성만 보여주고, 불필요한 정보는 감추는 것을 의미함
+- ADT의 대표적인 것들은 복소수, 리스트, 스택, 큐, 맵, 우선순위 큐, 집합 등이 있음
 
 ## chapter05 리스트, 딕셔너리
 - 파이썬에서의 리스트는 말 그대로 순서대로 저장하는 시퀀스이자 변경 가능한 목록(mutable list)를 말함
@@ -275,7 +276,7 @@ a is copy.deepcopy(a)
 - 리스트에 요소를 추가하거나 조작하기 시작하면 ob_item의 사이즈를 조절해 나가는 형태로 구현되어 있음
 - 리스트는 객체로 되어 있는 모든 자료형을 포인터로 연결함
 - 즉 파이썬이 모든 것이 객체이기 때문에 파이썬의 리스트는 이들 객체에 대한 포인터 목록을 관리하는 형태로 구현되어 있음
-- 연결 리스트에 대한 포인터 목록을 배열 형태로 관리하고 있으며, 덕분에 파이썬의 리스트는 배열과 연결 리스트를 합친 듯이 강력한 기능을 제공
+- <b>연결 리스트에 대한 포인터 목록을 배열 형태로 관리</b>하고 있으며, 덕분에 파이썬의 리스트는 배열과 연결 리스트를 합친 듯이 강력한 기능을 제공
 - <b>즉 다시 강조하면 파이썬의 리스트는 연결 리스트에 대한 포인터 목록을 관리하기 때문에 정수, 문자, 불리언 등 제각기 다양한 타입을 동시에 단일 리스트에서 관리하는 것이 가능</b>
 ~~~python
 a = ['a', 1, True]
@@ -410,7 +411,7 @@ P             y           t           h           o           n
 - 연결 방식의 가장 기본이 되는 자료형은 '연결 리스트'임
 - 추상 자료형(ADT)의 실제 구현 대부분은 배열 또는 연결 리스트를 기반으로 함  
   예를 들어 Stack은 연결 리스트로 구현하고, queue는 배열로 구현하는 식임
-- 배열은 어느 위치에나 O(1)에 조회가 가능하다는 장점이 있는데, 예를 들어 배열에서 4번째 값에 접근하고 싶다면 int 배열이므로 각각 4바이트, (4-1)x4 =  12가 되고, 0x00에서 시작해 12만큼 증가한 16진수는 0x0C가 됨
+- 배열은 어느 위치에나 O(1)에 조회가 가능하다는 장점이 있는데, 예를 들어 배열에서 4번째 값에 접근하고 싶다면 int 배열이므로 각각 4바이트, (4-1)x4 = 12가 되고, 0x00에서 시작해 12만큼 증가한 16진수는 0x0C가 됨
 - 이제 이 주소를 찾으면 해당 메모리에 배치되어 있는 값을 바로 읽어올 수 있음
 - 대부분의 프로그래밍 언어는 동적 배열을 지원하며, 자바에서는 ArrayList, C++에서는 std:vector임
 - 파이썬에서는 list가 바로 동적 배열 자료형임. 대부분의 동적 프로그래밍 언어들은 아예 정적 배열 자체가 없음. 파이썬도 마찬가지!
@@ -491,3 +492,153 @@ mn = sys.maxsize
 - 메모리 어딘가에 여기저기 흩뿌려진 형상을 띔
 - <b>연결 리스트는 특정 인덱스에 접근하기 위해서는 전체를 순서대로 읽어야 하므로 상수 시간 안에 접근할 수 없음. 즉 탐색에는 O(n)이 소요됨</b>
 - 반면 시작, 끝 지점에 아이템을 추가하거나 삭제하는 것은 O(1)에 가능
+
+
+### 팰린드롬 연결 리스트 문제의 제대로 된 풀이법 - 런너(Runner)
+- 입력값이 1 -> 2 -> 3 -> 2 -> 1인 연결 리스트에 런너를 적용해 풀이하는 방법
+- 런너(Runner) 방법
+  - 순서에 따라 2개의 런너, 빠른 런너(Fast Runner)와 느린 런너(Slow Runner)를 각각 출발 시킴
+  - 빠른 런너가 도착 할 때, 느린 런너는 중간 지점에 도착함
+  - 느린 런너는 중간까지 이동하면서 역순으로 연결 리스트 rev를 만들어 나감
+  - 역순으로 만든 rev와 앞으로 진행할 값과 비교하여 같은지 확인해 나가면 됨
+- 코드 구현 방법
+- 먼저 빠른 런너 fast와 느린 런너 slow의 초깃값은 다음과 같이 모두 head에서 시작
+~~~python
+slow = fast = head
+~~~
+- 런너를 이동할 차례인데, 다음과 같이 next가 존재하지 않을 때까지 이동
+- 빠른 런너는 2 칸씩, 느린 런너 slow는 한 칸씩 이동
+- 그러면서 역순으로 연결 리스트 rev를 생성하는 로직을 slow 앞에 덧붙임 
+~~~python
+while fast and fast.next:
+  fast = fast.next.next
+  rev, rev.next, slow = slow, rev, slow.next #- 역순 연결리스트 만드는 구문
+~~~
+- 역순 연결 리스트는 현재 값을 slow로 교체
+- rev.next는 rev가 됨. 즉 앞에 계속 새로운 노드가 추가되는 형태가 됨
+
+
+### 다중 할당(multiple Assignment)
+- 파이썬에서 다중 할당은 2개 이상의 값을 2개 이상의 변수에 동시 할당하는 것을 말함
+- 위의 런너 풀이에서 다중 할당을 사용한 바 있음
+~~~python
+rev, rev.next, slow = slow, rev, slow.next
+~~~
+- 이 코드를 보면서 의문이 들었을 수 있는데, 왜 두 줄로 분기하여 풀지 않았을까?
+- 예를 들어 다음과 같이 쓸 때 분기하여 쓸 수 있음
+~~~python
+rev, rev.next = slow,rev
+slow = slow.next
+~~~
+- 중요한 것은 위와 같이 두 줄로 분기하였을 때 문제가 풀리지 않는다
+- 두 줄로 늘어트릴 경우는 slow와 rev가 동일한 참조가 됨
+- 구문 중간에 rev = slow가 있으니 서로 같은 값을 참조하게 되는 것임
+- 즉, `=` 구문이 값을 할당하는 것이 아닌 서로 같은 값을 참조하게 되는 이유는 파이썬의 모든 것은 객체며, primitive types는 존재하지 않음
+- 문자와 숫자의 경우만 불변 객체라는 점만 다를 뿐이고, `=` 연산자를 활용해 할당을 진행하게 되면 값을 할당하는 것이 아니라 불변 객체에 대한 참조를 할당하게 됨
+- 다음의 실험을 보고 생각해보자
+~~~python
+id(5)
+#- 4390087440
+
+a = 5
+id(a)
+#- 4390087440
+
+b = 5
+id(b)
+#- 4390087440
+~~~
+- 5라는 숫자에 대해 숫자 5와 변수 a,b 모두 동일한 ID를 가짐
+- 즉 5라는 값은 메모리 상에 단 하나만 존재하며, a,b 두 변수는 각각 이 값을 가리키는 참조라는 의미
+- 그럼 만약 5가 6으로 변경된다면 같은 주소 값을 참조하므로, a,b가 모두 6으로 변경될 것 같지만 그렇지 않음
+- 그 이유는 숫자는 불변(immutable) 객체이기 때문. 만약 숫자가 아니라 리스트, 딕셔너리와 같은 자료형이라면 내부 값은 바뀌며, 참조하는 모든 값도 바뀌게 됨
+- 다시 돌아와서 rev = 1, slow = 2 -> 3이라고 가정해보자
+~~~python
+rev, rev.next, slow = slow, rev, slow.next
+~~~
+- <b>위의 구문은 같은 작업이 동시에 일어나기 때문에, 이 모든 작업은 중간 과정 없이 동시에 일어남. 즉 중간 과정 없이 한 번의 트랜잭션으로 끝나게 됨</b> 
+- 만약 다음과 같이 썼다면 어떻게 될까? 
+~~~python
+#- 여기서 slow, fast 를 =로 할당하는 것은 node 자체를 할당하는 것과 같음
+#- rev = 1, slow = 2 -> 3
+rev, rev.next = slow, rev   #- 결과: rev = 2 -> 1, 중요한 것은 rev = slow
+                            #- 동일하게 참조하기 떄문에 slow도 2 -> 1로 변해버림
+slow = slow.next            #- slow.next는 1로 변경됨. 따라서 값이 이상해짐
+~~~
+- 결과적으로 왜 다중 할당을 하는지, 나누지 않고 한 번에 처리해야 하는지 어느 정도 이해할 수 있음
+
+### 두 정렬 리스트의 병합
+- 병합 정렬의 마지막 조합과 동일한 방식으로 첫 번째부터 비교하면서 리턴하면 쉽게 풀 수 있는 문제
+~~~python
+#- l1, l2를 비교했을 때 반드시 작은 값이 l1으로 오도록 비교하는 방법을 말함
+class Solution:
+    def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
+        #- l1 이 없거나, l1, l2가 있고 l2.val < l1.val 이면 swap
+        #- 즉 l1이 없거나 l1.val이 l2.val 보다 작으면 무조건 swap -> 
+        if (not l1) or (l2 and l1.val > l2.val):
+            l1, l2 = l2, l1
+        if l1:
+            l1.next = self.mergeTwoLists(l1.next, l2)
+        return l1
+~~~
+
+### 리스트를 연결리스트로 변경하는 방법
+~~~Python
+def to_reversed_linkedlist(arr):
+  prev = None
+  for value in arr:
+    node = ListNode(value)
+    node.next = prev
+    prev = node
+  return prev
+~~~
+
+### 두 수의 덧셈
+#### 자료형 변환으로 풀이
+- 연결리스트를 뒤집은 뒤, 문자열로 이어 붙이고 숫자로 변환 후 덧셈
+- 다시 연결 리스트로 변경
+~~~python
+class Solution:
+    def addTwoNumbers(self, l1:ListNode, l2:ListNode) -> ListNode:
+        first_num_list = self.toList(self.reverseList(l1))
+        second_num_list = self.toList(self.reverseList(l2))
+
+        first_num = int("".join((str(e) for e in first_num_list)))
+        second_num = int("".join((str(e) for e in second_num_list)))
+
+        return self.toReversedLinkedList(str(first_num + second_num))
+
+
+    #- linkedList를 reverse 하는 함수
+    def reverseList(self, head:ListNode) -> ListNode:
+        node, prev = head, None
+
+        while node:
+            prev, prev.next, node = node, prev, node.next
+
+        return prev
+
+    #- 연결 리스트를 파이썬의 리스트로 변경
+    def toList(self, node):
+        list = []
+        while node:
+            list.append(node.val)
+            node = node.next
+        return list
+
+    #- list를 linkedlist 로 변경
+    def toReversedLinkedList(self, result):
+        prev = None
+        for r in result:
+            node = ListNode(r)
+            node.next = prev
+            prev = node
+
+        return node
+~~~  
+
+#### 잔가산기 구현
+- 논리 회로의 전가산기(Full Adders)의 유사한 형태를 구현해보자
+- 이진법이 아니라 십진법이라는 차이만 있을 뿐, 자리올림수를 구하는 것까지 가산기의 원리와 거의 동일
+- 입력값 A, B, 이전의 자리올림수 이렇게 3가지 입력으로 합(Sum)과 다음 자리올림수 여부를 결정
+- 

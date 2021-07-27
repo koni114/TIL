@@ -1,18 +1,26 @@
-height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]
-stack = [] #- stack 에 인덱스 저장
-volume = 0
+# Definition for singly-linked list.
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
 
-for i in range(len(height)):
-    # 변곡점을 만나는 경우
-    while stack and height[i] > height[stack[-1]]:
-        top = stack.pop()
-        if not len(stack):
-            break
 
-        #- 이전과의 차이만큼 물 높이 처리
-        distance = i - stack[-1] - 1
-        waters = min(height[i], height[stack[-1]]) - height[top]
+class Solution(object):
+    def isPalindrome(self, head:ListNode) -> bool:
+        rev = None
+        slow = fast = head
+        while fast and fast.next:
+            fast = fast.next.next
+            rev, rev.next, slow.next = slow, rev, slow
 
-        volume += distance * waters
-    stack.append(i)
+        # 홀수인 경우, 빗겨나가야 하기 때문
+        if fast:
+            slow = slow.next
+
+        #- 팰린드롬 여부 확인
+        while rev and rev.val == slow.val:
+            slow, rev = slow.next, rev.next
+
+
+
 

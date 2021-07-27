@@ -26,6 +26,7 @@ class Solution:
 
         return True
 
+
 class Solution:
     def isPalindrome(self, head: ListNode) -> bool:
         rev = None
@@ -41,4 +42,12 @@ class Solution:
         while rev and rev.val == slow.val:
             slow, rev = slow.next, rev.next
         return not rev
+
+
+class ListNode(object):
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+
 
