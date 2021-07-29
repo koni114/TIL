@@ -10,75 +10,69 @@
   - isEmpty(): 데크가 비어 있는지 여부를 판별
   - isFull(): 데크가 가득 차 있는지 여부를 판별
 """
-#- head, tail 은 항상 head, tail 이어야 함.
-#- head 는 왼쪽, tail 은 오른쪽임을 기억
-class ListNode():
+class ListNode:
     def __init__(self, val=None, left=None, right=None):
         self.val = val
         self.left = left
         self.right = right
 
-class CircularQueue():
-    def __init__(self, k):
-        self.head, self.tail = ListNode(None), ListNode(None)  #- head, tail 을 정의
-        self.k, self.len = k, 0 #- 길이 정보를 담는 변수가 될 len 을 따로 정의
-        #- head <-> tail 연결, right, left 로 연결
+class MyCircularDeque:
+    #- head, tail 은 항상 끝과 끝에 존재
+    def __init__(self, k: int):
+        self.head, self.tail = ListNode(None), ListNode(None)
+        self.k, self.max_len = k, 0
         self.head.right, self.tail.left = self.tail, self.head
 
-    #- 새로운 노드 삽입, * 중간 삽입 한다는 가정도 들어감
-    #- 기존 node.right -> new, new.left -> node,
-    #-    new.right -> n, n.left -> new
     def _add(self, node: ListNode, new: ListNode):
         n = node.right
         node.right = new
         new.left, new.right = node, n
         n.left = new
 
-    #- 입력된 node 의 우측 node 를 삭제
     def _del(self, node: ListNode):
         n = node.right.right
         node.right = n
         n.left = node
 
-    def insertFront(self, value):
-        if self.len == self.k:  #- 길이가 꽉찬 경우 추가 못함
+    def insertFront(self, value: int) -> bool:
+        if self.max_len == self.k:
             return False
-        self.len += 1
+        self.max_len += 1
         self._add(self.head, ListNode(value))
         return True
 
-    def insertLast(self, value):
-        if self.len == self.k:
+    def insertLast(self, value: int) -> bool:
+        if self.max_len == self.k:
             return False
-        self.len += 1
+        self.max_len += 1
         self._add(self.tail.left, ListNode(value))
         return True
 
-    def deleteFronts(self):
-        if self.len == 0:
+    def deleteFront(self) -> bool:
+        if self.max_len == 0:
             return False
-        self.len -= 1
+        self.max_len -= 1
         self._del(self.head)
+        return True
 
-    def deleteLast(self):
-        if self.len == 0:
+    def deleteLast(self) -> bool:
+        if self.max_len == 0:
             return False
-        self.len -= 1
+        self.max_len -= 1
         self._del(self.tail.left.left)
         return True
 
-    def getFront(self):
-        return self.head.right.val if self.len else -1
+    def getFront(self) -> int:
+        return self.head.right.val if self.max_len else -1
 
-    def getRear(self):
-        return self.tail.left.val if self.len else -1
+    def getRear(self) -> int:
+        return self.tail.left.val if self.max_len else -1
 
-    def isEmpty(self):
-        return self.len == 0
+    def isEmpty(self) -> bool:
+        return self.max_len == 0
 
-    def isFull(self):
-        return self.len == self.k
-
+    def isFull(self) -> bool:
+        return self.max_len == self.k
 
 
 

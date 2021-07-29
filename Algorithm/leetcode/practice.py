@@ -1,26 +1,18 @@
-# Definition for singly-linked list.
-class ListNode:
-    def __init__(self, val=0, next=None):
-        self.val = val
+#- 연결 리스트를 이용한 스택 ADT 구현
+class Node:
+    def __init__(self, item, next):
+        self.item = item
         self.next = next
 
 
-class Solution(object):
-    def isPalindrome(self, head:ListNode) -> bool:
-        rev = None
-        slow = fast = head
-        while fast and fast.next:
-            fast = fast.next.next
-            rev, rev.next, slow.next = slow, rev, slow
+class Stack:
+    def __init__(self):
+        self.last = None
 
-        # 홀수인 경우, 빗겨나가야 하기 때문
-        if fast:
-            slow = slow.next
+    def push(self, item):
+        self.last = Node(item, self.last)
 
-        #- 팰린드롬 여부 확인
-        while rev and rev.val == slow.val:
-            slow, rev = slow.next, rev.next
-
-
-
-
+    def pop(self):
+        item = self.last.item
+        self.last = self.last.next
+        return item

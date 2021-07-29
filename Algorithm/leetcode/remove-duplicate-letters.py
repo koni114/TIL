@@ -1,20 +1,22 @@
 """
-중복 문자 제거
+중복된 문자를 제외하고 사전식 순서(Lexicographical Order)로 나열
 """
-def removeDuplicateLetters(s):
-    import collections
-    #- seen --> 이미 처리된 문자 여부 확인
-    counter, seen, stack = collections.Counter(s), set(), []
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        from collections import Counter
+        c, stack = Counter(s), []
+        stack.append(s[0])
+        c[s[0]] -= 1
 
-    for char in s:
-        counter[char] -= 1
-        if char in seen:
-            continue
-        #- 뒤에 붙일 문자가 남아 있다면 stack 에서 제거
-        while stack and char < stack[-1] and counter[stack[-1]] > 0:
-            seen.remove(stack.pop())
-        stack.append(char)
-        seen.add(char)
+        for char in s[1:]:
+            while stack and stack[-1] > char and c[stack[-1]] and char not in stack:
+                stack.pop()
+            if char not in stack:
+                stack.append(char)
+            c[char] -= 1
+        return "".join(stack)
 
-    return ''.join(stack)
+s = Solution()
+s.removeDuplicateLetters("abacb")
+
 
