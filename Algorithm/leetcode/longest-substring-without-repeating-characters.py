@@ -1,6 +1,9 @@
 """
 중복문자가 없는 가장 긴 부분 문자열의 길이 리턴
 """
+import itertools
+
+
 class Solution:
     def lengthOfLongestSubstring(self, s: str) -> int:
         from collections import defaultdict
@@ -32,11 +35,11 @@ class Solution:
         used = {}
         max_length = start = 0
         for index, char in enumerate(s):
-            #- 이미 등장했던 문자라면 'start' 위치 갱신
             if char in used and start <= used[char]:
                 start = used[char] + 1
             else:
                 max_length = max(max_length, index - start + 1)
-
             used[char] = index
+
+
 
