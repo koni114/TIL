@@ -684,10 +684,9 @@ print(f"{same_birthdays / TRIALS * 100}%")
 - 최근 루비나 파이썬 같은 Modern 언어들은 오픈 어드레싱 방식을 택해 성능을 높히는 대신 로드 팩터를 작게 잡아 성능 저하 문제를 해결함
 - 파이썬의 로드 팩터는 0.66으로 자바보다 작음
 
+
 ### 해시맵 디자인
 ~~~python
-
-
 class ListNode:
     def __init__(self, key=None, value=None):
         self.key = key

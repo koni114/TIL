@@ -16,3 +16,6 @@ class Stack:
         item = self.last.item
         self.last = self.last.next
         return item
+
+
+node_class = Node(item='hello', next=None)

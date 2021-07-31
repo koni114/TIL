@@ -458,7 +458,7 @@ class Person(object):
         print("I am a person")
 
 
-class Student(object):
+class Student(Person):
     def __init__(self):
         super().__init__()
         print('I am a student')
