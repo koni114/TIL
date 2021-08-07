@@ -1,7 +1,7 @@
 # LightGBM
 
 ## LightGBM 배경
-- 다중 분류, 클릭 예측, 순위 학습에 주로 사용되는 GBMT는 굉장히 유용한 머신러닝 알고리즘이며, XGBoost나 pGBRT 등 효율적인 기법의 설계를 가능하게 함
+- 다중 분류, 클릭 예측, 순위 학습에 주로 사용되는 GBDT(Gradient Boosting Decision Tree)는 굉장히 유용한 머신러닝 알고리즘이며, XGBoost나 pGBRT 등 효율적인 기법의 설계를 가능하게 함
 - 하지만 고차원이고 대량 데이터 분석에는 만족스러운 결과를 내지 못하는 경우도 있는데, 그 이유는 모든 가능한 분할점에 대해서 information gain을 평가하기 위해 전체 데이터를 SCAN 하기 때문. 이는 굉장히 시간 소모적임
 - LightGBM은 해당 문제를 해결하기 위하여 2가지 최신 기술을 도입함
 - 첫 번째는 <b>GOSS(Gradient Based One Side Sampling)</b>이며, 기울기(gradient)가 큰 개체가 정보 획득에 있어 더 큰 역할을 한다는 아이디어에서 비롯된 기술  
