@@ -12,9 +12,38 @@
 - 앙상블 방법은 예측기가 가능한 한 서로 독립적일 때 최고의 성능을 발휘함. 즉 다양한 분류기를 얻는 한 가지 방법은  
   각기 다른 알고리즘으로 학습시키는 것. 이렇게 하면 매우 다른 종류의 오차를 만들 가능성이 높기 때문에 앙상블 모델의 정확도를 향상시킴
 - 모든 분류기가 클래스의 확률을 예측할 수 있으면(`predict_proba()` 메서드가 있으면) 개별 분류기의 예측을 평균 내어 확률이 가장 높은 클래스를 예측할 수 있음. 이를 soft voting라고 함
+~~~python
+#- votingClassifier example
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+
+log_clf = LogisticRegression()
+rnd_clf = RandomForestClassifier()
+svm_clf = SVC()
+
+voting_clf = VotingClassifier(
+    estimators=[('lr', log_clf), ('rf', rnd_clf), ('svc', svm_clf)],
+    voting = 'hard'
+)
+
+#- 각 분류기의 정확도 확인
+for clf in (voting_clf, log_clf, rnd_clf, svm_clf):
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+    print(clf.__class__.__name__, round(accuracy_score(y_test, y_pred), 4))
+
+# VotingClassifier 0.8222
+# LogisticRegression 0.8444
+# RandomForestClassifier 0.8667
+# SVC 0.7
+~~~
+
 
 ## bagging, pasting
 - 훈련 세트를 중복을 허용하여 샘플링하는 방식을 bagging, 중복 허용을 안하는 방식을 pasting 이라고 함
+- 모든 예측기가 훈련을 마치면 결과를 수집하는데, 해당 수집함수는 분류일 때는 통계적 최빈값, 회귀에서는 평균값으로 계산 
 - 개별 예측기는 원본 훈련 세트로 훈련시킨 것보다 훨씬 크게 편향되어 있지만 수집 함수를 통과하면 편향과 분산 모두 감소
 - 일반적으로 앙상블의 결과는 원본 데이터셋으로 하나의 예측기를 훈련시킬때와 비교해 편향은 비슷하지만 분산은 줄어듬  
   즉, <b>훈련 세트의 오차 수는 거의 비슷하지만, 결정 경계는 덜 불규칙하다는 의미</b>
@@ -22,8 +51,24 @@
 - `BaggingClassifier` 클래스는 기반이 되는 분류기가 결정 트리 분류기처럼 클래스 확률을 추정할 수 있으면 hard voting 대신 soft voting 수행
 - <b>부트스트래핑은 각 예측기가 학습하는 서브셋에 다양성을 증가시키므로, 배깅이 페이스팅보다 편향이 좀 더 높고, 분산이 적어 더 선호됨</b>
 - 시간과 여유가 있다면 교차 검증으로 둘 다 비교하는 것이 좋음
-
 ![img](https://github.com/koni114/TIL/tree/master/Machine-Learning/img/bagging_ensemble.JPG)
+~~~python
+from sklearn.ensemble import BaggingClassifier
+from sklearn.tree import DecisionTreeClassifier
+
+bag_clf = BaggingClassifier(
+    DecisionTreeClassifier(),
+    n_estimators=500,
+    max_samples=100,
+    bootstrap=True,
+    n_jobs=-1)
+
+bag_clf.fit(X_train, y_train)
+y_pred = bag_clf.predict(X_test)
+print(bag_clf.__class__.__name__, round(accuracy_score(y_test, y_pred), 4))
+~~~
+- 단일 결정 트리와 500개의 결정 트리 앙상블 모형을 비교하면, 편향은 거의 비슷하지만 분산은 감소하는 것을 확인할 수 있음
+
 
 ### oob 평가
 - 배깅을 사용하면 어떤 샘플은 선택되고, 어떤 샘플은 선택되지 않을 수 있음
@@ -33,6 +78,23 @@
 - `BaggingClassifier`를 만들 때 `oob_score = True`로 지정하면 훈련이 끝난 후 자동으로 oob 평가를 수행
 - oob 샘플에 대한 결정 함수의 값도 `oob_decision_function_` 변수에서 확인할 수 있음  
   각 훈련 샘플의 클래스 확률을 반환  
+~~~python
+bag_clf = BaggingClassifier(
+    DecisionTreeClassifier(),
+    n_estimators=500,
+    max_samples=100,
+    bootstrap=True,
+    n_jobs=-1,
+    oob_score=True)
+
+bag_clf.fit(X_train, y_train)
+bag_clf.oob_score_
+
+#- 0.8038277511961722
+
+#- oob_test의 결정함수의 값 확인
+bag_clf.oob_decision_function_
+~~~
 
 ### 랜덤 패치와 랜덤 서브스페이스
 - `BaggingClassifier`는 특성 샘플링도 지원.  
@@ -89,36 +151,98 @@
 - 이 알고리즘은 지정된 예측기 수에 도달하거나, 완벽한 예측기가 만들어지면 종료됨
 - <b>예측을 할 때 에이다부스트는 단순히 모든 예측기의 예측을 계산하고 예측기 가중치 alpha(j)를 더해 예측 결과를 만듬</b>
 - 사이킷런은 SAMME라는 에이다부스트의 다중 클래스 버전을 사용. 클래스가 두 개뿐일 때는 SAMME가 에이다부스트와 동일
-- 예측기가 클래스의 확률을 추정할 수 있다면 SAMME.R 이라는 변종을 사용
+- 예측기가 클래스의 확률을 추정할 수 있다면 SAMME.R(Real) 이라는 변종을 사용
 - `AdaBoostClassifier`의 기본 추정기는 `max_depth = 1`인 DT임
-- `AdaBoostRegressor`는 `max_depth = 3`인 DT를 사용
+- `AdaBoostRegressor`는 `max_depth = 3`인 DT를 기본 추정기로 사용함
+~~~python
+from sklearn.ensemble import AdaBoostClassifier
+ada_clf = AdaBoostClassifier(
+    DecisionTreeClassifier(max_depth=1), n_estimators=200,
+    algorithm="SAMME.R", learning_rate=0.5)
+ada_clf.fit(X_train, y_train)
+~~~
 
 ### 그레디언트 부스팅
 - 앙상블에 이전까지의 오차를 보정하도록 예측기를 순차적으로 추가함
 - <b>이전 예측기가 만든 잔여 오차(residual error)에 새로운 예측기를 학습시킴</b>
 - 결정 트리를 기반 예측기로 사용하는 것을 <b>그레디언트 트리 부스팅, 그레디언트 부스티드 회귀 트리(GBRT)라고 함</b>
 - `GradientBoostingRegressor` 를 사용하면 GBRT 앙상블을 간단하게 훈련시킬 수 있음
-- `learning_rate` 매개변수가 각 트리의 기여 정도를 조절하는데, 즉 잔차예측값 x 학습률으로 사용됨
+- 다음은 이전에 만든 것과 같은 앙상블을 만드는 코드
+~~~python
+from sklearn.ensemble import GradientBoostingRegressor
+gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=3, learning_rate=1.0)
+gbrt.fit(X, y)
+~~~
+- `learning_rate` 매개변수가 각 트리의 기여 정도를 조절하는데, 즉 <b>잔차예측값 x 학습률</b>으로 사용됨
+- learning_rate를 낮게 설정하면 그만큼의 많은 트리가 필요하지만 예측의 성능은 좋아지며, 이를 축소(shrinkage)라고 부르는 규제 방법 
 - learning_rate가 크면 오차예측값의 반영률이 높으므로 과대적합될 우려가 있음
 - 최적의 트리수를 찾기 위해서는 early stopping 사용
-- 간단하게 사용하려면 `staged_predict()` 사용. 해당 함수는 많은 수의 트리 모형을 만들고, 최적의 트리 모형 개수를 찾아내는 방식
+- 간단하게 사용하려면 `staged_predict()` 사용. 이 메서드는 훈련의 각 단계(트리 하나, 트리 둘)에서 앙상블에 의해 만들어진 예측기를 순회하는 iterator를 반환
+- 다음 코드는 120개의 트리로 GBRT 앙상블을 훈련시키고, 최적의 트리 수를 찾기 위해 각 훈련 단계에서 검증 오차를 측정함
+- 마지막에 최적의 트리 수를 사용해 새로운 GBRT 앙상블을 훈련시킴
+~~~python
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+X_train, X_val, y_train, y_val = train_test_split(X, y)
+
+gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=120)
+gbrt.fit(X_train, y_train)
+
+errors = [mean_squared_error(y_val, y_pred)
+          for y_pred in gbrt.staged_predict(X_val)]
+
+bst_n_estimators = np.argmin(errors) + 1
+
+gbrt_best = GradientBoostingRegressor(max_depth=2, n_estimators=bst_n_estimators)
+gbrt_best.fit(X_train, y_train)
+~~~
+- 해당 함수는 많은 수의 트리 모형을 만들고, 최적의 트리 모형 개수를 찾아내는 방식
 - 사이킷런 0.20 버전에서 그레디언트 부스팅에 early stopping 기능이 추가 되었음
 - 훈련 데이터에서 `validation_fraction` 비율 만큼 떼내어 `n_iter_no_change` 반복 동안에 `tol` 값 이상 향상되지 않으면 훈련이 멈춤
 - `GradientBoostingRegressor`는 `subsample` 파라미터도 지원
 - 이렇게 subsampling한 데이터로 weak learner를 만들면 편향은 증가하면서 분산은 감소하고 속도 성능은 증가시킬 수 있음. 이런 기법을 <b>확률적 그레디언트 부스팅(stochastic gradient boosting)</b> 이라고 함
+- 다음 예제는 grdient boosting 알고리즘을 만드는 예제. decisionTree 3개를 가지고 잔여 오차를 예측하여 각 모델을 앙상블한 것 
+~~~python
+#- 1. 먼저 DecisionTreeRegressor를 훈련 세트에 학습
+from sklearn.tree import DecisionTreeRegressor
+tree_reg1 = DecisionTreeRegressor(max_depth=2)
+tree_reg1.fit(X, y)
+
+#- 2. 첫번째 예측기에서 생긴 잔여 오차에 두번째 DecisionTreeRegressor를 훈련
+y2 = y - tree_reg1.predict(X)
+tree_reg2 = DecisionTreeRegressor(max_depth=2)
+tree_reg2.fit(X, y2)
+
+#- 3. 두번째 예측기에서 생긴 잔여 오차에 세번째 DecisionTreeRegressor를 훈련
+y3 = y2 - tree_reg2.predict(X)
+tree_reg3 = DecisionTreeRegressor(max_depth=2)
+tree_reg3.fit(X, y3)
+
+#- 4. 세 개의 트리를 포함하는 앙상블 모델을 통한 예측은 3개의 값을 합치면 됨
+y_pred = sum(tree.predict(X_test) for tree in (tree_reg1, tree_reg2, tree_reg3))
+~~~
+- 최적화된 그레이디언트 부스팅 구현으로 XGBoost 파이썬 라이브러리가 유명함
+~~~python
+import xgboost
+xgb_reg = xgboost.XGBRegressor()
+xgb_reg.fit(X_train, y_train,
+            eval_set=[(X_val, y_val)], early_stopping_rounds=2) #- 조기 종료 기능도 제공
+y_pred = xgb_reg.predict(X_val)
+~~~
 
 ## 스태킹(stacking)
 - stacked generalization의 줄임말
 - 앙상블에 속한 모든 예측기의 예측을 취합하는 간단한 함수를 사용하는 대신, 취합하는 모델을 훈련시키면 어떨까? 라는 아이디어에서 출발
 - 마지막 취합하는 예측기를 <b>블랜더(blender), 메타 학습기(meta learner)라고 함</b>
 - 블랜더를 학습시키는 일반적인 방법은 홀드 아웃 세트를 사용하는 것
-
 1. 먼저 훈련 세트를 2개의 서브셋으로 나눔
 2. 첫 번째 서브셋을 첫 번째 레이어의 예측을 훈련시키기 위해 사용
 3. 첫 번째 레이어의 예측기를 사용해 두 번째 서브셋에 대한 예측값을 만듬
-4. 해당 예측한 값을 특성으로 새로운 훈련세트를 만들고, 이를 블렌더를 훈련시킴
-
+4. 해당 예측한 값을 특성으로 새로운 훈련세트를 만들고, 이 데이터를 가지고 블렌더를 훈련시킴
 - 이런 방식으로 레이어를 증가시킬 수 있음
+- 만약 2개의 layer가 필요하다면, 3개의 subset이 필요!
 - 사이킷런 0.22 버전에서 `StackingClassifier`와 `StackingRegressor`가 추가됨 
 
 ## 용어 정리

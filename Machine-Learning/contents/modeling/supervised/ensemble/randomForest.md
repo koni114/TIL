@@ -10,9 +10,24 @@
 - `BaggingClassifier`에 `DecisionTreeClassifier`를 넣어 만들 수도 있고, `RandomForestClassifier`를 사용 가능
 - `RandomForestClassifier`는 몇 가지 예외가 있지만 DecisionTree Classifier의 매개변수와 앙상블 자체를 제어하는 데 필요한  
   `BaggingClassifier`의 매개변수를 모두 가지고 있음
-- RF는 트리의 노드를 분할할 때 전체 특성 중에서 최선의 특성을 찾는 대신 무작위로 선택한 특성 후보 중에서 최적의 특성을  
-  찾는 식으로 무작위성을 더 주입
+- RF는 트리의 노드를 분할할 때 전체 특성 중에서 최선의 특성을 찾는 대신 무작위로 선택한 특성 후보 중에서 최적의 특성을 찾는 식으로 무작위성을 더 주입
 - 이는 결국 트리를 더욱 다양하게 만들고, 편향을 손해보는 대신 분산을 낮추어 전체적으로 더 훌륭한 모델을 만들어냄
+~~~python
+from sklearn.ensemble import RandomForestClassifier
+rnd_clf = RandomForestClassifier(n_estimators=500, max_leaf_nodes=16, n_jobs=-1)
+rnd_clf.fit(X_train, y_train)
+y_pred_rf = rnd_clf.predict(X_test)
+
+#- baggingClassifier를 활용한 randomForest
+from sklearn.ensemble import BaggingClassifier
+BaggingClassifier(
+    DecisionTreeClassifier(max_features="auto", max_leaf_nodes=16),
+    n_estimators=500,
+    max_samples=1.0,
+    bootstrap=True,
+    n_jobs=-1
+)
+~~~
 
 ## extra-tree
 - 랜덤 포레스트는 트리를 더욱 무작위하게 만들기 위해 후보 특성을 사용해 무작위로 분할한 다음 그중에서 최상의 분할을 선택
@@ -22,6 +37,7 @@
 - `ExtraTreesClassifier` 사용, 사용법은 `RandomForestClassifier` 와 같음
 - randomForestClassifier가 ExtraTreesClassifier 보다 좋을지 나쁠지는 예단하기 어려움  
   일반적으로 둘 다 시도해보고 교차 검증으로 비교해보는 것이 유일한 방법
+- 엑스트라 트리의 무작위 분할을 단일 결정 트리에 적용한 모델은 `ExtraTreeClassifier`와 `ExtraTreeRegressor`임
 
 ## 특성 중요도
 - 랜덤 포레스트는 특성의 상대적 중요도를 측정하기 쉬움  
@@ -34,7 +50,19 @@
 - 결정 트리의 중요도는 노드에 사용된 특성별로 <b>(현재 노드의 샘플 비율 x 불순도) - (왼쪽 자식 노드의 샘플 비율 x 불순도) - (오른쪽 자식 노드의 샘플 비율 x 불순도) 로 계산하여 더하고</b>  
   특성 중요도의 합이 1이 되도록 전체 합으로 나누어 정규화
 - 여기서 샘플 비율은 트리 전체 샘플 수에 대한 비율. 랜덤 포레스트 특성 중요도는 각 결정 트리의 특성 중요도를 모두 계산하여 더한 후 트리 수로 나눈 것
-- 
+~~~python 
+from sklearn.datasets import load_iris
+iris = load_iris()
+rnd_clf = RandomForestClassifier(n_estimators=500, n_jobs=-1)
+rnd_clf.fit(iris['data'], iris['target'])
+for name, score in zip(iris['feature_names'], rnd_clf.feature_importances_):
+    print(name, score
+
+# sepal length (cm) 0.0934308966587885
+# sepal width (cm) 0.024394066806035508
+# petal length (cm) 0.4254620443696972
+# petal width (cm) 0.4567129921654788
+~~~
 
 ## R 기반 구현
 - R에서 의사결정나무를 수행하는 패키지는 `rpart`임

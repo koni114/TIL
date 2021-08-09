@@ -24,6 +24,7 @@
 - 로짓을 <b>로그-오즈(log-odds)</b>라고도 부름. 로그-오즈는 양성 클래스 추정 확률과 음성 클래스 추정 확률 사이의 로그 비율이기 때문
 - `LogisticRegression` 는 클래스 레이블을 반환하는 `predict()` 와 클래스에 속할 확률 값을 
 반환하는 `predict_proba()`를 반환
+- `predict()` 메서드는 theta^T * x 값이 0보다 클 때를 양성 클래스로 판단하여 결과를 반환하며 `predict_proba()` 메서드는 시그모이드 함수를 적용하여 계산한 확률을 반환
 
 ## 훈련과 비용 함수
 - 그렇다면 해당 모형을 어떻게 훈련시킬까?
@@ -51,8 +52,47 @@
 - 다른 선형 모델처럼 로지스틱 회귀 모델도 l1, l2 패널티를 사용하여 규제 가능
 - 사이킷런의 LogisticRegression 모델의 규제 강도를 조절하는 하이퍼파라미터는 (다른 선형 모델처럼) alpha가 아니고 그 역수에 해당하는 C. C가 높을수록 모델의 규제가 줄어듬
 
+### 로지스틱 회귀 예제
+~~~python
+#- logistic regression
+#- iris data
+#- petal : 꽃잎, sepal : 꽃받침
+from sklearn import datasets
+import numpy as np
+import pandas as pd
+
+iris = datasets.load_iris()
+print(list(iris.keys()))
+
+X = iris['data'][:, 3:]  #- 꽃잎의 너비
+y = (iris['target'] == 2).astype(int)
+
+#- 로지스틱 회귀 모형 훈련
+from sklearn.linear_model import LogisticRegression
+log_reg = LogisticRegression()
+log_reg.fit(X, y)
+
+#- 꽃잎의 너비가 0~3cm인 꽃에 대해 모델의 추정 확률 계산
+import matplotlib.pyplot as plt
+X_new = np.linspace(0, 3, 1000).reshape(-1, 1)
+y_proba = log_reg.predict_proba(X_new)
+plt.plot(X_new, y_proba[:, 1], 'g-', label="Iris virginica")
+plt.plot(X_new, y_proba[:, 0], 'b--', label="Not Iris virginica")
+
+#- 결과 해석
+#- Iris-Verginica 의 꽃잎 너비는 1.4 ~ 2.5cm 사이에 분포
+#- 반면 다른 붓꽃은 일반적으로 꽃잎 너비가 더 작아 0.1~1.8cm에 분포. 약간 중첩되는 부분은 존재
+#- 양쪽 확률이 50%가 되는 1.6cm 근방에서 결정 경계가 만들어짐
+
+log_reg.predict([[1.7], [1.5]])
+~~~
+- 다른 선형 모델처럼 로지스틱 회귀 모델도 l1, l2 패털티를 사용하여 규제 가능
+- 사이킷런 패키지는 l2를 기본 패널티로함
+- `LogisticRegression` 모델의 규제 강도를 조절하는 하이퍼파라미터는 alpha가 아니고 그 역수에 해당하는 C입니다. C가 높을수록 규제가 줄어듬
+
+
 ## 4.6.4 소프트맥스 회귀(다항 로지스틱 회귀)
-- 로지스틱 회귀 모델은 여러 개의 이진 분류기를 훈련시켜 연결하지 않고 직접 다중 클래스를 지원하도록 일반화될 수 있음
+- 로지스틱 회귀 모델은 여러 개의 이진 분류기를 훈련시켜 연결하지 않고 직접 다중 클래스를 지원하도록 일반화될 수 있음(y의 label이 여러개..)
 - 이를 <b>소프트맥스 회귀</b>, <b>다항 로지스틱 회귀</b>라고 함
 <p align = 'center'><a href="https://www.codecogs.com/eqnedit.php?latex=s_{k}(x)&space;=&space;(\theta^{k})^{T}x" target="_blank"><img src="https://latex.codecogs.com/gif.latex?s_{k}(x)&space;=&space;(\theta^{k})^{T}x" title="s_{k}(x) = (\theta^{k})^{T}x" /></a></p>
 
