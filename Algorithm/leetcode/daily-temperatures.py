@@ -17,4 +17,4 @@ class Solution:
         return result
 
 s = Solution()
-s.dailyTemperatures([30,60,90])
+s.dailyTemperatures([30, 60, 90])
