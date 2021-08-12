@@ -203,3 +203,135 @@ class Solution:
 
         return results
 ~~~
+
+### 일정 재구성 문제
+- [from, to]로 구성된 항공권 목록을 이용해 JFK에서 출발하는 여행 일정 구성하기
+- 여러 일정이 있는 경우 사전 어휘 순으로 방문함
+
+### 최단 경로 문제
+- 최단 경로 문제는 각 간선의 가중치 합이 최소가 되는 두 정점사이의 경로를 찾는 문제
+- 이런 최단 경로 문제는 그래프의 종류와 특성에 따라 각각 최적화된 다양한 최단 경로 알고리즘이 존재함
+- 이 중에서 가장 유명한 것은 다익스트라 알고리즘
+- 다익스트라 알고리즘은 항상 노드 주변의 최단 경로만을 택하는 대표적인 그리디 알고리즘 중 하나로, 단순할 뿐만 아니라 실행 속도 또한 빠름
+- 다익스트라 알고리즘은 노드 주변을 탐색할 때, BFS를 이용하는 대표적인 알고리즘이기도 함
+- 하지만 가중치가 음수인 경우에는 처리할 수 없음
+- 다익스트라 알고리즘은 임의의 정점을 출발 집합에 더할 때, 그 정점까지의 최단거리는 계산이 끝났다는 확신을 갖고 더함
+- 만일 이후에 더 짧은 경로가 존재한다면, 다익스트라 알고리즘의 논리적 기반이 무너짐
+- 이때는 모두 값을 더해 양수로 변환하는 방법이 있으며, 이마저도 어렵다면 벨만-포드 알고리즘 같은, 음수 가중치를 계산할 수 있는 다른 알고리즘을 사용해야 함
+- BFS + priorityqueue 를 적용할 경우, 시간 복잡도는 O(V+E), 모든 정점이 출발지에서 도달이 가능하다면, O(ElogV)가 됨
+
+### 네트워크 딜레이 타임
+- K부터 출발해 모든 노드가 신호를 받을 수 있는 시간을 계산해라. 불가능할 경우 -1을 리턴
+- 입력값 (u, v, w)는 각각 출발지, 도착지, 소요 시간으로 구성되며, 전체 노드의 개수는 N으로 입력받음
+
+#### 전체 코드
+~~~python
+def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        graph = collections.defaultdict(list)
+        #- 그래프 인접 리스트 구성
+        for u, v, w in times:
+            graph[u].append((v, w))
+
+        # 큐 변수: [(소요시간, 정점)]
+        Q = [(0, k)]
+        dist = collections.defaultdict(int)
+
+        while Q:
+            time, node = heapq.heappop(Q)
+            if node not in dist:
+                dist[node] += time
+                for v, w in graph[node]:
+                    alt = time + w
+                    heapq.heappush(Q, (alt, v))
+
+        #- 모든 노드의 최단 경로 존재 여부 판별
+        if len(dist) == n:
+            return max(dist.values())
+        return -1
+~~~
+
+#### 코드 단위별 파악해보기
+~~~python
+ graph = collections.defaultdict(list)
+        #- 그래프 인접 리스트 구성
+        for u, v, w in times:
+            graph[u].append((v, w))
+~~~
+- 문제의 입력값 (u, v, w)를 키/값 구조로 조회할 수 있는 그래프 구조(인접 리스트)로 변경
+~~~python
+ # 큐 변수: [(소요시간, 정점)]
+Q = [(0, k)]
+dist = collections.defaultdict(int)
+~~~
+- 큐 변수 Q는 '(소요시간, 정점)' 구조로 구성함. 즉 시작점에서 '정점'까지의 소요 시간을 담아 둘 것임
+~~~python
+while Q:
+    time, node = heapq.heappop(Q)
+    if node not in dist:
+        dist[node] += time
+        for v, w in graph[node]:
+            alt = time + w
+            heapq.heappush(Q, (alt, v))
+~~~
+- 큐 순회를 시작하자마자 최솟값을 추출한 후, dist에 node 포함 여부부터 확인
+- 이미 dist에 키가 존재한다면 그 값은 버리게 되는 것이 핵심
+
+### K 경유지 내 가장 저렴한 항공권
+- 다익스트라 알고리즘과 유사하나 K개의 경유지 이내에 도착해야 함
+~~~python
+def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, K: int) -> int:
+        # build adjacency list
+        adjList = defaultdict(list)
+        for source, dest, price in flights:
+            adjList[source].append([dest, price])
+
+        visited = {src: 0}  # city: minimum price to get here
+        queue = deque([(src, 0, 0)])
+        # BFS start with src
+        # queue : (city, curPrice, curStops)
+        while queue:
+            # get curCity and curPrice, and curStops
+            curCity, curPrice, curStops = queue.popleft()
+            for newCity, travelCost in adjList[curCity]:
+                if newCity not in visited or travelCost + curPrice < visited[newCity]:
+                    # append to queue if current stops < K
+                    if curStops < K:
+                        queue.append((newCity, travelCost + curPrice, curStops + 1))
+                    # add/update to visited
+                    visited[newCity] = travelCost + curPrice
+
+        if dst in visited:
+            return visited[dst]
+        return -1
+~~~
+
+## chapter14 트리
+- 계층형 트리 구조를 시뮬레이션 하는 추상 자료형(ADT)로, 루트 값과 부모-자식 관계에서 서브트리로 구성되며, 서로 연결된 노드의 집합
+- 트리 구조는 우리 주변 일상에서 쉽게 볼 수 있는 위아래 개념을 컴퓨터에서 표현한 구조
+- 좀 더 중요한 트리의 속성 중 하나는 재귀로 정의된(Recursively Defined) 자기 참조 자료구조라는 점
+- 즉, 트리는 자식도 트리고, 또 그 자식도 트리임. 즉 여러 개의 트리가 쌓아 올려져 큰 트리가 됨
+- 흔히 서브트리로 구성된다고 표현하는데, 앞서 트리에 대한 위키피디아의 정의에도 서브트리라는 용어가 등장함
+
+### 트리의 각 명칭
+- 트리는 항상 루트(root)에서부터 시작됨. 루트는 자식(child) 노드를 가지며, 간선(Edge)으로 연결되어 있음
+- 자식 노드의 개수는 차수(Degree)라고 하며, 크기(Size)는 자신을 포함한 모든 자식 노드의 개수임
+- 높이(Height)는 현재 위치에서부터 리프(Leaf)까지의 거리, 깊이(Depth)는 루트에서부터 현재 노드까지의 거리
+- 일반적으로 레벨 0(트리)에서부터 시작함. 논문에 따라 1에서부터 시작하는 경우도 있으나 현재 대부분의 문서에서는 0에서부터 시작하는 것이 좀 더 일반적
+
+### 그래프 vs 트리
+- 그래프와 트리의 가장큰 차이는 <b>트리는 순환 구조를 갖지 않는 그래프</b>라는 점
+- 또한 단방향과 양방향을 모두 가리킬 수 있는 그래프와는 달리, 트리는 부모 노드에서 자식 노드를 가리키는 단방향뿐
+- 또한 트리는 부모도 하나, 루트도 하나여야 함
+
+### 이진 트리
+- 트리 중에서도 가장 널리 사용되는 트리 자료구조는 이진 트리와 이진 탐색 트리임
+- 각 노드가 m개 이하의 자식 노드를 가지고 있는 경우는 m-ary 트리(다항트리, 다진트리)라고 함
+- m=2일 경우, 모든 노드의 차수가 2 이하일 때는 특히 이진 트리라고 구분해서 부름
+- 이진 트리는 왼쪽, 오른쪽 최대 2개의 자식을 갖는 특별한 형태로 다진 트리에 비해 훨씬 간결할 뿐만 아니라 여러 가지 알고리즘을 구현하는 일도 좀 더 간단하게 처리할 수 있어, 보통 트리라고 하면 특별한 경우가 아니고서는 대부분 이진 트리를 일컬음 
+- 이진 트리의 명칭은 논문마다 조금씩 다르므로, 여기서는 되도록 널리 쓰이는 형태로 언급함
+- 정 이진 트리(Full Binary Tree): 모든 노드가 0개 또는 2개의 자식 노드를 갖음
+- 완전 이진 트리(Complete Binary Tree): 마지막 레벨을 제외하고 모든 레벨이 완전히 채워져 있으며 마지막 레벨의 모든 노드는 가장 왼쪽부터 채워져 있음
+- 포화 이진 트리(Perfect Binary Tree): 모든 노드가 2개의 자식 노드를 갖고 있으며, 모든 리프 노드가 동일한 깊이 또는 레벨을 가짐. 문자 그대로, 가장 완벽한(Perfect) 유형의 트리
+
+### 이진 트리의 최대 깊이 구하기
+

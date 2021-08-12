@@ -7,30 +7,31 @@ ticket[i] = [from, to]가 한 항공편의 출발 및 도착 공항을 나타내
 
 예를 들어, 여정 ["JFK", "LGA"]는 ["JFK", "LGB"]보다 어휘 순서가 작습니다.
 모든 티켓이 하나 이상의 유효한 일정을 구성한다고 가정할 수 있습니다. 모든 티켓은 한 번만 사용해야 합니다.
-"""
 
+다음의 예제 꼭 확인
+-  [["JFK","KUL"], ["JFK","NRT"], ["NRT","JFK"]]
+-> KUL이 NRT보다 사전순으로는 빠르지만, KUL로 가면 DFS로 연결이 안됨
+"""
 from typing import List
 from collections import OrderedDict
 class Solution:
     def findItinerary(self, tickets: List[List[str]]) -> List[str]:
-        import collections
-        dic = collections.defaultdict(list)
-        for a, b in sorted(tickets, reverse=True):
-            dic[a].append(b)
-
+        # tickets = [["JFK","SFO"],["JFK","ATL"],
+        #            ["SFO","ATL"],["ATL","JFK"],
+        #            ["ATL","SFO"]]
         results = []
-        def dfs(a):
-            while dic[a]:
-                dfs(dic[a].pop())
-            results.append(a)
+        from collections import defaultdict
+        dic = defaultdict(list)
+        for key, value in sorted(tickets):
+            dic[key].append(value)
+
+        def dfs(site):
+            while dic[site]:
+                dfs(dic[site].pop(0))
+            results.append(site)
 
         dfs('JFK')
         return results[::-1]
 
-
 s = Solution()
-test = s.findItinerary([["JFK","SFO"],["JFK","ATL"],
-                        ["SFO","ATL"],["ATL","JFK"],
-                        ["ATL","SFO"]])
-
-
+test = s.findItinerary([["JFK", "KUL"], ["JFK", "NRT"], ["NRT", "JFK"]])
