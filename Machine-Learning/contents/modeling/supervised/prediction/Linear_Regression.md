@@ -1,4 +1,6 @@
 # Linear Regression
+- 다항 회귀는 선형 회귀보다 파라미터가 많아 훈련 데이터에 과적합되기 쉬움
+
 ## 선형 회귀
 - 선형 회귀를 훈련시키는 두 가지 방법
   - 직접 계산할 수 있는 공식을 사용하여 훈련 세트에 가장 잘 맞는 모델 파라미터(훈련 세트에 대해 비용 함수를 최소화하는 모델 파라미터를 해석적으로 구함
@@ -41,6 +43,49 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - <b>중요한 것은 `LinearRegresssion` 은 theta hat = X^{+}y를 계산하는데, 여기서 X^{+}는 유사역행렬(pseudoinverse)라고 함</b>
 - 유사역행렬 자체는 <b>특잇값 분해(sigular value decomposition, SVD)</b> 라고 부르는 표준 행렬 분해 기법을 사용해 계산
 - R에서의 `lm()` 함수는 QR분해를 이용하여 선형 회귀를 계산함
+~~~python 
+import numpy as np
+X = 2 * np.random.rand(100, 1)
+y = 4 + 3 * X + np.random.randn(100, 1) #- randn : 가우시안 표준정규분포 난수
+
+#- 정규방정식을 사용한 theta 값 계산
+#- numpy 선혀앧수 모듈에 있는 inv() 함수를 사용해 역행렬을 계산
+#- dot() 메서드를 사용해 행렬 곱셈을 함
+x_b = np.c_[np.ones((100, 1)), X]  #- 모든 샘플에 x0 = 1을 추가
+theta_best = np.linalg.inv(x_b.T.dot(x_b)).dot(x_b.T).dot(y) #- (X^T * X)^(-1) (X^T * y)
+print(theta_best) #- 잡음 때문에 정확하게 예측하지는 못함
+
+#- thata hat을 활용한 예측 수행
+X_new = np.array([[0], [2]])
+X_new_b = np.c_[np.ones((2, 1)), X_new]
+y_predict = X_new_b.dot(theta_best)
+print(y_predict)
+
+#- 모델의 예측을 그래프에 나타내보기
+import matplotlib.pyplot as plt
+plt.plot(X_new, y_predict, "r-")
+plt.plot(X, y, "b.")
+plt.axis([0, 2, 0, 15])
+plt.show()
+
+#- scikit-learn에서 선형 회귀를 수행하는 것은 간단
+#- scikit-learn은 가중치(coef_)와 편향(intercept_)를 분리하여 저장
+from sklearn.linear_model import LinearRegression
+lin_reg = LinearRegression()
+lin_reg.fit(X, y)
+print(lin_reg.intercept_, lin_reg.coef_)
+lin_reg.predict(X_new)
+
+#- LinearRegression class는 scipy.linalg.lstsq() 함수를 기반으로 함
+#- 이 함수를 직접 호출할 수 있음
+X_b = np.c_[np.ones((100, 1)), X]
+theta_best_svd, residuals, rank, s = np.linalg.lstsq(X_b, y, rcond=1e-6)
+
+#- np.linalg.lstsq 함수는 hat theta = X^(+)y를 계산
+#- X+는 X의 유사역행렬
+#- np.linalg.pinv() 함수를 사용해 유사역행렬을 직접 구할 수 있음
+np.linalg.pinv(X_b).dot(y)
+~~~
 
 #### 특잇값분해(singular value decomposition)
 - 유사역행렬은 다음과 같은 식으로 계산됨 --> theta hat = X^{+} y 
@@ -52,7 +97,9 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
   특성이 두배 늘어날수록 계산 시간이 대략 5.3 ~ 8배 정도 늘어남
 - `LinearRegression`이 사용하는 SVD 방법은 약 O(n^{2})임. 특성의 개수가 늘어나면 계산 속도는 약 4배 늘어나게 됨
 - <b>특성의 개수가 늘어날수록 성능 저하가 심하게 일어남</b>
-- 훈련 세트의 샘플 수에 대해서는 선형적으로 증가(O(m))
+- 훈련 세트의 샘플 수에 대해서는 선형적으로 증가(O(m)). 따라서 메모리 공간이 허락된다면 큰 훈련 세트도 효율적으로 처리가 가능
+- 또한 학습된 선형 회귀 모델은 예측이 매우 빠른데, 예측 계산 복잡도는 샘플 수와 특성 수에 선형적
+- 다시 말해 예측하려는 샘플이 두 배로 늘어나면 걸리는 시간도 거의 두 배 증가
 
 
 ### 경사 하강법
@@ -73,7 +120,9 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - <b>선형 회귀를 위한 MSE 비용 함수는 항상 2차 볼록함수이기 때문에 어디서 시작하던 전역 최솟값만 있고 기울기가 갑자기 변하지 않음(립시츠 연속)</b>
 - 이 두 사실로부터 경사 하강법이 전역 최솟값에 가깝게 접근할 수 있음을 보장함
 - 사실 비용 함수는 그릇 모양을 하고 있지만 <b>특성들의 스케일이 매우 다르면 길쭉한 모양일 수 있음</b>
-
+- 왼쪽: 특성1과 특성2이 스케일이 같은 훈련 세트
+- 오른쪽: 특성1이 특성2보다 더 작은 훈련 세트
+- 특성1이 더 작기 때문에 비용함수에 영향을 주기 위해서는 특성1이 더 크게 바뀌어야 함. 그래서 특성1 축을 따라서 더 길쭉한 모양이 됨
 ![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/LM_scaling_versus.JPG)
 
 - 위의 그림에서 보면, 왼쪽 그림은 scaling 처리가 되어 최솟값으로 곧장 진행하고 있어 빠르게 도달하는 반면, 오른쪽 그래프는 시간이 오래걸림
@@ -88,7 +137,6 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 이러한 같은 질문을 모든 차원에서 행함
 - 다음의 식은 파라미터 theta(j)에 대한 비용 함수의 편도함수임
 <p align = 'center'><img src="https://latex.codecogs.com/gif.latex?\frac{\partial&space;}{\partial\theta_{j}}&space;MSE(\theta)&space;=&space;\frac{2}{m}&space;\sum_{i&space;=&space;1}^{m}(\theta^{T}x^{(i)}&space;-&space;y^{(i)})&space;(x_{j})^{(i)}" /></p>
-
 - 위의 식을 이용해 편도 함수를 각각 계산할 수도 있지만, 선형 대수로 한꺼번에도 계산 가능
 - 수식에 theta가 있기 때문에 매 경사 하강법 스텝에서 전체 훈련 세트 X에 대해 계산함
 - 그래서 이 알고리즘을 <b>배치 경사 하강법(batch gradient descent)</b>라고 함
@@ -100,7 +148,20 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 다음은 경사 하강법의 스텝 식임
 <p align = 'center'><img src="https://latex.codecogs.com/gif.latex?\theta^{next&space;step}&space;=&space;\theta&space;-&space;\eta&space;\bigtriangledown_{\theta}&space;MSE(\theta)" /></p>
 
-- 적절한 반복 휫수를 찾으려면, 반복 횟수를 아주 크게 지정하고 그레디언트 벡터가 아주 작아지면 벡터의 노름이 허용 오차보다 작아지면 경사 하강법이 거의 최솟값에 도달한 것이므로 알고리즘을 중지시키는 방법이 있음
+~~~python
+eta = 0.1 #- 학습률
+n_iterations = 1000
+m = 100
+
+theta = np.random.randn(2, 1)
+for iteration in range(n_iterations):
+    gradients = 2/m * X_b.T.dot(X_b.dot(theta) - y)
+    theta = theta - eta * gradients
+
+print(theta)
+~~~
+- 적절한 학습률을 찾으려면 그리드 탐색을 사용. 그리드 탐색에서 수렴하는 데 너무 오래 걸리는 모델을 막기 위해 반복 횟수를 제한해야 함
+- 적절한 학습률의 반복 휫수를 찾으려면, 반복 횟수를 아주 크게 지정하고 그레디언트 벡터가 아주 작아지면 벡터의 노름이 허용 오차보다 작아지면 경사 하강법이 거의 최솟값에 도달한 것이므로 알고리즘을 중지시키는 방법이 있음
 - 수렴율  
   - 비용함수의 모양에 따라 달라지겠지만 허용 오차 범위 안에서 최적의 솔루션에 도달하기 위해서는 O(1/허용오차)의 반복이 걸릴 수 있음
   - <b>허용 오차를 1/10으로 줄이면 알고리즘의 반복은 10배 늘어남</b>
@@ -117,8 +178,30 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 무작위성은 지역 최솟값에서 탈출시켜줘서 좋지만 알고리즘을 전역 최솟값에 다다르지 못하게 한다는 점에서 좋지 않음
 - 딜레마를 해결하는 한 가지 방법은 학습률을 점진적으로 감소시키는 것
   - 이는 담금질 기법(simulated annealing) 알고리즘과 유사
-  - 매 반복에서 학습률을 결정하는 함수를 학습 스케줄(learning schedule)이라고 함
+  - 매 반복에서 학습률을 결정하는 함수를 학습 스케줄(learning schedule, learning rate schedule)이라고 함
 - 시작할 때는 학습률을 크게하지만 점차 작게 줄여서 알고리즘이 전역 최솟값에 도달하게 함
+- 다음은 간단한 학습 스케줄을 사용한 확률적 경사 하강법의 구현
+~~~python
+n_epochs = 50
+t0, t1 = 5, 50
+m = 100 #- sample num
+
+def learning_schedule(t):
+    return t0 / (t + t1)
+
+theta = np.random.randn(2, 1)
+
+for epoch in range(n_epochs):
+    for i in range(m):
+        random_index = np.random.randint(m)
+        xi = X_b[random_index:random_index+1]
+        yi = y[random_index:random_index+1]
+        gradients = 2 * xi.T.dot(xi.dot(theta) - yi)
+        eta = learning_schedule(epoch * m + i)
+        theta = theta - eta * gradients
+
+print(theta)
+~~~
 - 일반적으로 한 반복에서 m번(훈련 세트에 있는 샘플 수) 되풀이 되고, 이때 각 반복을 epoch라고 함
 - 샘플은 무작위로 선택되기 때문에 한 샘플은 2번 이상 선택 될 수도 있고, 아예 선택받지 못할 수도 있음
 - <b>따라서 알고리즘이 epoch마다 모든 샘플을 사용하게 하려면 훈련 세트를 섞은 후 차례대로 하나씩 선택하고 다음 에포크에서 다시 섞는 식의 방법을 사용할 수 있음</b>   
@@ -127,6 +210,20 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 확률적 경사 하강법을 사용할 때 훈련 샘플이 IID(independent and identically distributed)를 만족해야 평균적으로 파라미터가 전역 최적점을 향해 진행한다고 보장할 수 있음
 - 이렇게 만드는 가장 간단한 방법은 훈련하는 동안 샘플을 섞는 것. 예를 들어 epoch 단위로 샘플을 섞는 것
 - 레이블 순서대로 정렬된 샘플처럼 샘플을 섞지 않은 채로 사용하면 확률적 경사 하강법이 먼저 한 레이블에 최적화하고 그다음 두 번째 레이블을 최적화하는 방식으로 진행되므로, 이 모델은 결국 최적점에 가깝게 도달하지 못할 것임
+- scikit-learn에서 SGD 방식으로 선형 회귀를 사용하려면 기본값으로 제곱 오차 비용 함수를 최적화하는 `SGDRegressor` 클래스를 사용
+- 다음 코드는 최대 1000번 epoch 동안 실행됨(`max_iter=1000`). 또한 한 에포크에서 0.001보다 적게 손실이 줄어들 때까지 실행됨(`tol=1e-3`)
+- 학습률 0.1(`eta0 = 0.1`)로 기본 학습 스케줄을 사용
+- 기본 학습 스케줄의 기본 값은 'invscaling'으로, 반복 횟수 t, eta0, power_t 두 매개변수를 사용한 다음 공식으로 학습률을 계산 
+- 회귀 : eta(t) = eta0 / t^(power_t), default: eta0 = 0.01, power_t = 0.25
+- 분류 : 1 / alpha(t0 + t)
+~~~python
+#- 사이킷런 SGD 방식의 선형 회귀 사용 예제
+from sklearn.linear_model import SGDRegressor
+sgd_reg = SGDRegressor(max_iter=1000, tol=1e-3, penalty=None, eta0=0.1)
+sgd_reg.fit(X , y.ravel())
+
+print(sgd_reg.intercept_, sgd_reg.coef_)
+~~~
 
 ### 미니배치 경사 하강법
 - 전체 훈련 세트나 하나의 샘플을 기반으로 그레디언트를 계산하는 것이 아니라  
@@ -134,16 +231,35 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
 - 확률적 경사 하강법에 비해서 장점은 행렬 연산에 최적화된 하드웨어, 특히 GPU를 사용해서 얻는 성능 향상
 - 미니배치를 어느정도 크게하면 덜 불규칙적이게 수렴
 - 선형회귀가 아니라면 지역 최솟값에서 벗어나기 힘들지도 모름
-
 ![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/Linear_Regression.JPG)
 
 ## 다항 회귀
 - 비선형 데이터를 학습하는 데 선형 모델을 사용할 수 있음
-- 이렇게 하는 간단한 방법은 각 특성의 거듭제곱을 새로운 특성으로 추가하고, 이 확장된 특성을 포함한 데이터셋에 선형 모델을 훈련시키는 것. 이런 기법을 <b>다항 회귀</b>라고 함
+- 이렇게 하는 간단한 방법은 각 특성의 거듭제곱을 새로운 특성으로 추가하고, 이 확장된 특성을 포함한 데이터셋에 선형 모델을 훈련시키는 것. 이런 기법을 <b>다항 회귀(Polynomial Regression)</b>라고 함
+~~~python
+#- 다항 회귀
+m = 100
+X = 6 * np.random.rand(m, 1) - 3
+y = 0.5 * X**2 + X + 2 + np.random.randn(m, 1)
+plt.plot(X, y, 'b.')
+
+from sklearn.preprocessing import PolynomialFeatures
+#- include_bias --> True이면 편향을 위한 특성 x0인 1이 추가됨
+poly_features =PolynomialFeatures(degree=2, include_bias=False)
+X_poly = poly_features.fit_transform(X)
+print(X[0])
+print(X_poly[0])
+
+lin_reg = LinearRegression()
+lin_reg.fit(X_poly, y)
+print(lin_reg.intercept_, lin_reg.coef_)
+~~~
 - 특성이 여러 개일 때 다항 회귀는 특성 사이의 관계를 찾을 수 있음(교호작용)
+- `PolynomialFeatures`가 주어진 차수까지 특성 간의 모든 교차항을 추가하기 때문
+- 예를 들어 두 개의 특성 a, b가 있을 때 `degree=3`으로 추가하면 a^2, b^2, a^3, b^3 뿐만 아니라 ab, ab^2, a^2b 도 특성으로 추가됨
 - `PolynomialFeatures`를 이용해 다항 변수들을 생성해 낼 수 있는데, `interaction_only = True`로 지정하면 제곱항들은 제거
 - 특성 a, b가 있을때 degree = 2이면, a^2, b^2, ab, a, b도 특성으로 추가함
-
+- `PolynomialFeatures(degree=d)`는 특성이 n개의 배열을 특성이 (n + d)! / d!n! 개인 배열로 변환함
 
 ### 학습 곡선
 - 고차 다항 회귀는 보통의 선형 회귀보다 훨씬 더 훈련 데이터에 잘 맞추려고 할 것임
@@ -153,10 +269,8 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
     --> n의 값을 낮추어야 함
   - 만약 train/test Dataset에 대한 성능이 둘 다 좋지 못하다면 과소적합 된 것
   - <b>학습 곡선</b>을 살펴보는 것도 도움이 됨  
-    이 그래프는 훈련 세트와 검증 세트의 모델 성능을 훈련 세트 크기의 함수로 나타냄   
-
-
-
+    이 그래프는 훈련 세트와 검증 세트의 모델 성능을 훈련 세트 크기의 함수로 나타냄  
+    X = 훈련 세트 크기, y = RMSE를 각각 훈련/테스트 세트로 계산  
 ![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/underFitting_LearningCurve.JPG)
 
 - 위의 학습 곡선은 과소 적합 되었을 때의 특징이 나타나는 학습 곡선  
@@ -172,6 +286,37 @@ why? 보통 성능 지표에는 없는 유용한 미분 특성이 존재해 이�
   - 두 곡선 사이의 공간이 있음. 이 말은 훈련 데이터에서의 모델 성능이 검증 데이터에서보다 훨씬 낫다는 의미를 보여줌 --> 과대 적합의 특징
   - 더 큰 훈련세트를 사용하면 두 곡선이 점점 가까워짐 
 - 과대적합 모델을 개선하는 한 가지 방법은 검증 오차가 훈련 오차에 근접할 때까지 더 많은 훈련 데이터를 추가하는 것
+- 다음은 해당 곡선을 그리기 위한 코드
+~~~python
+from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+
+def plot_learning_curve(model, X  ,y):
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2)
+    train_errors, val_errors = [], []
+    for m in range(1, len(X_train)):
+        model.fit(X_train[:m], y_train[:m])
+        y_train_predict = model.predict(X_train[:m])
+        y_val_predict = model.predict(X_val)
+        train_errors.append(mean_squared_error(y_train[:m], y_train_predict))
+        val_errors.append(mean_squared_error(y_val, y_val_predict))
+    plt.plot(np.sqrt(train_errors), "r-+", linewidth=2, label="훈련 세트")
+    plt.plot(np.sqrt(val_errors), "b-+", linewidth=2, label="검증 세트")
+
+#- 단순 선형 회귀 모형 learning curve
+lin_reg = LinearRegression()
+
+plot_learning_curve(lin_reg, X, y)
+
+#- 10차 다항 회귀 모형 learning curve
+polynomial_regression = Pipeline([
+    ("poly_features", PolynomialFeatures(degree=10, include_bias=False)),
+    ('lin_reg', LinearRegression()),
+])
+
+plot_learning_curve(polynomial_regression, X, y)
+~~~
 
 #### 편향(bias)/분산(variance) 트레이드 오프
 - 통계학과 머신러닝에서 나온 중요한 이론 하나는 모델의 일반화 오차는 세가지 다른 종류의 오차의 합으로 표현될 수 있다는 사실
