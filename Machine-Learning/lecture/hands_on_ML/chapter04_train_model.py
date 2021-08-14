@@ -126,3 +126,17 @@ polynomial_regression = Pipeline([
 ])
 
 plot_learning_curve(polynomial_regression, X, y)
+
+#- Ridge Regression
+from sklearn.linear_model import Ridge
+ridge_reg = Ridge(alpha=1, solver='cholesky')
+ridge_reg.fit(X, y)
+ridge_reg.predict([[1.5]])
+
+from sklearn.linear_model import SGDRegressor
+sgd_reg = SGDRegressor(penalty='l2')
+sgd_reg.fit(X, y.ravel())
+sgd_reg.predict([[1.5]])
+
+#- Lasso Regression
+

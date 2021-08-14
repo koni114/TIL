@@ -47,3 +47,10 @@ lig_reg.predict(X_new)
 
 theta_best_svd, residuals, rank, s = np.linalg.lstsq(X_b, y, rcond=1e-6)
 print(theta_best_svd)
+
+#- 2차원 배열에 대해 order="C", order="F", order="k" 별로 확인
+#- np.ravel(x, order="C") : C와 같은 순서로 인덱싱하여 평평하게 배열
+x = np.arange(12).reshape(3, 4)
+x.ravel(order="C")
+x.ravel(order="F") #- Fortran과 같은 순서로 인덱싱하여 평평하게 배열
+x.ravel(order="k") #- 메모리에서 발생하는 순서대로 인덱싱하여 평평하게 배열
