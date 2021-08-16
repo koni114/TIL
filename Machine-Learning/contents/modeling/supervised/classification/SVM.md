@@ -7,7 +7,7 @@
 
 - 위 그림에서 두 클래스가 직선으로 확실히 잘 나뉘어 있음
 - 왼쪽 그래프에서 점선은 클래스를 잘 분류하지 못하고 있고, 다른 두 모델은 훈련 세트에 대해서 완벽하게 동작
-- 하지만 결정 경계가 샘플에 너무 가까워 새로운 샘플에 대해서는 잘 작동하지 못할 것임
+- 하지만 결정 경계가 샘플에 너무 가까워 새로운 샘플에 대해서는 잘 작동하지 å못할 것임
 - 오른쪽 그래프의 실선은 SVM 분류기의 결정 경계
 - <b>이 직선은 두 개의 클래스로 나누고 있을 뿐만 아니라 제일 가까운 훈련 샘플로부터 가능한 멀리 떨어져 있음</b>
 - SVM 분류기를 클래스 사이에 가장 폭이 넓은 도로를 찾는 것으로 생각할 수 있음
@@ -35,8 +35,30 @@
   - SVC --> SVC(kernel = "linear", C = 1) 
   - SGDClassifier --> SGDClassifier(loss='hinge', alpha = 1/(m*C))  
     선형 SVM 분류기를 사용하기 위해 일반적인 확률적 경사 하강법을 사용. LinearSVC보다는 느리게 수렴하지만, 데이터가 많아 전부 메모리 적재가 어려울 때 유용
-- LinearSVC는 SVC와 비교했을 때 규제에 편향이
- 들어가기 때문에 SVC와 비교할때는 반드시 `StandardScaler()`를 수행해 주어야 함
+- LinearSVC는 SVC와 비교했을 때 규제에 편향이 들어가기 때문에 SVC와 비교할때는 반드시  
+`StandardScaler()`를 수행해 주어야 함
+~~~python
+#- Support Vector Machine
+import numpy as np
+from sklearn import datasets
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import LinearSVC
+
+
+iris = datasets.load_iris()
+X = iris.data[:, (2,3)]
+y = (iris['target'] == 2).astype(np.float64)
+
+svm_clf = Pipeline([
+    ('scaler', StandardScaler()),
+    ("linear_svc", LinearSVC(C=1, loss='hinge'))
+])
+
+svm_clf.fit(X, y)
+svm_clf.predict([[5.5, 1.7]])
+~~~
+
 
 ## 비선형 SVM 분류
 - 선형 SVM 분류기가 효율적이고, 많은 경우에 아주 잘 작동하지만, 선형적으로는 분류할 수 없는 데이터셋이 많음
@@ -48,6 +70,22 @@
 - 위의 그림에서 왼쪽 그래프는 하나의 특성 x_{1} 만을 가진 간단한 데이터셋을 나타냄
 - 그림에서 볼 수 있듯이 이 데이터셋은 선형적으로 구분이 안됨
 - 하지만 두 번째 특성 x_{2} = (x1)^{2}을 추가하여 만들어진 2차원 데이터셋은 완벽하게 선형적으로 구분할 수 있음
+- 다음의 코드는 `polynomialFeatures`, `StandardScaler`, `LinearSVC`의 pipeline을 구성하여 모델을 학습하는 코드
+~~~python
+#- moons dataset을 PolynomialFeatures,
+#- StandardSscaler, LinearSVC를 연결하여 pipeline을 만듬
+from sklearn.datasets import make_moons
+from sklearn.preprocessing import PolynomialFeatures
+X, y = datasets.make_moons(n_samples=100, noise=0.15)
+print(f"moons datasets shape : {X.shape}")
+print(f"moons datasets y shape : {y.shape}")
+polynomial_svm_clf = Pipeline([
+    ("poly_features", PolynomialFeatures(degree=3)),
+    ("scaler", StandardScaler()),
+    ("svm_clf", LinearSVC(C=10, loss="hinge"))
+])
+polynomial_svm_clf.fit(X, y)
+~~~
 
 ### 다항식 커널
 - 다항식 특성을 추가하는 것은 간단하고 모든 머신러닝 알고리즘에서 잘 작동함
@@ -66,13 +104,13 @@ poly_kernel_svm_clf(X, y)
 ~~~
 
 ![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/SVM_4.JPG)
-
 - 이 코드는 3차 다항식 커널을 사용해 SVM 분류기를 훈련시킴
 - 결과는 위의 그래프의 왼쪽과 같고, 오른쪽 그래프는 10차 다항식 커널을 사용한 또 다른 SVM 분류기 
 - 모델이 과대적합이라면 다항식의 차수를 줄여야 함
 - 반대로 과소적합이라면 차수를 늘려야 함. `coef0`는 모델이 높은 차수와 낮은 차수에 얼마나 영향을 받을지 조절함
 - 적절한 하이퍼파라미터를 찾는 일반적인 방법은 grid search를 사용하는 것
 - 처음에는 그리드 폭을 크게하고, 그다음에는 최적의 값을 찾기 위해 그리드를 세밀하게 검색함
+
 
 ### 유사도 특성
 - 비선형 특성을 다루는 또 다른 기법은 각 샘플이 특정 <b>랜드마크(landmark)</b>와 얼마나 닮았는지 측정하는 <b>유사도 함수(similarity)</b>로 계산한 특성을 추가하는 것

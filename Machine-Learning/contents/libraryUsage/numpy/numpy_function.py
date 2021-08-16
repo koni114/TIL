@@ -33,24 +33,26 @@ X_new_b = np.c_[np.ones((2, 1)), X_new]
 y_predict = X_new_b.dot(theta_best)
 print(y_predict)
 
-import matplotlib.pyplot as plt
-plt.plot(X_new, y_predict, 'r-')
-plt.plot(X, y, "b.")
-plt.show()
-
-#- 사이킷런을 통한 선형 회귀 생성
-from sklearn.linear_model import LinearRegression
-lig_reg = LinearRegression()
-lig_reg.fit(X, y)
-print(lig_reg.intercept_, lig_reg.coef_)
-lig_reg.predict(X_new)
-
-theta_best_svd, residuals, rank, s = np.linalg.lstsq(X_b, y, rcond=1e-6)
-print(theta_best_svd)
-
 #- 2차원 배열에 대해 order="C", order="F", order="k" 별로 확인
 #- np.ravel(x, order="C") : C와 같은 순서로 인덱싱하여 평평하게 배열
 x = np.arange(12).reshape(3, 4)
 x.ravel(order="C")
 x.ravel(order="F") #- Fortran과 같은 순서로 인덱싱하여 평평하게 배열
 x.ravel(order="k") #- 메모리에서 발생하는 순서대로 인덱싱하여 평평하게 배열
+
+#- np.cumsum function
+#- 행렬 식을 점점 누적해서 더해주는 function
+np.cumsum([1, 2, 3, 4, 5])
+
+#- np.array_split function
+from sklearn.datasets import load_iris
+X = load_iris().data
+n_batch = 10
+for X_batches in np.array_split(X, n_batch):
+    print(f"X_batches shape : {X_batches.shape}")
+
+
+#- np.percentile function
+#- 분위수를 구해주는 함수.
+np.percentile([1, 2, 3, 4, 5], 50)   #- 전체 numpy.array 의 50% 이므로, 3.0이 나옴
+np.percentile([1, 2, 3, 4, 5], 100)  #- 전체 100% 위치 -> 5.0

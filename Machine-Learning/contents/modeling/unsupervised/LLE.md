@@ -4,6 +4,12 @@
 - LLE는 각 훈련 샘플이 가장 가까운 이웃(closest neighbor, c.n)에 얼마나 선형적으로 연관되어 있는지 측정
 - 그런 다음 국부적인 관계가 가장 잘 보존되는 훈련 세트의 저차원 표현을 찾음
 - 특히 이 방법은 잡음이 너무 많지 않는 경우 꼬인 매니폴드를 펼치는 데 잘 작동함
+~~~python
+from sklearn.manifold import LocallyLinearEmbedding
+lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10)
+X_reduced = lle.fit_transform(X)
+print(X_reduced)
+~~~
 - 사이킷런의 `LocallyLinearEmbedding`을 사용해 스위스 롤을 펼침
 - 아래 그림처럼 펼칠 수 있음
 
@@ -33,3 +39,5 @@
 - Z는 모든 z^(i)를 포함하는 행렬임
 
 <p align = 'center'><a href="https://www.codecogs.com/eqnedit.php?latex=Z&space;=&space;argmin(z^{(i)}&space;-&space;\sum_{j=1}^{m}W_{i,j}z^{(j)})^{2}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?Z&space;=&space;argmin(z^{(i)}&space;-&space;\sum_{j=1}^{m}W_{i,j}z^{(j)})^{2}" title="Z = argmin(z^{(i)} - \sum_{j=1}^{m}W_{i,j}z^{(j)})^{2}" /></a></p>
+- 사이킷런이 제공하는 LLE 구현의 계산 복잡도는 k개의 가장 가까운 이웃을 찾는 데 O(mlog(m)nlog(k)), 가중치 최적화에 O(mnk^3), 저차원 표현을 만드는 데 O(dm^2)임
+- 마지막 m^2 때문에 이 알고리즘을 대량의 데이터셋에 적용하기는 어려움

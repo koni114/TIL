@@ -1,4 +1,15 @@
-# Clustering
+# 비지도 학습
+- 군집(clustering)
+  - 비슷한 샘플을 cluster로 모음. 군집은 데이터 분석, 고객 분류, 추천 시스템, 검색 엔진, 이미지 분할, 준지도 학습, 차원 축소 등에 사용할 수 있는 훌륭한 도구
+- 이상치 탐지(outlier detection)
+  - '정상' 데이터가 어떻게 보이는지를 학습하고, 비정상 샘플을 감지하는 데 사용됨
+  - 예를 들면 제조 라인에서 결함 제품을 감지하거나, 시계열 데이터에서 새로운 트렌드를 찾음
+- 밀도 추정(density estimation)
+  - 데이터셋 생성 확률 과정(random process)의 PDF(probability density function)을 추정
+  - 밀도 추정은 이상치 탐지에 널리 사용됨. 밀도가 매우 낮은 영역에 놓인 샘플이 이상치일 가능성이 높음  . 또한 데이터 분석과 시각화에도 유용함
+    
+    
+## 군집(Clustering)
 - 비슷한 샘플을 구별해 하나의 클러스터 또는 비슷한 샘플의 그룹으로 할당하는 작업
 - 각 샘플은 하나의 군집에 할당됨
 - 군집은 다음과 같은 다양한 애플리케이션에서 사용됨
@@ -9,7 +20,7 @@
   - 데이터 분석  
     새로운 데이터셋을 분석할 때 군집 알고리즘을 수행하고 각 클러스터를 따로 분석하면 도움이 됨
   - 차원 축소 기법  
-    한 데이터셋에 군집 알고리즘을 사용하면 각 클러스터에 대한 친화성(affinity)를 측정할 수 있음  
+    한 데이터셋에 군집 알고리즘을 사용하면 각 클러스터에 대한 <b>샘플의 친화성(affinity)</b>를 측정할 수 있음  
     각 샘플의 특성 벡터 x는 클러스터 친화성의 벡터로 바꿀 수 있음  
     k개의 클러스터가 있다면, 이 벡터는 k차원이 됨
   - 이상치 탐지  
@@ -49,14 +60,38 @@
 - 이 점수는 샘플과 센트로이드 사이의 거리가 되거나, 반대로 가우시안 방사 기저 함수와 같은 유사도 점수(simularity score)가 될 수 있음
 - `KMeans` 클래스의 `transform` 메서드는 샘플과 각 센트로이드 사이의 거리를 반환함
 - 이러한 변환은 매우 효율적인 비선형 차원 축소 기법이 될 수 있음
+~~~python
+from sklearn.datasets import load_iris
+X = load_iris().data
+y = load_iris().target
+
+from sklearn.cluster import KMeans
+k = 5
+kmeans = KMeans(n_clusters=5)
+y_pred = kmeans.fit_predict(X)
+
+#- KMeans 클래스의 인스턴스는 labels_ 인스턴스 변수에
+#- 훈련된 샘플의 레이블을 가지고 있음
+print(kmeans.labels_)          #- 훈련 샘플 레이블
+print(kmeans.cluster_centers_) #- 이 알고리즘이 찾은 센트로이드
+
+#- 새로운 샘플에 가장 가까운 센트로이드의 클러스터를 할당할 수 있음
+import numpy as np
+X_new = np.array([[0, 2, 3, 4], [3, 2, 4, 1], [-3, 3, 0, 0], [-3, 2.5, 3, 1]])
+kmeans.predict(X_new)
+
+#- KMeans 의 transform 함수는 샘플과 각 센트로이드 사이의 거리를 반환
+#- 이러한 변환은 매우 효율적인 비선형 차원 축소 방법이 될 수 있음
+kmeans.transform(X)
+~~~
 
 ### k-means 알고리즘
-- 레이블이나 센트로이드가 주어지지 않는다면 센트로이드를 랜덤하게 선정함
+- 레이블이나 센트로이드가 주어지지 않는다면 센트로이드를 랜덤하게 선정함(예를 들어 무작위로 k개의 샘플을 뽑아 그 위치를 센트로이드로 정함)
 - 그리고 샘플에 레이블을 할당하고 센트로이드를 업데이트하는 작업을 센트로이드 변화가 없을 때까지 계속함
 - <b>이 알고리즘은 제한된 횟수 안에 수렴하는 것을 보장함(일반적으로 이 횟수는 매우 작음)</b>
 - 무한하게 반복되지 않는데, 샘플과 가장 가까운 센트로이드 사이의 평균 제곱 거리가 매 단계마다 작아질 수 밖에 없기 때문
 - 이 알고리즘의 계산 복잡도는 일반적으로 샘플 개수 m, 클러스터의 개수 k, 차원 개수 n에 선형적임  
-이는 데이터가 군집할 수 있는 구조일 때 그러한데, 그렇지 않으면 최악의 경우 계산 복잡도는 샘플 갯수에 지수적으로 증가. 왠만하면 거의 그럴 일이 없음
+이는 데이터가 군집할 수 있는 구조를 가질 때 그러한데, 그렇지 않으면 최악의 경우 계산 복잡도는 샘플 갯수에 지수적으로 증가. 왠만하면 거의 그럴 일이 없음
 - <b>일반적으로 k-means 알고리즘은 가장 빠른 군집 분석 알고리즘 중 하나</b>
 - 이 알고리즘이 수렴하는 것을 보장하지만 적절한 솔루션으로 수렴하지 못할 수 있음(즉 지역 최적점으로 수렴할 수 있음)
 - <b>이 여부는 센트로이드의 초기화에 달려 있음</b>
@@ -97,9 +132,16 @@
 - <b>일반적으로 알고리즘의 속도를 3배에서 4배 정도로 높임</b>
 - 또한 메모리에 들어가지 않는 대량의 데이터셋에 군집 알고리즘을 적용할 수 있음
 - 사이킷런은 `MiniBatchKMeans` 클래스에 해당 알고리즘을 구현함  
-  해당 클래스는 초기화를 여러 번 수행하고 만들어진 결과에서 가장 좋을 것을 직접 골라야하기 때문에 할 일이 많음
-- 미니배치 k-평균 알고리즘이 기존 k-평균 알고리즘보다 이너셔 자체는 조금 더 나쁨  
-  특히 클러스터의 개수가 증가할 때 그러함
+~~~python
+#- mini-batch kmeans
+from sklearn.cluster import MiniBatchKMeans
+minibatch_kmeans = MiniBatchKMeans(n_clusters=5)
+minibatch_kmeans.fit(X)
+~~~
+- 데이터셋이 메모리에 들어가지 않으면 가장 간단한 방법은 numpy의 `memmap` 클래스를 사용하는 것
+- 또는 `MiniBatchMeans` 클래스의 `partial_fit()` 메서드를 한 번에 하나의 미니배치를 전달할 수 있음
+- 미니배치 k-평균 알고리즘이 기존 k-평균 알고리즘보다 속도는 훨씬 빠르지만, 이너셔 자체는 조금 더 나쁨 특히 클러스터의 개수가 증가할 때 그러함
+
 
 ![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/kmeans_1.JPG)
 
@@ -155,15 +197,57 @@
 - 각 색상에 대해 그 픽셀의 컬러 클러스터의 평균을 찾음  
   예를 들어 초록 클러스터의 평균 색이 밝은 초록이라고 가정
 - 마지막으로 이 긴 색상의 리스트를 원본 이미지가 동일한 크기로 바꿈
+~~~python
+from matplotlib.image import imread
+import os
+image = imread(os.path.join("images", "unsupervised_learning", "ladybug.png"))
+print(f"image.shape : {image.shape}")
+
+#- imread : 0.0 ~ 1.0 사이
+#- imageio.imread : 0 ~ 255 사이
+#- 어떤 이미지는 더 적은 채널을 가지고(흑백사진), 어떤 이미지는 더 많은 채널을 가짐(투명도를 위한 알파채널 추가)
+#- 위성 이미지는 종종 여러 전자기파에 대한 채널을 포함함(ex) 적외선)
+
+#- 다음 코드는 RGB 색상의 긴 리스트로 변환한 다음 k-means 알고리즘을 사용해 클러스터로 모음
+#- 각 색상에 대해 그 픽셀의 컬러 클러스터의 평균 컬러를 찾음. 예를 들어 모든 초록색은 모두 밝은 초록색으로 바뀔 수 있음
+#- 마지막으로 shape 기존의 image shape과 동일하게 변경
+X = image.reshape(-1, 3)
+kmeans = KMeans(n_clusters=8).fit(X)
+segmented_img = kmeans.cluster_centers_[kmeans.labels_] #- 색상 클러스터링
+segmented_img = segmented_img.reshape(image.shape)
+
+#- 클러스터 개수를 조정하면 색상이 변경되는데, 무당벌레의 색상은 전체 이미지에서 조금 들어가있기 때문에
+#- 다른 색과 합쳐지는 경향이 보임!
+~~~
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/clustering_1.png)
 
 ## 군집을 사용한 전처리
-- 군집은 차원 축소에 효과적인 방법
+- 군집은 지도 학습 알고리즘을 사용하기 전 전처리 단계로 활용 가능
+- 차원 축소에 군집을 활용하는 예를 위해서 숫자 데이터셋을 활용해보자
+- 이 데이터셋은 MNIST와 비슷한 데이터셋으로 0에서 9까지의 숫자를 나타내는 8x8 크기 흑백 이미지 1,797개를 담고 있음. 
 - 특히 지도 학습 알고리즘을 적용하기 전에 전처리 단계로 이용할 수 있음
 - 예를 들어 8x8 의 차원을 가진 숫자 이미지 데이터를 로지스틱 회귀로 분류한다고 할 때,  
   cluster 개수가 50인 kmeans를 적용해 centroid로 변경하고, 이 값을 기반으로 로지스틱 회귀를 적용하면 더 개선될 수 있음
 - 즉, 차원 수는 줄이면서 성능은 증가할 수 있는데, 그 이유는 로지스틱 회귀 같은 경우는 선형임을 가정한 모형이기 때문에 성능도 개선되면서 차원을 줄일 수 있음! 
 - gridSearchCV를 이용해 최적의 클러스터 개수를 찾아볼 수 있음
+- 다음은 군집을 사용한 전처리 전체 코드
+~~~python
+from sklearn.pipeline import Pipeline
+pipeline = Pipeline([
+    ("kmeans", KMeans(n_clusters=50)),
+    ('log_reg', LogisticRegression(max_iter=100)),
+])
+pipeline.fit(X_train, y_train)
+pipeline.score(X_test, y_test)
 
+from sklearn.model_selection import GridSearchCV
+param_grid = dict(kmeans__n_clusters=range(75, 100))
+grid_clf = GridSearchCV(pipeline, param_grid, cv=3, verbose=2)
+grid_clf.fit(X_train, y_train)
+
+print(f"best params : {grid_clf.best_params_}")
+grid_clf.score(X_test, y_test)
+~~~
 
 ## 군집을 사용한 준지도 학습
 - 군집을 사용하는 또 다른 사례는 준지도 학습
@@ -181,9 +265,91 @@
 - 레이블을 수작업으로 처리하게 되면 어려우므로, 무작위 샘플 대신 대표 샘플에 레이블을 할당하는 것이 좋은 방법
 - 여기서 한단계 더 나아갈 수 있는데, 레이블을 동일한 클러스터에 있는 모든 샘플로 전파하면 어떨까?  
 이를 <b>레이블전파(label propagation)</b>라고 함
+~~~python
+########################
+## 군집을 사용한 준지도 학습 ##
+########################
+n_labels = 50
+log_reg = LogisticRegression()
+log_reg.fit(X_train[:n_labels], y_train[:n_labels])
+log_reg.score(X_test, y_test) #- 0.86
+
+#- 정확도가 훨씬 낮음
+#- 이를 개선하기 위해 먼저 훈련 세트를 50개의 클러스터로 나눔
+#- 그다음 각 클러스터에서 센트로이드에 가장 가까운 이미지를 찾음.
+#- 이런 이미지를 대표 이미지(representative image)라고 함
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+
+kmeans = KMeans(n_clusters=50)
+X_digits_dist = kmeans.fit_transform(X_train)
+representative_digit_idx = np.argmin(X_digits_dist, axis=0)
+X_representative_digits = X_train[representative_digit_idx]
+
+plt.figure(figsize=(8, 2))
+for index, X_representative_digit in enumerate(X_representative_digits):
+    plt.subplot(n_labels // 10, 10, index + 1) #- 5x10 의 50개의 칸, index+1 위치에 이미지 삽입한다는 의미
+    plt.imshow(X_representative_digit.reshape(8, 8), cmap="binary", interpolation="bilinear")
+    plt.axis('off')
+
+#- 이미지를 보고 수동으로 y 할당
+y_representative_digits = np.array([6, 8, 4, 3, 1, 0, 1, 2, 2, 5, 4, 6, 3, 1, 7, 9, 4, 7, 8, 6,
+                                    4, 1, 9, 2, 0, 2, 7, 9, 5, 3, 7, 5, 1, 6, 8, 2, 9, 7, 5, 2,
+                                    0, 8, 0, 4, 1, 0, 8, 6, 1, 9])
+
+#- 레이블된 50개 샘플로 이루어진 데이터셋이 준비됨
+#- 하지만 무작위로 고른 샘플은 아니고 이미지들은 각 클러스터를 대표하는 이미지
+#- 성능이 조금이라도 높은지 확인해보자
+log_reg = LogisticRegression()
+log_reg.fit(X_representative_digits, y_representative_digits)
+print(log_reg.score(X_test, y_test))
+
+#- 50개의 모델을 훈련했을 뿐인데, 83.3% -> 92.2%로 확 올라감
+#- 샘플에 레이블을 부여하는 것은 많이 어렵기 때문에 대표 샘플에 레이블을 할당하고 label propagation 을 해보자
+
+#- y_train_propagated : 앞선 수동 레이블을 기반으로, 같은 클러스터 데이터는 수동 레이블을 할당
+y_train_propagated = np.empty(len(X_train), dtype=np.int32)
+for i in range(n_labels):
+    y_train_propagated[kmeans.labels_== i] = y_representative_digits[i]
+
+#- LogisticRegression 재학습
+log_reg = LogisticRegression()
+log_reg.fit(X_train, y_train_propagated)
+log_reg.score(X_test, y_test)
+
+#- 92% 정도의 정확도를 나타내는데, 이는 놀라울 정도는 아님.
+#- 그 이유는 대표 샘플의 레이블을 동일한 클러스터의 모든 데이터에 전파했기 때문
+#- 클러스터 경계에 가깝게 위치한 샘플이 포함되어 있고, 아마 잘못 레이블이 부여되었을 것임
+#- 센트로이드와 가까운 샘플의 20%만 레이블을 전파해보고 어떻게 되는지 확인해보자
+
+percentile_closest = 20
+X_cluster_dist = X_digits_dist[np.arange(len(X_train)), kmeans.labels_]
+
+for i in range(n_labels):
+    in_cluster = (kmeans.labels_ == i)
+    cluster_dist = X_cluster_dist[in_cluster]
+    cutoff_distance = np.percentile(cluster_dist, percentile_closest) #- 각 클러스터별 20% 분위수 계산
+    above_cutoff = (X_cluster_dist > cutoff_distance)
+    X_cluster_dist[in_cluster & above_cutoff] = -1
+
+partially_propagated = (X_cluster_dist != -1)
+X_train_partially_propagated = X_train[partially_propagated]
+y_train_partially_propagated = y_train_propagated[partially_propagated]
+
+print(f"X_train_partially_propagated.shape : {X_train_partially_propagated.shape}")
+print(f"y_train_partially_propagated.shape : {y_train_partially_propagated.shape}")
+
+log_reg = LogisticRegression()
+log_reg.fit(X_train_partially_propagated, y_train_partially_propagated)
+log_reg.score(X_test, y_test)
+
+#- 실제 label propagation 이 성능이 좋음
+np.mean(y_train_partially_propagated == y_train[partially_propagated]
+~~~
 
 ### 능동 학습(active learning)
-- 모델과 훈련 세트를 지속적으로 향상하기 위해 다음 단계로 능동 학습을 몇 번 반복할 수 있음
+- 모델과 훈련 세트를 지속적으로 향상하기 위해 다음 단계로 <b>능동 학습(active learning)</b>을 몇 번 반복할 수 있음
 - 이 방법은 전문가가 학습 알고리즘과 상호작용하여 알고리즘이 요청할 때 특정 샘플의 레이블을 제공
 - active learning에는 여러 다른 전략이 많음
 - 하지만 가장 널리 사용되는 것 중에 하나는 불확실성 샘플링(uncertainty sampling)임
@@ -215,8 +381,53 @@
 - 클러스터의 모양과 개수에 상관없이 감지할 수 있는 능력이 있음
 - 이상치에 안정적이고 하이퍼파라미터가 두 개 뿐(eps, min_sample)
 - 하지만 <b>클러스터 간의 밀집도가 크게 다르면 모든 클러스터를 올바르게 잡아내는 것이 불가능함</b>
-- 계산 복잡도는 대략 O(m log m), 샘플 개수에 대해 거의 선형적으로 증가  
+- 계산 복잡도는 대략 O(mlog m), 샘플 개수에 대해 거의 선형적으로 증가  
   하지만 사이킷런의 구현은 eps가 커지면 O(m^2) 만큼 메모리가 필요
+~~~python
+from sklearn.cluster import DBSCAN
+from sklearn.datasets import make_moons
+
+X, y = make_moons(n_samples=1000, noise=0.05)
+dbscan = DBSCAN(eps=0.05, min_samples=5)
+dbscan.fit(X)
+
+#- 모든 샘플의 레이블은 _labels 에 저장
+print(dbscan.labels_) #- -1인 것들은 샘플의 이상치로 판단했다는 것
+print(np.unique(dbscan.labels_)) #- 총 9개의 cluster 생성
+
+#- core instance 확인
+#- core_sample_indices_ --> core instance의 index
+#- components_          --> core instance value
+print(f"core instance 개수 : {len(dbscan.core_sample_indices_)}")
+print(f"core instance : {dbscan.components_}")
+
+#- 클러스터를 7개 만들었고, 많은 샘플을 이상치로 판단하였으므로,
+#- eps 를 0.2로 늘리면 완벽한 군집을 얻을 수 있음
+
+#- DBSCAN 은 predict 함수를 제공하지 않고, predict_fit 함수만 제공
+#- 다시 말해 이 알고리즘은 새로운 데이터셋이 들어왔을 때 클러스터를 예측할 수 없음
+#- 따라서 사용자가 필요한 예측기를 선택해야 함 --> 분류 모델을 학습해야 한다는 의미
+from sklearn.neighbors import KNeighborsClassifier
+knn = KNeighborsClassifier(n_neighbors=50)
+knn.fit(dbscan.components_, dbscan.labels_[dbscan.core_sample_indices_])
+
+X_new = np.array([[-0.5, 0], [0, 0.5], [1, -0.1], [2, 1]])
+knn.predict(X_new)
+knn.predict_proba(X_new)
+
+#- 이 분류기를 핵심 샘플만 학습할수도 있고, 모든 샘플에 대해서 학습할 수도 있음
+#- 또는 이상치를 제외할 수도 있음. 선택은 최종 작업의 성능에 따라 결정됨
+
+#- 훈련 세트에는 이상치가 없기 때문에 클러스터가 멀리 떨어져 있어도 분류기는 항상 클러스터로 분류함
+#- 최대 거리를 사용하면 두 클러스터에서 멀리 떨어진 샘플을 이상치로 간단히 분류할 수 있음
+#- KNeighborsClassifier의 kneighbors() 메서드 사용
+#- 이 메서드에 샘플을 전달하면 훈련 세트에서 가장 가까운 k개 이웃의 거리와 인덱스를 반환
+
+y_dist, y_pred_idx = knn.kneighbors(X_new, n_neighbors=1)
+y_pred = dbscan.labels_[dbscan.core_sample_indices_][y_pred_idx]
+y_pred[y_dist > 0.2] = -1
+y_pred.ravel()
+~~~
 
 ## 다른 군집 알고리즘
 ### 병합 군집(agglomerative clustering)
