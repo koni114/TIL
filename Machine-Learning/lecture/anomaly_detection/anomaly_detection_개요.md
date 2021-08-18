@@ -65,7 +65,7 @@
 - 이러한 Outlier sample을 걸러 내기 위해 Out-of-distribution Detection 알고리즘을 사용할 수 있음
 - 또한 불독 이미지처럼 Novel한 sample이 관찰되었을 때 이를 걸러낸 뒤, classifier가 기존의 있는 4가지 class 대신 불독이 새로 추가된 5가지 class를 구분하도록 학습하는 Incremental learning 방법론과도 응용할 수 있음
 
-![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/anomaly_detection.PNG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/anomaly_detection.png)
 
 ## Anomaly Detection의 다양한 적용 사례
 - <b>Cyber-Intrusion-Detection</b> : 컴퓨터 시스템 상에 침입을 탐지하는 사례. 주로 시계열 데이터를 다루며 RAM, file system, log file 등 일련의 시계열 데이터에 대해 이상치를 검출하여 침입 탐지
