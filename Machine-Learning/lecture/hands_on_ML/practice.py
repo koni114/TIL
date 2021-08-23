@@ -1,40 +1,14 @@
-#- KernelPCA, LogisticRegression 을 연속해서 반영하는 pipeline 을 구성.
-#- GridSearchCV를 통해 최적의 parameter 찾기
-
-from sklearn.decomposition import KernelPCA
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.datasets import load_iris
+from sklearn import datasets
 import numpy as np
+iris = datasets.load_iris()
+X = iris["data"][:, (2, 3)]
+y = iris["target"]
 
-X = load_iris().data
-y = load_iris().target
+#- 모든 샘플에 편향 추가 xo = 1
+X_with_bias = np.c_[np.ones([len(X), 1]), X]
 
-clf = Pipeline([
-    ('kpca', KernelPCA(n_components=2)),
-    ('log_reg', LogisticRegression())
-])
+test_ratio = 0.2
+validation_ratio = 0.2
+total_size = len(X_with_bias)
 
-param_grid = [{
-    'kpca__gamma': np.linspace(0.03, 0.05, 10),
-    'kpca__kernel': ["rbf", "sigmoid"]
-}]
-
-grid_search = GridSearchCV(clf, param_grid, cv=3)
-grid_search.fit(X, y)
-
-print(f"clf best params : {grid_search.best_params_}")
-
-rbf_pca = KernelPCA(n_components=2, kernel='rbf', gamma=0.433,
-                    fit_inverse_transform=True)
-X_reduced = rbf_pca.fit_transform(X)
-X_preimage = rbf_pca.inverse_transform(X_reduced)
-
-from sklearn.metrics import mean_squared_error
-mean_squared_error(X, X_preimage)
-
-from sklearn.manifold import LocallyLinearEmbedding
-lle = LocallyLinearEmbedding(n_components=2, n_neighbors=10)
-X_reduced = lle.fit_transform(X)
-print(X_reduced)
+test_size = int(total_size * test_ratio)
