@@ -60,7 +60,6 @@
 4. decoder
 - encoder와 비슷하지만, 크게 2가지 차이점이 있음
   - Multi-head self attention에 masked가 들어갔다는 점이 첫 번째 차이
-  -  
 
 
 
