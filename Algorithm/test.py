@@ -1,11 +1,22 @@
-paragraph = "Bob hit a ball, the hit BALL flew far after it was hit."
-banned = ["hit"]
-from typing import List
-class Solution:
-    def mostCommonWord(self, paragraph: str, banned: List[str]) -> str:
-        import re
-        re.sub(r'[^\w]', ' ', paragraph)
+graph = {
+    1: [2, 3, 4],
+    2: [5],
+    3: [5],
+    4: [],
+    5: [6, 7],
+    6: [],
+    7: [3]
+}
 
+def recursive_dfs(start_v):
+    discovered = []
+    stack = [start_v]
+    while stack:
+        v = stack.pop()
+        if v not in discovered:
+            discovered.append(v)
+            for w in graph[v]:
+                stack.append(w)
+    return discovered
 
-
-        
+recursive_dfs(1)
