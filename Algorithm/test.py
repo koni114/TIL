@@ -1,15 +1,28 @@
 from typing import List
-paragraph = "Bob hit a ball, the hit BALL flew far after it was hit."
-strs = ["eat", "tea", "tan", "ate", "nat", "bat"]
-logs = ['dig1 8 1 5 1', 'let1 art can', 'dig2 3 6', 'let2 own kit dig', 'let3 art zero']
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
 
 class Solution:
-    def groupAnagrams(self, l:List[str]) -> List[List[str]]:
-        from collections import defaultdict
-        dic = defaultdict(list)
-        for word in l:
-            dic[''.join(sorted(word))].append(word)
-        return list(dic.values())
+    def isPalindrome(self, head: ListNode) -> bool:
+        q: List = []
 
+        if not head:
+            return True
+
+        node = head
+
+        while node is not None:
+            q.append(node.val)
+            node = node.next
+
+        while len(q) > 1:
+            if q.pop(0) != q.pop():
+                return False
+
+        return True
+
+head = ListNode(val=1, next=ListNode(val=2, next=ListNode(val=2, next=ListNode(val=1, next=None))))
 sol = Solution()
-sol.groupAnagrams(l=strs)
+sol.isPalindrome(head)
