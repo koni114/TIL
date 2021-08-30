@@ -145,7 +145,7 @@
   - 교착상태(deadlock) 해결 
 - 프로세스 정보 관리
 
-### Proceesor 관리
+### Processor 관리
 - 중앙 처리 장치(cpu)
   - 프로그램을 실행하는 핵심 자원
 - 프로세스 스케줄링(scheduling)
