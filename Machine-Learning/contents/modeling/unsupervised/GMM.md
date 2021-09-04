@@ -11,7 +11,7 @@
   - z(i) = j면, 즉 i번째 샘플이 j번째 클러스터에 할당되었다면 이 샘플의 위치 x(i)는 평균이 Mu(j)고 공분산 행렬이 sigma(j)인 가우시안 분포에서 랜덤하게 샘플링됨. 이를 x(i) ~ N(Mu(j), sigma(j))와 같이 씀
 - 이 생성 과정은 그래프 모형(graphical model)로 나타낼 수 있음
 - 다음 그림은 확률 변수 사이의 조건부 의존성의 구조를 나타냄
-![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_1.PNG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_1.png)
 - 이 그림을 보는 방법은 다음과 같음
   - 원은 확률 변수를 나타냄
   - 사각형은 고정값을 나타냄(즉 모델의 파라미터) 
@@ -101,7 +101,7 @@ gm_score_samples = gm.score_samples(X)
 - 예를 들어 (0, 0.1) 영역 밖에서는 모두 0인 확률 분포가 있다면 이 영역의 평균적인 확률 밀도는 10이 될 것임
 - 전 지역에 대해 그래프 아래 면적을 계산하면 10x0.1=1이 됨. 동일한 조건에서 2개의 확률 변수가 있다면 평균 확률 밀도는 100이 됨. 양축 방향으로 그래프 아래 공간을 계산하면 100 x 0.1 x 0.1 = 1이 됨
 - 아래 그림은 이 모델의 클러스터 평균, 결정 경계(파선), 밀도 등고선을 보여줌
-![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_2.PNG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_2.png)
 
 - 물론 이 문제는 2D 가우시안 분포를 사용해 데이터를 생성한 쉬운 작업임(실제 데이터는 가우시안 분포나 저차원이 아닌경우가 많음)
 - 또한 이 알고리즘에 정확한 클러스터 개수를 입력했음. 특성이나 클러스터가 많거나 샘플이 적을 때는 EM이 최적의 솔루션으로 수렴하기 어려움
@@ -113,7 +113,7 @@ gm_score_samples = gm.score_samples(X)
   - `tied`: 모든 클러스터가 동일한 타원 모양, 크기, 방향을 가짐(모든 클러스터는 동일한 공분산 행렬을 공유함)
 - `covariance_type`의 기본 타입은 full임. 각 클러스터는 모양, 크기, 방향에 제약이 없음
 - 다음 그림은 covariance_type을 'tied', 'spherical'로 지정했을 때 EM 알고리즘으로 찾은 솔루션임
-![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_3.PNG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_3.png)
 
 - GaussianMixture model을 훈련할 때의 계산 복잡도는 샘플 개수 m, 차원 개수 n, 클러스터 개수 k와 공분산 행렬에 있는 제약에 따라 결정됨. covariance_type이 "spherical", "diag"이면 데이터에 어떤 클러스터 구조가 있다고 가정하므로 O(kmn)임
 - covariance_type이 "tied"나 "Full"인 경우 O(jmn^2 + kn^3)임 따라서 특성 개수가 많으면 적용하기 힘듬
@@ -176,7 +176,7 @@ gm.aic(X)
 - 하지만 theta를 모른 채 대신 샘플 x = 2.5(왼쪽 위 그래프에 있는 수직선) 하나를 관측했다면 어떻게 할 수 있을까요?
 - 이 경우 오른쪽 위 그래프에 나타난 가능도 함수 L(theta|x=2.5) = f(x=2.5; theta)를 얻음
 
-![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_4.PNG)
+![img](https://github.com/koni114/TIL/blob/master/Machine-Learning/img/GMM_4.png)
 
 - 간단히 말해 PDF는 x의 함수임(theta 고정). 반면 가능도 함수는 theta의 함수(x 고정)
 - 가능도 함수가 확률 분포가 아니라는 것을 이해하는 것이 중요함. 가능한 모든 x에 대해서 확률 분포를 적분하면 항상 1이됨. 하지만 가능한 모든 theta에 대해서 가능도 함수를 적분하면 어떤 양숫값도 될 수 있음
