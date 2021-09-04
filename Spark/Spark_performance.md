@@ -56,4 +56,131 @@
 - `spark.sql.execution.arrow.enabled` -> true
 - 1G 파일 기준시, 20배 성능 향상 효과  
 
+### File Format 최적화
+- Parquet, ORC와 같은 columnar file 활용
+- splittable file format(snappy, bzip2와 같은 compression format)
+- 너무 많은 small file은 compaction 하자
 
+### Parallelism
+- 데이터 사이즈에 맞춘 스파크 파티션 생성
+- 너무 적은 파티션 수는 executor를 idle하게 만들며, Executor out of memory 발생 우려가 있음
+- 반대로 너무 많은 파티션은 task scheduling overhead, meta 정보의 과다로 성능이 떨어질 수 있음
+- Executor 최소한 2~3개 이상의 코어를 할당해야 함
+- `spark.sql.shuffle.partitions` 기본값 200은 빅데이터 프로덕션 환경에서는 너무 적을 수 있음. 따라서 기본적으로 튜닝이 필요
+
+### Shuffle 줄이기
+- shuffle은 네트워크와 disk I/O를 포함하는 노드간 데이터 이동을 불러일으키는 가장 비싼 연산
+- 즉, <b>shuffle을 줄이는 것이 튜닝의 시작</b>
+  - `spark.sql.shuffle.partitions` 을 튜닝하자
+  - 각 task 사이즈가 너무 적지 않도록 input data를 파티셔닝함
+  - 일반적으로 파티션당 100MB에서 200MB를 타겟팅 함 
+
+### Filter/Reduce dataSet size
+- partition된 데이터를 활용함
+- 최대한 이른 stage에서 데이터를 Filter out함
+
+### 적절한 cache의 사용
+- pipeline에서 여러번 계산이 필요한 df에서 활용
+- unpersist를 하자
+
+### Join
+- BroadcastHashJoin을 최대한 활용. 가장 성능이 빠른 Join
+
+### Cluster Resource Tuning
+- spark.driver.memory, executor-memory, num-executors, and executor-cores 튜닝
+
+### 하드워에 Spec에 대한 이해
+- Core count & speed
+- Memory Per Core(메모리당 코어가 얼마나 되는가)
+- Local disk type, count, size, speed
+- network speed, topology
+- cost / core / hour
+
+### action 수행이 효과적인지 확인 필요
+- Long Stages, Spills, Laggard Tasks
+  - duration으로 sorting해서 가장 오래 돌고 있는 Stage를 파악하는 것부터 시작할 수 있음
+  - disk spill(메모리에 공간이 없어 disk로 누수가 일어나는 현상)이 심하게 일어나고 있는 Stage인 경우를 찾음. 보통 가장 오래 도는 Job과 동일한 경우가 많음
+- CPU Utilization
+  - Ganglia / Yarn  
+    CPU 활용률이 너무 낮다면, CPU 활용률이 70% 내외로 활용될 수 있도록 타겟으로 잡아볼 수 있음
+   
+### 데이터 스캔 최소화
+- 간단하지만 가장 중요한 최적화 기법  
+  lazy loading - 데이터 파티셔닝을 최대한 필터하고 로딩해서 사용
+- Hive Partition  
+  Partition pruning을 통한 스캔 대상 데이터 최소화(기본 default 값 True)
+
+
+### Spark Paritions - Input/Shuffle/Output
+- Spark Partition을 컨트롤하는 두 가지 핵심
+- Spill을 피하도록 함
+- 최대한의 Core를 활용할 수 있도록 함. 데이터의 Input 단계부터 Shuffle 단계, Output 단계로 나눠서 알아보자
+
+#### Input
+- Size를 컨트롤하자
+  - `spark.sql.file.maxPartitionBytes` default value: 128MB
+  - Increase Parallelism : 코어의 활용률을 병렬도를 더 올리기 위해 쪼개서 읽을 수 있음
+- 예를들어 shuffle 이 없는 map job이라면 오직 read/write 속도에만 dependant한 task인데, 더 빠르게 처리하기 위해 maxPartitionSize를 core 수에 맞게 처리하면 속도를 크게 개선할 수 있음  
+더 많은 코어가 나누어서 처리했기 때문 
+- Heavily Nested/Repetitive Data 인 경우 메모리에서 풀어 냈을 때, 데이터가 커질 수 있으므로 더 작게 읽는 것이 필요할 수 있음
+- Generating Data - Explode : 이 역시 새로운 데이터 컬럼을 만들면서 데이터가 메모리 상에서 커질 수 있음
+- Source Structure is not optimal(upstream)
+- UDFs
+
+#### Shuffle
+- Count를 컨트롤하자
+- `spark.sql.shuffle.partitions` default value : 200
+- 가장 큰 셔플 스테이지의 타겟 사이즈를 파티션당 200MB 이하로 잡는 것이 적절함  
+  (target size <= 200 MB/partition)
+- ex) shuffle Stage Input = 210GB  
+  210000MB / 200MB = 1050 -> `spark.conf.set("sparks.sql.shuffle.partitions", 1050)`
+- 하지만 만약 클러스터의 가용 코어가 2000 이라면 다 활용하면 더 좋음  
+  -> `spark.conf.set("spark.sql.shuffle.partitions", 2000)`
+
+### Output
+- Count를 컨트롤하자
+- coalesce(n) : 2000개의 partition이 Shuffle 하고 나서, write할 때 100개가 나눠서 할 수 있도록 
+- Repartition(n) : partition을 증가시킬 때 사용. shuffle을 발생시키므로 곡 필요한 경우가 아니면 사용 X
+- ex) 전체 160GB의 파일을 처리하는데 10개의 코어가 1.6GB를 처리할 때와 100개의 코어가 처리할 때의 차이는 아주 큼
+
+### Skew Join Optimization
+- 어떤 파티션이 다른 파티션보다 훨씬 큰 경우  
+  ex) 어떤 키 하나에는 수백만개의 count가 몰려있고, 나머지 키에는 수십개 정도씩만 있다고 하자
+  Salting 이라는 방법을 통해 해결해 볼 수 있음(노이즈 데이터를 뿌려넣는다는 의미)
+- 0 부터 spark.sql.shuffle.partitions -1 사이의 random int를 가진 column을 양쪽 데이터에 생성
+- Join 조건에 새로운 salting column을 포함함
+- result 표출 시 salting column을 drop함
+
+~~~scala
+df.groupBy('city', 'state').agg(fuc).orderBy(co.desc)
+val saltVal = random(0, spark.conf.get(org...shuffle.partitions) - 1)
+df.withColumn("salt", lit(saltVal))
+  .groupBy("city", "state", "salt")
+  .agg(func)
+  .drop("salt")
+  .orderBy(col.desc)
+~~~
+- Spark3.0 부터는 join시 동적으로 splitting-replicating 등의 작업을 통해 재분배하는 조건이 생김
+  - `spark.sql.adaptive.skewJoin.enabled` : default: true
+  - `spark.sql.adaptive.skewJoin.skewedPartitionFactor` default: 10
+  - `spark.sql.adaptive.skewJoin.skewedPartitionThresholdInBytes` : default 256MB 
+
+### Minimize Data Scans(Persistence)
+- 반복 작업이 있는 경우에 `persist()` 사용
+- 기본 `df.cache == df.persist(StorageLevel.MEMORY_AND_DISK)`
+- 다른 타입들의 장단점에 대해서도 알아보자  
+  - Default StorageLevel.MEMORY_AND_DISK  
+    (deserialized)
+  - deserialized = Faster = Bigger
+  - serialized = Slower = Smaller
+- `df.unpersist`를 잊지 말자 
+  - cache memory 를 사용하는 만큼 working memory 가 줄어들 것임 
+
+### Join Optimization
+- `SortMerge Join` : 양쪽 데이터가 다 클때
+- `Broardcast Join` : 한쪽 데이터가 작때
+  - 옵티마이저에 자동으로 활성화됨(`spark.sql.autoBroadJoinThreshold`) 기본값은 10M.
+  - Risk
+    - Not Enough Driver Memory
+    - DF > spark.driver.maxResultSize
+    - DF > single executor avaliable working memory
