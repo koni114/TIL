@@ -46,7 +46,7 @@
 - 서버 코어 개수 * 2~3 설정 예시) 20(코어 수) * 3 = 60
 
 ### 데이터 저장/통신을 위한 serialization library 설정
-- `spark.serializer org.apache.spark.serializer.KryoSerializer`
+- `spark.serializer`를 `org.apache.spark.serializer.KryoSerializer` 로 지정해야 함
 - 빠른 성능을 제공하는 Serialization library
 
 ### serialization library read/write max buffer 사이즈
@@ -89,7 +89,7 @@
 ### Cluster Resource Tuning
 - spark.driver.memory, executor-memory, num-executors, and executor-cores 튜닝
 
-### 하드워에 Spec에 대한 이해
+### 하드워드의 Spec에 대한 이해
 - Core count & speed
 - Memory Per Core(메모리당 코어가 얼마나 되는가)
 - Local disk type, count, size, speed
@@ -119,8 +119,8 @@
 #### Input
 - Size를 컨트롤하자
   - `spark.sql.file.maxPartitionBytes` default value: 128MB
-  - Increase Parallelism : 코어의 활용률을 병렬도를 더 올리기 위해 쪼개서 읽을 수 있음
-- 예를들어 shuffle 이 없는 map job이라면 오직 read/write 속도에만 dependant한 task인데, 더 빠르게 처리하기 위해 maxPartitionSize를 core 수에 맞게 처리하면 속도를 크게 개선할 수 있음  
+- Increase Parallelism : 코어의 활용률을 병렬도를 더 올리기 위해 쪼개서 읽을 수 있음 
+  - 예를들어 shuffle 이 없는 map job이라면 오직 read/write 속도에만 dependant한 task인데, 더 빠르게 처리하기 위해 maxPartitionSize를 core 수에 맞게 처리하면 속도를 크게 개선할 수 있음  
 더 많은 코어가 나누어서 처리했기 때문 
 - Heavily Nested/Repetitive Data 인 경우 메모리에서 풀어 냈을 때, 데이터가 커질 수 있으므로 더 작게 읽는 것이 필요할 수 있음
 - Generating Data - Explode : 이 역시 새로운 데이터 컬럼을 만들면서 데이터가 메모리 상에서 커질 수 있음
@@ -140,7 +140,7 @@
 ### Output
 - Count를 컨트롤하자
 - coalesce(n) : 2000개의 partition이 Shuffle 하고 나서, write할 때 100개가 나눠서 할 수 있도록 
-- Repartition(n) : partition을 증가시킬 때 사용. shuffle을 발생시키므로 곡 필요한 경우가 아니면 사용 X
+- Repartition(n) : partition을 증가시킬 때 사용. shuffle을 발생시키므로 곡 필요한 경우가 아니면 사용 X 
 - ex) 전체 160GB의 파일을 처리하는데 10개의 코어가 1.6GB를 처리할 때와 100개의 코어가 처리할 때의 차이는 아주 큼
 
 ### Skew Join Optimization
@@ -198,10 +198,10 @@ df.withColumn("salt", lit(saltVal))
 - `count()`
   - 진짜 필요한 경우에만 써라.
   - 습관적으로 많이 쓰긴 하지만, 프로덕션 배포 전에 제외시키는 걸 잊지 말자!
-- distinctCount -> 꼭 정확한 숫자가 필요한 것이 아니라면 가능하면 approxCountDistinct()를 써라.
+- `distinctCount()` -> 꼭 정확한 숫자가 필요한 것이 아니라면 가능하면 `approxCountDistinct()`를 써라.
 - 생각해보면 2% 내외의 오차가 발생하는 것을 감수할 수 있는 경우가 많다.
 - `distinct()`
-  - distinct 대신 dropDuplicates을 써라.
+  - `distinct()` 대신 `dropDuplicates()`을 써라.
   - dropDuplicates를 JOIN 전에 써라.
   - dropDuplicates를 groupBy 전에 써라.
 
