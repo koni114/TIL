@@ -1,7 +1,7 @@
 ## Spark 성능비교 정리
 ### 복잡한 쿼리 수행 후 DataFrame 생성 vs 간단한 쿼리를 통해 DataFrame 생성 후 filter, select를 통한 정제
 - RDBMS(Oracle, MySQL, postgreSQL...)
-  - spark는 RDBMS에서 데이터를 가져올 때 느림. 네트워크를 통해 최소의 데이터양으로 전송하는 것이 좋으므로, 복잡한 쿼리를 통해 최대한의 데이터를 fitlering 하는 것이 중요
+  - spark는 RDBMS에서 데이터를 가져올 때 느림. 네트워크를 통해 최소의 데이터 양으로 전송하는 것이 좋으므로, 복잡한 쿼리를 통해 최대한의 데이터를 fitlering 하는 것이 중요
 - RedShift, snowflake
   - 쿼리를 클러스터 자체로 push down 하거나 , JDBC를 사용하여 데이터를 읽으려는 경우가 더 빠름
 - file
@@ -184,3 +184,29 @@ df.withColumn("salt", lit(saltVal))
     - Not Enough Driver Memory
     - DF > spark.driver.maxResultSize
     - DF > single executor avaliable working memory
+- BroadCast join을 조심해야 하는 이유
+  - driver에서 hashmap format dataFrame으로 바꿔서 각 executor로 보냄
+  - hashmap을 만들면서 기존에 compression이 되어 있던 것도 풀리므로 데이터 사이즈도 처음 partition 안에 있을 때보다 몇배 커진 상태가 될 수 있음(ex) 126MB -> 270MB) 
+
+### BroadcastNestedLoopJoin(BNLJ)
+- SparkSQL에서는 `NOT IN` 조건 대신 `NOT EXISTS` 를 사용해라 
+
+### 비싼 오퍼레이션을 제외시키자 - Omit Expensive Ops
+- 튜닝의 시작을 IntelliJ에서 아래 키워드를 찾는 것 부터 시작해 볼 수 있음
+- `Repartition`
+  - coalesce를 쓰거나 shuffle partition count 세팅을 바꿔서 써라.
+- `count()`
+  - 진짜 필요한 경우에만 써라.
+  - 습관적으로 많이 쓰긴 하지만, 프로덕션 배포 전에 제외시키는 걸 잊지 말자!
+- distinctCount -> 꼭 정확한 숫자가 필요한 것이 아니라면 가능하면 approxCountDistinct()를 써라.
+- 생각해보면 2% 내외의 오차가 발생하는 것을 감수할 수 있는 경우가 많다.
+- `distinct()`
+  - distinct 대신 dropDuplicates을 써라.
+  - dropDuplicates를 JOIN 전에 써라.
+  - dropDuplicates를 groupBy 전에 써라.
+
+### UDF penalties
+- UDF 사용은 최대한 피하는게 좋음
+- 일반적으로 scala udf가 python udf보다 빠름. udf는 가끔 동작함
+- `org.apache.spark.sql.functions`를 최대한 활용
+- UDF 만들기 전에 PandasUDF(vectorized UDFs)에 원하는 기능이 없는지 알아보자.
