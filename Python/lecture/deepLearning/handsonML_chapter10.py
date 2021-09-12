@@ -1,10 +1,11 @@
+import keras.wrappers.scikit_learn
 import tensorflow as tf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 #- fashion MNIST
-fashion_mnist = 1tf.keras.datasets.fashion_mnist
+fashion_mnist = tf.keras.datasets.fashion_mnist
 (X_train_full, y_train_full), (X_test, y_test) = fashion_mnist.load_data()
 
 #- 간편하게 픽셀 강도를 255.0로 나누어 0 ~ 1 사이로 범위 조정
@@ -127,3 +128,64 @@ history = model.fit(X_train, y_train, epochs=20, callbacks=[checkpoint_cb])
 history = model.fit(X_train, y_train, epochs=10,
                     validation_data = (X_valid, y_valid),
                     callbacks=[checkpoint_cb])
+
+#- 텐서보드
+#- 프로그램을 수정해서 이벤트 파일(event file)이라는 특별한 이진 로그 파일에
+#- 시각화하려는 데이터를 출력해야 함
+
+#- 일반적으로 텐서보드 서버가 루트 디렉터리를 가리키고 프로그램은 실행할 때마다
+#- 다른 서브디렉터리에 이벤트를 기록함
+
+#- 루트 디렉토리 정의
+#- 현재 날짜와 시간을 사용해 실행할 때마다 다른 서브 디렉토리 경로를 생성하는 간단한 함수도 만들어보자
+#- 테스트 하는 하이퍼파라미터 값과 같은 추가적인 정보를 로그 디렉터리 이름으로 사용가능
+import os
+root_logdir = os.path.join(os.curdir, "my_logs")
+
+def get_run_logdir():
+    import time
+    run_id = time.strftime('run_%Y_%m_%d_%H_%M_%S')
+    return os.path.join(root_logdir, run_id)
+
+run_logdir = get_run_logdir()
+print(run_logdir)
+
+tensorboard_cb = tf.keras.callbacks.TensorBoard(run_logdir)
+history = model.fit(X_train, y_train, epochs=30,
+                    validation_data=(X_valid, y_valid),
+                    callbacks=[tensorboard_cb])
+
+#- 10.3 신경망 하이퍼파라미터 튜닝하기
+def build_model(n_hidden=1, n_neurons=30, learning_rate=3e-3, input_shape=[8]):
+    model = tf.keras.models.Sequential()
+    model.add(tf.keras.layers.InputLayer(input_shape=input_shape))
+    for layer in range(n_hidden):
+        model.add(tf.keras.layers.Dense(n_neurons, activation='relu'))
+    model.add(tf.keras.layers.Dense(1))
+    optimizer = tf.keras.optimizers.SGD(learning_rate=learning_rate)
+    model.compile(loss='mse', optimizer=optimizer)
+    return model
+
+#- build_model() 함수를 사용해 KerasRegressor 클래스의 객체를 만듬
+keras_reg = keras.wrappers.scikit_learn.KerasRegressor(build_model)
+keras_reg.fit(X_train, y_train, epochs=100, validation_data=(X_valid, y_valid),
+              callbacks=[tf.keras.callbacks.EarlyStopping(patience=10)])
+mse_test = keras_reg.score(X_test, y_test)
+
+#- random Search 를 이용한 하이퍼 파라미터 탐색
+from scipy.stats import reciprocal
+from sklearn.model_selection import RandomizedSearchCV
+
+param_distribs ={
+    'n_hidden': [0, 1, 2, 3],
+    'n_neurons': np.arange(1, 100),
+    'learning_rate': reciprocal(3e-4, 3e-2)
+}
+
+rnd_search_cv = RandomizedSearchCV(keras_reg, param_distribs, n_iter=10, cv=3)
+
+from sklearn.datasets import load_iris
+from sklearn.linear_model import Perceptron
+iris = load_iris()
+X = iris.data[:, (2, 3)]
+y = (iris.target == 0).astype(np.int)
