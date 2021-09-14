@@ -5,3 +5,5 @@
   머신러닝 논문 및 구현 & pretraied model 공개 site
 - https://goo.gl/qvNTyu  
   딥러닝을 위한 콘볼루션 계산 가이드
+- http://image-net.org  
+  ILSVRC 이미지넷 대회의 에러율 확인
