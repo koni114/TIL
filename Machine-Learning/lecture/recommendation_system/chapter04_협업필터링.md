@@ -3,7 +3,9 @@
 ### 협업필터링의 개요
 - 사용자의 구매 패턴이나 평점을 가지고 다른 사람들의 구매 패턴, 평점을 통해 추천을 하는 방법
 - 나에 대해서 추천을 해줄 때, 내가 평점을 매긴 것과 비슷한 사용자들을 찾아 추천을 해주는 방법
-- 종류 : 최근접 이웃기반, 잠재 요인기반 등
+- 종류 
+  - 최근접 이웃기반
+  - 잠재 요인기반 등
 
 ### Neighborhood based method
 - 최근접 이웃기반 모델
@@ -40,16 +42,69 @@
 - 추천 시스템의 가장 큰 문제는 빈익빈 부익부 현상 발생
 - 따라서 이러한 문제를 해결하기 위해 컨텐츠 기반의 모델을 적절히 섞어서 사용하는 것이 좋음
 
-
 ### Neighborhood vs Latent Factor
 - Neighborhood는 Item space내에 유사한 Item을 추천해 준다던지, User Space 안에서 유사한 User를 추천해 주는 방식이였다면, Latent Factor는 Item space의 Latent space와 User Space의 Latent space를 구하고, 그 두개의 곱을 통해서 계산하는 방식
 
 ### Latent Factor Collaborative Filtering 정의
 - 잠재적 요인기반 추천 모델
+- Rating Matrix에서 빈 공간을 채우기 위해 사용자와 상품을 잘 표현하는 차원(Latent Factor)를 찾는 방법
+- 잘 알려진 행렬 분해는 추천 시스템에서 사용되는 협업 필터링 알고리즘의 한 종류
+- 행렬 분해 알고리즘은 사용자-아이템 상호 작용 행렬을 두 개의 저차원 직사각형 행렬 곱으로 분해하여 작동
 - Rating Matrix을 만들어내기 위해 2가지 matrix를 도입하는데, 첫 번째는 사용자 기반의 매트릭스와 두 번째는 아이템 기반의 매트릭스를 도입함
-- 각각의 요인이 의미하는지는 정확히 모르기 떄문에 잠재 기반의 협업 필터링이라고 함
+- 각각의 요인이 무엇을 의미하는지는 정확히 모르기 떄문에 잠재 기반의 협업 필터링이라고 함
+- 사용자 기반의 latent matrix와 아이템 기반의 latent matrix를 곱했을 때 평점 매트릭스를 복원할 수 있다는 것
 
 ### Latent Factor Collaborative Filtering 원리
 - 사용자의 잠재요인과 아이템의 잠재요인을 내적해서 평점 매트릭스를 계산
 - R ~~ UV^(T)
-- Observed Only MF, Weighted MF, SVD 등
+
+### SGD
+- 고유값 분해와 같은 행렬을 대각화하는 방법
+- Minimize J = 1/2 * ||R - UV^T||^2  
+  평점 매트릭스와 user latent matrix * item latent matrix 간의 차이를 최소화하려는 U, V를 찾겠다라는 것  
+  딥러닝 모형이다 보니, U, V의 weight가 계속 update 됨  
+- gradient 폭주를 막기 위해 regularization term을 추가
+
+#### SGD 예시
+- Explicit Feedback된 형태의 4명 유저에 대한 3개의 아이템 평점 Matrix
+- 목표는 ?를 채우는 것은 user latent 와 item latent로 채우겠다는 것
+~~~
+Rating Matrix
+?  3  2
+5  1  2
+4  2  1
+2  ?  4
+~~~
+- SGD 계산 process는 다음과 같음
+  - user latent와 item latent를 임의로 초기화함  
+    - Rating matrix가 4x3이기 때문에 4xn, nx3으로 형성  
+    - ALS 논문에서는 n을 20으로 setting 함
+  - Grdent Descent를 진행
+    - ?는 제외하고 나머지 값에 대해서 진행
+  - 모든 평점에 대해서 반복(epoch 1)  
+    - latent matrix가 계속 갱신됨
+- 계산된 latent space를 통해서도 insight를 얻을 수 있음
+
+#### SGD 장단점
+- 매우 유연한 모델로 다른 Loss function 사용 가능
+- parallelized 가능함
+- 단점은 수렴까지 속도가 매우 느림
+
+### ALS
+- 기존의 SGD가 두 개의 행렬(User Latent, Item Latent)를 동시에 최적화하는 방법이라면 ALS는 두 행렬 중 하나를 고정시키고 다른 하나의 행렬을 순차적으로 반복하면서 최적화하는 방법
+- 이렇게 하면 기존의 최적화 문제가 convex 형태로 바뀌기에 수렴된 행렬을 찾을 수 있는 장점이 있음
+
+#### ALS 알고리즘
+- 초기 아이템, 사용자 행렬을 초기화
+- 아이템 행렬을 고정하고 사용자 행렬을 최적화
+- 사용자 행렬을 고정하고 아이템 행렬을 최적화
+- 위의 2, 3 과정을 반복
+
+### 협업필터링 장단점
+- 장점
+  - 도메인 지식이 필요하지 않음
+  - 사용자의 새로운 흥미를 발견하기 좋음
+  - 시작단계의 모델로 선택하기 좋음(추가적인 문맥정보등의 필요가 없음)
+- 단점
+  - 새로운 아이템에 대해서 다루기가 힘듬(한번 더 학습 수행해야 함)
+  - side features(고객의 개인정보, 아이템의 추가정보)를 포함시키기 어려움   

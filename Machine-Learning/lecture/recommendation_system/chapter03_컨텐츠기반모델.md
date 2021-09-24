@@ -18,10 +18,12 @@
 
 ### Word2Vec 정의
 - Word2Vec은 단어간 유사도를 반영하여 단어를 벡터로 바꿔주는 임베딩 방법론
+- 단어의 유사도는 단어의 위치를 통해서 단어의 유사도를 반영함  
+  예를 들어 '나는 고양이를 좋아한다'와 '나는 강아지를 좋아한다'를 비교 했을 때, '나는'과 '좋아한다' 사이에 들어간 단어는 비교적 유사한 단어일 것임을 판단
 - 원-핫 벡터의 sparse matrix의 단점을 해소하고자 저차원의 공간에 벡터로 매핑하는 것이 특징
 - Word2Vec은 비슷한 위치에 등장하는 단어들은 비슷한 의미를 가진다 라는 가정을 통해 학습을 진행함
 - 저차원에 학습된 단어의 의미를 분산하여 표현하기에 단어 간 유사도를 계산할 수 있음
-- 추천시스템에는 단어를 구매 상품으로 바꿔서 구매한 패턴에 Word2Vec을 적용해서 비슷한 상품을 찾을 수 있음
+- 추천 시스템에는 단어를 구매 상품으로 바꿔서 구매한 패턴에 Word2Vec을 적용해서 비슷한 상품을 찾을 수 있음
 
 ### Word2Vec - CBOW, Skip-gram
 - 결과적으로는 skip gram을 많이 사용하며, 논문 상에서도 성능 차이가 많이 발생한다고 함
@@ -31,10 +33,21 @@
 - 중심 단어: (say)
 - 윈도우 크기 : 주변을 몇 칸까지 볼 지에 대한 크기 (1). 만약 2면 중심단어를 기준으로 양옆 2칸까지 보겠다는 의미
 
-### CBOW 모델 생성 방법
-- One Hot vector 형태의 입력값을 받음
-- One Hot vector 형태의 입력값을 Win과 곱함. 여기서의 Win은 신경망 모형에서의 Weight를 말함  
-  차원의 크기는 사용자가 지정
+### CBOW 모델 생성 프로세스
+1. One Hot vector 형태의 입력값을 받음
+  - You, GoodBye vector를 각각 입력 받음 
+2. One Hot vector 형태의 입력값을 가중치 Win과 곱함. 여기서의 Win은 신경망 모형에서의 Weight를 말함  
+  - 차원의 크기는 사용자가 지정
+  - 입력 값은 You, GoodBye를 받고, 정답은 say를 출력하는 형태로 신경망이 구성됨
+  - Win 값이 단어의 임베딩 값이 된다고 생각하면 됨
+3. Hidden state의 값을 Wout과 곱해서 Score를 추출
+4. Score에 softmax를 취해서 각 단어가 나올 확률을 계산
+5. 정답과 Cross-entropy 계산
+6. loss를 계산한 값을 통해 back-propagation 과정을 통해 weight를 업데이트
+7. 위의 과정을 다른 문맥에서도 동일하게 수행  
+   -> [you], [say], [goodbye]...
+- 중요한 것은 Win 가중치가 결국 임베딩 벡터에 해당됨
+
 ~~~python
 import numpy as np
 input1 = np.array([1, 0, 0, 0, 0, 0, 0]) #= You
@@ -105,7 +118,6 @@ print(np.round(W_in_new, 4))
 ### Skip-gram 
 - 위의 CBOW와 나머지는 동일하고, input data가 1개의 one-hot vector로 구성되며, output vector는 2개의 one-hot vector로 구성
 
-
 ### Word2Vec 실습
 - `gensim` package를 활용하여 수행 가능
 
@@ -119,4 +131,3 @@ print(np.round(W_in_new, 4))
 - 그렇기에 Domain knowledge가 분석시에 필요할 수 있음
 - 기존의 item과 유사한 item 위주로만 추천하기에 새로운 장르의 item을 추천하기 어려움
 - 새로운 사용자에 대해서 충분한 평점이 쌓이기 전까지는 추천하기 힘듬
-
