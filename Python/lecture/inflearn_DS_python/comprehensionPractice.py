@@ -113,3 +113,5 @@ def matrix_product(matrix_a, matrix_b):
     if not is_product_availability_matrix(matrix_a, matrix_b):
         raise ArithmeticError
     return None
+
+    
