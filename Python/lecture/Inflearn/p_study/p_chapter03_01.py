@@ -7,6 +7,7 @@ chapter03-01 파이썬 데이터 모델
 
 # Special Method(Magic Method)
 # 파이썬의 핵심 4가지 -> 시퀀스(Sequence), 반복(Iterator), 함수(Functions), 클래스(Class)
+# --> Python data Model 이라고 부름
 # 4가지를 정복을 한다면, 파이썬을 바라보는 시야가 훨씬 깊어짐
 
 # 매직 메소드는 클래스 안에 정의할 수 있는 특별한(Built-in, 만들어져 있음) 메소드
@@ -34,7 +35,6 @@ print(n * 100, n.__mul__(100)) # 두 개는 동일
 
 # 클래스 끼리의 연산 수행해보기
 # 클래스 예제1
-
 
 class Fruit:
     def __init__(self, name, price):
@@ -94,5 +94,4 @@ print(s1 >= s2)
 
 print(s1 < s2)
 print(s1 > s2)
-
 
