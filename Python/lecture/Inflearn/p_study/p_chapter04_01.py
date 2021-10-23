@@ -62,6 +62,7 @@ print(type(array_g))
 print(array_g.tolist())
 
 # 제너레이터 예제
+# A1, A2, A3 .. ~ D20까지 출력하는 제너레이터를 만들어 출력해보기
 for s in ('%s' % c + str(n) for c in ['A', 'B', 'C', 'D'] for n in range(1, 21)):
     print(s)
 
