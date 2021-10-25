@@ -93,8 +93,8 @@ class WordSplitGenerator:
         for word in self._text:
             yield word # generator. return 이 따로 없어도 됨
 
-        def __repr__(self):
-            return f"WordSplitGenerator({self._text})"
+    def __repr__(self):
+        return f"WordSplitGenerator({self._text})"
 
 wg = WordSplitGenerator('Do today what you could do tomorrow')
 wt = iter(wg)
