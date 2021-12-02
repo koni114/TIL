@@ -77,5 +77,3 @@ df.embarked = df.embarked.replace('', np.nan)
 # 결측치를 제거하는 방법
 df.dropna(how='all').head()  # 한 행이 모두 missing value 이면 제거
 df.dropna(how='any').head()  # 한 행에서 하나라도 missing value 가 있으면 제거
-
-#  
