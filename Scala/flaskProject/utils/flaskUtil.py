@@ -1,5 +1,10 @@
 import os
 
+
+def preload_model(working_path=os.getcwd(), model_id='k420004H', model_name='', model_type='S'):
+    pass
+
+
 def get_working_path(mgmt_id):
     pass
 
@@ -8,7 +13,7 @@ def get_X_test_from_DB(mgmt_id, bind_var_value):
     pass
 
 
-def make_response_json():
+def make_response_json(dict_rtn, dict_model_info, dict_req_info):
     pass
 
 
