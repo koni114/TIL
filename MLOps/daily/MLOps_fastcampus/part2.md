@@ -78,6 +78,7 @@ $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >
 /dev/null
 ~~~
 
+
 #### Install Docker Engine
 2) Docker 엔진의 최신 버전을 설치
 ~~~shell
@@ -112,6 +113,7 @@ Share images, automate workflows, and more with a free Docker ID: https://hub.do
 For more examples and ideas, visit: https://docs.docker.com/get-started/
 ~~~
 
+
 #### Docker 권한 설정
 - 현재는 모든 docker 관련 작업이 root 유저에게만 권한이 있기 때문에, docker 관련 명령을 수행하려면 `sudo`를 앞에 붙여주어야만 가능
 - 예를 들면
@@ -128,6 +130,7 @@ $ sudo service docker restart
 ~~~shell
 CONTAINERID IMAGE COMMAND CREATED STATUS PORTS NAMES
 ~~~
+
 
 #### Docker의 기본적인 명령
 1) Docker pull
