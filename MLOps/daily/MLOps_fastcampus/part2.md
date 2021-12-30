@@ -50,6 +50,16 @@
   - `sudo passwd` 수행 후에 password update 수행
 - 중간에 VM을 사용하지 않는 경우는 전원을 끈 상태로 유지해야 함
 
+#### ubuntu 해상도 변경 방법
+- 다음과 같은 명령어를 통해 VirtualBox Guest Addictions를 설치해 해상도 관련 기능 추가
+- 게스트 도구를 이용하면 VM의 창의 크기를 조절할 수 있고, 호스트 운영체제(VirtualBox를 돌리는 운영체제)와 클립보드를 공유해서 복사, 잘라내기, 붙여넣기 등을 할 수 있음
+- 게스트 도구는 Ubuntu package repository 에 저장되어 있음
+~~~shell
+sudo apt-get install -y virtualbox-guest-dkms
+~~~
+- 해당 명령어를 통해 설치 후, reboot 진행
+- 이후 시스템 설정 -> 디스플레이 -> 해상도 변경
+
 
 ### Docker 실습 1, 2 - 설치와 기본 명령어
 #### Docker 설치
@@ -73,7 +83,7 @@ $ sudo apt-get install \
 ~~~
 - Docker 의 GPG key 추가
 ~~~shell
-$ curl - fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg \ --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 ~~~
 - 그 다음 stable 버전의 repository 를 바라보도록 설정  
   이 때 해당 cpu가 arm64 인지 amd64인지 확인해서 `arch=arm64` 또는 `arch=amd64` 로 설정
@@ -83,10 +93,10 @@ dpkg --print-architecture
 ~~~
 ~~~shell
 echo \
-"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
-https://download.docker.com/linux/ubuntu \
-$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >
-/dev/null
+"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] http
+s://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /de
+v/null
 ~~~
 
 #### Install Docker Engine
