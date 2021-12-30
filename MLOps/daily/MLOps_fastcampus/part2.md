@@ -71,9 +71,11 @@ $ curl - fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor 
 ~~~
 - 그 다음 stable 버전의 repository 를 바라보도록 설정
 ~~~shell
-$ echo \
-  "deb [arch=amd64 signed by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+echo \
+"deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
+https://download.docker.com/linux/ubuntu \
+$(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >
+/dev/null
 ~~~
 
 #### Install Docker Engine
