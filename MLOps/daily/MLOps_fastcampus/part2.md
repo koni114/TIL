@@ -43,7 +43,13 @@
 - 물리적 하드 드라이브에 저장 -> 동적 할당 선택
 - 파일 위치 및 크기 -> 10.00GB 
 - 완료 후 시작 버튼 클릭 후, 우측 버튼 아이콘을 선택한 후, 추가 버튼 클릭 후, 다운로드 경로를 찾아서 ubuntu 파일 선택하면, ubuntu가 실행됨 
-- 이후 ubuntu 기본 설치 작업을 차례차례 진행하면, 완료
+- 이후 ubuntu 기본 설치 작업을 차례차례 진행한 후에 reboot 수행하면 ubuntu 설치 완료
+- 추가 작업사항
+  - terminal에서 root passwd를 지정해야 함
+  - root user의 비밀번호를 지정하는 것
+  - `sudo passwd` 수행 후에 password update 수행
+- 중간에 VM을 사용하지 않는 경우는 전원을 끈 상태로 유지해야 함
+
 
 ### Docker 실습 1, 2 - 설치와 기본 명령어
 #### Docker 설치
@@ -67,17 +73,21 @@ $ sudo apt-get install \
 ~~~
 - Docker 의 GPG key 추가
 ~~~shell
-$ curl - fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+$ curl - fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg \ --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 ~~~
-- 그 다음 stable 버전의 repository 를 바라보도록 설정
+- 그 다음 stable 버전의 repository 를 바라보도록 설정  
+  이 때 해당 cpu가 arm64 인지 amd64인지 확인해서 `arch=arm64` 또는 `arch=amd64` 로 설정
+- 다음의 명령어를 통해 확인 가능
+~~~shell
+dpkg --print-architecture
+~~~
 ~~~shell
 echo \
-"deb [arch=arm64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
+"deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg]
 https://download.docker.com/linux/ubuntu \
 $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >
 /dev/null
 ~~~
-
 
 #### Install Docker Engine
 2) Docker 엔진의 최신 버전을 설치
