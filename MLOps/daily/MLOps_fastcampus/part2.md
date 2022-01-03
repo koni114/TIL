@@ -819,8 +819,163 @@ minikube start --driver=docker
 - minikube status
   - 정상적으로 생성되었는지 minikube 의 상태 확인
 ~~~shell
+minikube status
+~~~
+- 터미널에 다음과 같은 메세지 출력되어야 함
+~~~shell
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
 ~~~
 
+#### kubectl get pod -n kube-system
+- kubectl 을 사용하여 minikube 내부의 default pod 들이 정상적으로 생성되었는지 확인
+~~~shell
+kubectl get pod -n kube-system
+~~~
+- 터미널에 다음과 같은 메세지가 출력되어야 함
+~~~shell
+NAME
+READY   STATUS    RESTARTS   AGE
+1/1     Running   0         3m40s
+1/1     Running   0         3m46s
+1/1     Running   0         3m46s
+1/1     Running   0         3m53s
+1/1     Running   0         3m40s
+1/1     Running   0         3m46s
+1/1     Running   1         3m51s
+~~~
+
+#### Minikube 삭제하기
+- minikube delete
+   - 다음 명령어로 간단하게 삭제 가능
+~~~shell
+minikube delete
+~~~
+
+### 쿠버네티스 - POD
+#### POD 란? 
+- Pod(파드)는 쿠버네티스에서 생성하고 관리할 수 있는 배포 가능한 가장 작은 컴퓨팅 단위
+  - https://kubernetes.io/ko/docs/concepts/workloads/pods
+- 쿠버네티스는 Pod 단위로 스케줄링, 로드벨런싱, 스케일링 등의 관리 작업 수행
+  - 쿠버네티스에 어떤 어플리케이션을 배포하고 싶다면, 최소 Pod 으로 구성해야 한다는 의미 
+- 조금 어렵다면 Pod 는 Container를 감싼 개념이라고 생각할 수 있음
+  - 하나의 Pod 는 한 개의 Container 혹은 여러 개의 Container로 이루어져 있을 수 있음 
+  - Pod 내부의 여러 Container 는 자원을 공유함
+- Pod는 Stateless 한 특징을 가지고 있으며, 언제든지 삭제될 수 있는 자원이라는 점
+
+#### Pod 생성
+- 간단한 Pod의 예시
+~~~shell
+apiVersion: v1 # kubernetes 의 resource이 API version
+kind: Pod      # kubernetes resource name
+metadata: # 메타 데이터 : name, namespace, labels, annotations 등을 포함
+  name: counter
+spec:     # 메인 파트 : resource 의 desired state 를 명시
+  containers:
+  - name: count      # container 의 이름
+    image: busybox   # container 의 image
+    args: [/bin/sh, -c, 'i=0; while true; do echo "$i: $(date)"; i=$((i+1)); sleep 1; done']
+    # 해당 image 의 entrypoint 의 args 로 입력하고 싶은 부분
+~~~
+- 위의 스펙대로 Pod 하나 생성
+~~~shell
+vi pod.yaml # 위의 내용을 복사 붙여넣기
+kubectl apply -f pod.yaml
+~~~
+- `kubectl apply -f <yaml-file-path>` 를 수행하면, `<yaml-file-path>`에 해당하는  
+  kubernetes resource 를 생성 또는 변경할 수 있음
+  - kubernetes resource 의 desired state 를 기록해놓기 위해 항상 YAML 파일을 저장하고, 버전 관리하는 것을 권장
+  - `kubectl run` 명령어로 YAML 파일 생성 없이 pod를 생성할 수도 있지만, 이는 kubernetes 에서 권장하는 방식은 아니므로 생략
+- 생성한 Pod 의 상태 확인  
+~~~shell
+kubectl get pod
+# ContainerCreating
+
+kubectl get pod
+# 시간이 지난 후 Running 으로 변하는 것을 확인 가능
+~~~
+
+#### Pod 조회
+- 방금 current namespace 의 Pod 목록을 조회하는 명령 수행
+  - 조회 결과는 Desired state 가 아닌, Current State를 출력 
+~~~shell
+kubectl get pod
+~~~
+- namespace 란?
+  - namespace 는 kubernetes 에서 리소스를 격리하는 가상의 단위 
+  - `kubectl config view --minify | grep namespace:` 로 current namespace 가 
+    어떤 namespace 로 설정되었는지 확인할 수 있음
+  - 따로 설정하지 않았다면 `default` namespace 가 기본으로 설정되어 있을 것임
+- 특정 namespace 혹은 모든 namespace 의 pod 를 조회할 수 있음
+~~~shell
+kubectl get pod -n kube-system
+# kube-system namespace 의 pod 를 조회
+
+kubectl get pod -A
+# 모든 namespace 의 pod 조회
+~~~
+- pod 하나를 조회하는 명령어는 다음과 같음
+  - `<pod-name>`에 해당하는 pod 조회
+~~~shell
+kubectl get pod <pod-name>
+~~~
+- pod 하나를 조금 더 자세히 조회하는 명령어는 다음과 같음 
+  - <pod-name> 에 해당하는 pod 을 자세히 조회
+~~~shell
+kubectl describe pod <pod-name>
+~~~
+- 기타 유용한 명령을 소개
+~~~shell
+kubectl get pod -o wide
+# pod 목록을 보다 자세히 출력
+
+kubectl get pod <pod-name> -o yaml
+# <pod-name>을 yaml 형식으로 출력
+
+kubectl get pod -w
+# kubectl get pod 의 결과를 계속 보여주며, 변화가 있을 때만 업데이트 수행
+~~~
+
+#### Pod 로그
+- pod의 로그를 확인하는 명령어는 다음과 같음
+~~~shell
+kubectl logs <pod-name>
+
+kubectl logs <pod-name> -f
+# <pod-name> 의 로그를 계속 보여줌
+~~~
+- pod 안에 여러 개의 container 가 있는 경우에는 다음과 같음
+~~~shell
+kubectl logs <pod-name> -c <container-name>
+
+kubectl logs <pod-name> -c <container-name> -f
+~~~
+
+#### Pod 내부 접속
+- pod 내부에 접속하는 명령어는 다음과 같음
+~~~shell
+kubectl exec -it <pod-name> -- <명령어>
+~~~
+- pod 안에 여러 개의 container 가 있는 경우에는 다음과 같음
+~~~shell
+kubectl exec -it <pod-name> -c <container-name> -- <명령어>
+~~~
+- docker exec 와 비슷한 명령임을 확인
+
+#### Pod 삭제
+- pod 를 삭제하는 명령어는 다음과 같음
+~~~shell
+kubectl delete pod <pod-name>
+~~~
+- 혹은 다음과 같이 리소스 생성시, 사용한 YAML 파일을 사용해 삭제 가능
+~~~shell
+kubectl delete -f <YAML-파일-경로>
+~~~
+- 위 명령어는 꼭 pod 이 아니더라도 모든 kubernetes resource 에 적용 가능
 
 ### 리눅스 명령어 참고
 - `curl` : 사용자 상호 작용 없이 작동하도록 설계된 서버에서 또는 서버로 데이터를 전송하기 위한 명령줄 유틸리티
