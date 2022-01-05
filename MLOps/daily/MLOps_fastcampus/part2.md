@@ -977,8 +977,104 @@ kubectl delete -f <YAML-파일-경로>
 ~~~
 - 위 명령어는 꼭 pod 이 아니더라도 모든 kubernetes resource 에 적용 가능
 
-### 쿠퍼네티스 - Deployment
 
+### 쿠퍼네티스 - Deployment
+#### Deployment 란 ? 
+- Deployment는 Pod와 Replica-set에 대한 관리를 제공하는 단위
+  - https://kubernetes.io/ko/docs/concepts/workloads/controllers/deployment/
+- 관리라는 의미는 Self-healing, Scaling, Rollout(무중단 업데이트) 과 같은 기능을 포함
+- 조금 어렵다면 Deployment 는 Pod 을 감싼 개념이라고 생각할 수 있음
+  - Pod 을 Deployment 로 배포함으로써 여러 개로 복제된 Pod, 여러 버전의 Pod 을 안전하게 관리할 수 있음  
+
+
+#### Deployment 생성
+- 간단한 Deployment 의 예시
+~~~shell
+apiVersion: apps/v1 # kubernetes resource API Version
+kind: Deployment # kubernetes resource name
+metadata: # : name, namespace, labels, annotations 등을 포함
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+      spec:
+        containers:
+        - name: nginx
+          image: nginx:1.14.2
+          ports:
+          - containerPort: 80
+~~~
+- 위의 스펙대로 Deployment 를 하나 생성
+~~~shell
+vi deployment.yaml
+# 위의 내용을 복사 후 붙여넣음
+
+kubectl apply -f deployment.yaml
+~~~
+
+
+#### Deployment 조회
+- 생성한 Deployment 의 상태를 확인
+~~~shell
+kubectl get deployment
+# 다음과 같은 메세지가 출력
+# NAME             READY UP-TO-DATE AVAILABLE   AGE 
+# nginx-deployment  0/3      3          0       10s 
+
+kubectl get deployment, pod
+~~~
+- 시간이 지난 후, deployment 와 함께 3 개의 pod 이 생성된 것을 확인할 수 있음
+~~~shell
+kubectl describe pod <pod-name>
+~~~
+- pod 의 정보를 자세히 조회하면 `Controlled By`로 Deployment 에 의해 생성되고 관리되고 있는 것을 확인 가능
+
+
+#### Deployment Auto-healing
+- pod 하나를 삭제해보겠습니다
+~~~shell
+kubectl delete pod <pod-name>
+~~~
+- 기존 pod 이 삭제되고, 동일한 pod 이 새로 하나 생성된 것을 확인할 수 있음
+~~~shell
+kubectl get pod
+~~~
+
+
+#### Deployment Scaling
+- replica 개수를 늘려보겠습니다
+~~~shell
+kubectl scale deployment/nginx-deployment --replicas=5
+kubectl get deployment 
+kubectl get pod
+~~~
+- replica 개수를 줄여보겠습니다
+~~~shell
+kubectl scale deployment/nginx-deployment --replicas=1
+kubectl get deployment
+kubectl get pod
+~~~
+
+#### Deployment 삭제
+- deployment 를 삭제
+~~~shell
+kubectl delete deployment <deployment-name>
+kubectl get deployment
+kubectl get pod
+~~~
+- Deployment 의 Control 을 받던 pod 역시 모두 삭제된 것을 확인할 수 있음
+- 혹은 `-f` 옵션으로 YAML 파일을 사용해서 삭제할 수도 있음
+~~~shell
+kubectl delete -f <YAML-파일-경로>
+~~~
 
 ### 리눅스 명령어 참고
 - `curl` : 사용자 상호 작용 없이 작동하도록 설계된 서버에서 또는 서버로 데이터를 전송하기 위한 명령줄 유틸리티
