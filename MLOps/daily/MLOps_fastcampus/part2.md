@@ -856,6 +856,7 @@ READY   STATUS    RESTARTS   AGE
 minikube delete
 ~~~
 
+
 ### 쿠버네티스 - POD
 #### POD 란? 
 - Pod(파드)는 쿠버네티스에서 생성하고 관리할 수 있는 배포 가능한 가장 작은 컴퓨팅 단위
@@ -866,6 +867,7 @@ minikube delete
   - 하나의 Pod 는 한 개의 Container 혹은 여러 개의 Container로 이루어져 있을 수 있음 
   - Pod 내부의 여러 Container 는 자원을 공유함
 - Pod는 Stateless 한 특징을 가지고 있으며, 언제든지 삭제될 수 있는 자원이라는 점
+
 
 #### Pod 생성
 - 간단한 Pod의 예시
@@ -978,7 +980,7 @@ kubectl delete -f <YAML-파일-경로>
 - 위 명령어는 꼭 pod 이 아니더라도 모든 kubernetes resource 에 적용 가능
 
 
-### 쿠퍼네티스 - Deployment
+### 쿠버네티스 - Deployment
 #### Deployment 란 ? 
 - Deployment는 Pod와 Replica-set에 대한 관리를 제공하는 단위
   - https://kubernetes.io/ko/docs/concepts/workloads/controllers/deployment/
@@ -990,27 +992,27 @@ kubectl delete -f <YAML-파일-경로>
 #### Deployment 생성
 - 간단한 Deployment 의 예시
 ~~~shell
-apiVersion: apps/v1 # kubernetes resource API Version
-kind: Deployment # kubernetes resource name
-metadata: # : name, namespace, labels, annotations 등을 포함
+apiVersion: apps/v1   # kubernetes resource API Version
+kind: Deployment      # kubernetes resoure name
+metadata:             # meta-data : name, namespace, labels, annotation 등
   name: nginx-deployment
   labels:
     app: nginx
-spec:
-  replicas: 3
+spec:                 # main part : resource 의 desired state 를 명시
+  replicas: 3         # 동일한 template 의 pod 를 3 개 복제본으로 생성
   selector:
     matchLabels:
       app: nginx
-  template:
+  template:           # Pod 의 template 을 의미
     metadata:
       labels:
         app: nginx
-      spec:
-        containers:
-        - name: nginx
-          image: nginx:1.14.2
-          ports:
-          - containerPort: 80
+    spec:
+      containers:
+      - name: nginx          # container 의 이름
+        image: nginx:1.14.2  # container 의 image
+        ports:
+        - containerPort: 80  # container 의 내부 Port
 ~~~
 - 위의 스펙대로 Deployment 를 하나 생성
 ~~~shell
@@ -1019,7 +1021,6 @@ vi deployment.yaml
 
 kubectl apply -f deployment.yaml
 ~~~
-
 
 #### Deployment 조회
 - 생성한 Deployment 의 상태를 확인
@@ -1048,7 +1049,6 @@ kubectl delete pod <pod-name>
 kubectl get pod
 ~~~
 
-
 #### Deployment Scaling
 - replica 개수를 늘려보겠습니다
 ~~~shell
@@ -1075,6 +1075,169 @@ kubectl get pod
 ~~~shell
 kubectl delete -f <YAML-파일-경로>
 ~~~
+
+### 쿠버네티스 - Service
+#### Service 란?
+- Service 는 쿠버네티스에 배포한 애플리케이션(Pod)를 외부에서 접근하기 쉽게 추상화한 리소스
+  - https://kubernetes.io/ko/docs/concepts/services-networking/service/
+- Pod는 IP 를 할당받고 생성되지만, 언제든지 죽었다가 다시 살아날 수 있으며, 그 과정에서 IP는 항상 재할당받기에 고정된 IP로 원하는 Pod에 접근할 수는 없음
+- 따라서 클러스터 외부 혹은 내부에서 Pod에 접근할 때는, Pod의 IP가 아닌 Service 를 통해서 접근하는 방식을 거침
+- Service 는 고정된 IP를 가지며, Service는 하나 혹은 여러 개의 Pod와 매칭
+- 따라서 클라이언트가 Service 의 주소로 접근하면, 실제로는 Service 에 매칭된 Pod에 접속할 수 있게 됨
+
+#### Service 생성
+- 지난 시간에 생성한 Deployment 를 다시 생성
+~~~shell
+kubectl apply -f deployment.yaml
+~~~
+- 생성된 Pod의 IP를 확인하고 접속 시도
+~~~shell
+kubectl get pod -o wide
+# Pod 의 IP 를 확인
+
+curl -X GET <POD-IP> -vvv
+ping <POD-IP>
+# 통신 불가능
+~~~
+- 할당된 <POP-IP> 는 클러스터 내부에서만 접근할 수 있는 IP 이기 때문에 외부에서는 Pod에 접속 불가능
+- minikube 내부로 접속하면 통신이 되는지 확인
+~~~shell
+minikube ssh
+# minikube 내부로 접속
+
+curl -X GET <POD-IP> -vvv
+ping <POD-IP>
+# 통신 가능
+~~~
+- 그럼 이제 위의 Deployment 를 매칭시킨 Service 를 생성해보자
+~~~shell
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-nginx
+  labels:
+    run: my-nginx
+spec:
+  type: NodePort # Service 의 Type 을 명시하는 부분
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:      # 아래 label 을 가진 Pod 를 매핑하는 부분
+    app: nginx
+~~~
+- Service 를 생성
+~~~shell
+vi service.yaml
+# 파일을 열어 위의 내용을 복사 붙여넣기 함
+
+kubectl apply -f service.yaml
+
+kubectl get service 
+# PORT 80:<PORT> 숫자 확인
+
+curl -X GET $(minikube ip):31971
+# 클러스터 외부에서도 정상적으로 pod 에 접속할 수 있는 것을 확인
+~~~
+- NodePort 를 사용하면, node의 IP 를 그대로 사용하되, PORT 는 다르게 사용하는 방식이라고 기억
+- *Service 의 Type 이란? 
+  - <b>NodePort</b> 라는 type 을 사용했기 때문에, minikube 라는 kubernetes cluster 내부에 배포된 서비스에 클러스터 외부에서 접근할 수 있었음 
+    - 접근하는 IP는 pod 가 떠있는 노드(머신)의 IP를 사용하고, Port는 할당받은 Port를 사용 
+  - <b>LoadBalancer</b> 라는 type을 사용해도, 마찬가지로 클러스터 외부에서 접근할 수 있지만, LoadBalancer 를 사용하기 위해서는 LoadBalancing 역할을 하는 묘듈이 추가적으로 필요
+  - <b>ClusterIP</b> 라는 type 은 고정된 IP, PORT를 제공하지만, 클러스터 내부에서만 접근할 수 있는 대역의 주소가 할당됨. 해당 주소로는 외부에서 접근 불가능
+  - 실무에서는 주로 kubernetes cluster 에 MetalLB와 같은 LoadBalancing 역할을 하는 모듈을 설치한 후, <b>LoadBalancer</b> type 으로 서비스를 expose 하는 방식을 사용
+    - NodePort 는 Pod 가 어떤 Node 에 스케줄링될 지 모르는 상황에서, Pod 가 할당된 후 해당 Node 의 IP 를 알아야 한다는 단점이 존재
+
+### 쿠버네티스 - PVC
+#### PVC 란 ? 
+- Persistent Volume(PV), Persistent Volume Claim(PVC)는 stateless 한 Pod 에 영구적으로(persistent) 데이터를 보존하고 싶은 경우 사용하는 리소스
+- 도커에 익숙한 경우 `docker run`의 `-v` 옵션인 도커 볼륨과 유사한 역할을 한다고 이해 할 수 있음 
+- PV는 관리자가 생성한 실제 저장 공간의 정보를 담고 있고, PVC는 사용자가 요청한 저장 공간의 스펙에 대한 정보를 담고 있는 리소스
+- Pod 내부에서 작성한 데이터는 기본적으로 언제든지 사라질 수 있기에, 보존하고 싶은 데이터가 있다면 Pod에 PVC를 Mount 해서 사용해야 한다는 것만 기억
+- PVC를 사용하면 여러 pod 간 data 공유도 쉽게 가능
+
+#### PVC 생성
+- minikube 를 생성하면, 기본적으로 minikube 와 함께 설치되는 storageclass 가 존재함
+  - `kubectl get storageclass` 를 통해 이미 설치된 storageclass 를 확인
+  - PVC 를 생성하면 해당 PVC 의 스펙에 맞는 PV를 그 즉시 자동으로 생성해준 뒤, PVC와 매칭시켜준다고만 이해하면 됨(dynamic provisioning 지원하는 storageclass)   
+- PVC 생성
+~~~shell
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:               # pvc 정보 입력
+  accessModes:
+    - ReadWriteMany # ReadWriteOnce, ReadWriteMany 옵션 선택
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Mi           # storage 용량 설정
+  storageClassName: standard  # 방금 전에 확인한 storageclass의 name 입력
+~~~
+~~~shell
+vi pvc.yaml
+kubectl apply -f pvc.yaml
+
+kubectl get pvc,pv
+# pvc 와 동시에 pv 까지 함께 생성된 것을 확인 가능
+~~~
+
+#### Pod 에서 PVC 사용
+- Pod 를 생성
+  - volumeMounts, volumes 부분이 추가됨 
+~~~shell
+apiVersion: v1 
+kind: Pod      
+metadata: 
+  name: mypod
+spec:     
+  containers:
+  - name: myfrontend 
+    image: nginx
+    volumeMounts:
+    - mountPath: "/var/www/html" # mount 할 pvc 를 mount 할 pod 의 경로 작성
+      name: mypd # 어떤 이름이든 상관없으나, 아래 volumes[0].name 과 일치해야 함
+  volumes:
+    - name: mypd # 어떤 이름이든 상관없으나, 위의 volumeMounts[0].name 과 일치해야 함
+      persistentVolumeClaim:
+        claimName: myclaim    # mount 할 pvc 의 name 을 적음
+~~~
+~~~shell
+vi pod-pvc.yaml
+
+kubectl apply -f pod-pvc.yaml
+~~~
+- pod 에 접속하여 mount 한 경로와 그 외의 경로에 파일 생성
+~~~shell
+kubectl exec -it mypod -- bash
+touch hi-fast-campus
+cd /var/www/html
+touch hi-fast-campus
+~~~
+- pod 를 삭제
+~~~shell
+kubectl delete pod mypod
+~~~
+- pvc 는 그대로 남아있는지 확인
+~~~shell
+kubectl get pvc,pv
+~~~
+- 해당 pvc 를 mount 하는 pod 를 다시 생성
+~~~shell
+kubectl apply -f pod-pvc.yaml
+~~~
+- pod 에 접속하여 아까 작성한 파일들이 그대로 있는지 확인
+~~~shell
+kubectl exec -it mypod -- bash
+
+ls
+# hi-fast-campus 파일이 사라진 것을 확인 
+cd /var/www/html
+
+ls 
+# hi-fast-campus 파일이 그대로 보존되는 것을 확인
+~~~
+
 
 ### 리눅스 명령어 참고
 - `curl` : 사용자 상호 작용 없이 작동하도록 설계된 서버에서 또는 서버로 데이터를 전송하기 위한 명령줄 유틸리티
