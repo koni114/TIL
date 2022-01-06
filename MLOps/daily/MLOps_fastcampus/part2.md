@@ -404,7 +404,7 @@ docker build -t my-image:v1.0.0 .
 - 정상적으로 이미지 빌드되었는지 확인
 ~~~shell
 # grep : my-image가 있는지를 확인하는 명령어 
-docker images | grep my-images
+docker images | grep my-image
 ~~~
 - 이제 빌드한 my-images:v1.0.0 이미지로 docker 컨테이너를 run 해보자
 ~~~shell
@@ -426,14 +426,6 @@ docker run -d -p 5000:5000 --name registry registry
 
 docker ps
 # 정상적으로 registry 이미지가 registry 라는 이름으로 생성되었음을 확인할 수 있음
-# localhost:5000 으로 해당 registry 와 통신 가능
-~~~
-- my-image를 방금 생성한 registry 를 바라보도록 tag 함
-~~~shell
-docker run -d -p 5000:5000 --name registry registry
-
-docker ps
-# 정상적으로 registry 이미지가 registry 라는 이름으로 생성되었음을 확인 가능
 # localhost:5000 으로 해당 registry 와 통신 가능
 ~~~
 - my-image 를 방금 생성한 registry를 바라보도록 tag 함
@@ -1229,14 +1221,14 @@ kubectl apply -f pod-pvc.yaml
 - pod 에 접속하여 아까 작성한 파일들이 그대로 있는지 확인
 ~~~shell
 kubectl exec -it mypod -- bash
-
 ls
-# hi-fast-campus 파일이 사라진 것을 확인 
-cd /var/www/html
+# hi-fast-campus 파일이 사라진 것을 확인
 
+cd /var/www/html
 ls 
 # hi-fast-campus 파일이 그대로 보존되는 것을 확인
 ~~~
+
 
 
 ### 리눅스 명령어 참고
