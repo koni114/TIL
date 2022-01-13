@@ -194,3 +194,4 @@ crontab -l > /home/bak/crontab_bak.txt
 # 크론탭 내용을 txt 파일로 만들어 저장해 둠.
 50 23 * * * crontab -l > /home/bak/crontab_bak.txt
 ~~~
+- 
