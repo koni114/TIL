@@ -201,8 +201,8 @@ ex) /sort -> sort 단어가 들어간 문구들을 하이라이트해서 확인 
 
 * 화면으로 출력되는 것이 기본인데, 출력 방향을 돌려서 다른 곳에다가 저장 함  
 <b/>이를 redirection 이라고 함</b>  
-* 해당 이미지 참조**
-![img](https://github.com/koni114/TIL/blob/master/Linux/img/Linux_IO.JPG/Linux_IO.JPG)
+** 해당 이미지 참조**
+![img](https://github.com/koni114/TIL/blob/master/Linux/img/Linux_IO.JPG)
 * 우리가 실행시킨 Unix Process의 결과가 standard output으로 나옴
 * unix에서 어떤 프로그램이 실행되면, 그것을 processor라고 하는데, 이 processor가 출력하는 결과를 크게 2가지로 나눔
   * 1. standard output
@@ -249,8 +249,8 @@ cat에 result.txt를 입력으로 받겠다는 의미
 * tip : 명령 실행을 하고 싶지 않으면 ctrl + C를 누르면 됨
 * '<<' 여러개의 명령어를 하나로 합친다는 의미
 ~~~
-* ls -al > dev/null
-unix에서 dev/null은 쓰레기통 같은 역할
+* ls -al > /dev/null
+unix에서 /dev/null은 쓰레기통 같은 역할
 따라서 출력도 하고 싶지않고, 저장도 하고 싶지 않을 때 사용
 ~~~
 
@@ -261,7 +261,7 @@ unix에서 dev/null은 쓰레기통 같은 역할
   * Kernel : 핵심, 알맹이라는 의미가 있음
 
 * Shell은 무엇이고, Kernel은 무엇인가?
-![img](https://github.com/koni114/TIL/blob/master/Linux/img/Linux_IO.JPG/shell_kernel.JPG)
+![img](https://github.com/koni114/TIL/blob/master/Linux/img/shell_kernel.JPG)
 * hardware : 컴퓨터의 기계적인 부분들. ex) SSD, CPU 등..
 * Kernel : hardware를 감싸고 있는데, 물리적인 부분을 직접적으로 제어하는, 가장 중심이 되는 core
 * Shell : 사용자가 리눅스에서 어떤 명령어를 입력하면, shell이 입력받아 다시 kernel이 이해할 수 있게끔 해석해줌  

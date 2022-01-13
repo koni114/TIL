@@ -165,28 +165,27 @@ background를 만들어두면 사용자는 불편하게 기다리지 않아도 �
 
 ### 강의 34
 #### Linux - Startup script bashrc
-* shell이 실행됐을 때 특정 명령어가 자동으로 실행되게끔 하는 방법 설명
-  * shell의 startup 설정이라고 부름
+- shell이 실행됐을 때 특정 명령어가 자동으로 실행되게끔 하는 방법 설명
+- 이를 shell의 startup 설정 또는 startup script 라고 부름
 ~~~
-* alias
-* alias l='ls -al'
+$ alias
+$ alias l='ls -al'
+
 ~~~
 * l 이라고 입력하면 ls -al 명령어가 수행됨
 ##### shell 실행 시, 특정 명령어 수행 방법
-* shell 실행 시 bashrc code를 실행하도록 약속되어 있음
-* bash 문법에 따라서 작성된 코드
-* 이 소스 제일 하단에 'Hi bash'를 입력
+- bash는 사용자가 bash 를 처음 실행했을 때, 어떤 특정한 이름의 파일을 실행하도록 되어있음
+- 해당 파일을 확인하는 방법
+~~~shell
+cd ~          # home directory 로 이동
+vi .bashrc  # .bashrc 라고하는 파일을 실행하도록 약속되어 있음
+
+# 해당 파일 안에 echo "Hi bash!" 라는 문장 추가
+echo 'Hi bash!'
 ~~~
-bash
-~~~
-* Hi, bash가 뜨는 것을 확인 할 수 있음
-~~~
-exit
-~~~
-* 종료
-* 그 외에 할 수 있는 것들
-  * prompt 정보 형태 변경
-  * PATH 값을 변경한다던지, 이런 것들을 시작 할 때 자동으로 setting해 줄 수 있음
+- 그 외에 할 수 있는 것들
+  - prompt 정보 형태 변경
+  - PATH 값을 변경한다던지, 이런 것들을 시작 할 때 자동으로 setting해 줄 수 있음
 
 ### 강의 35
 #### Linux - Multi user 1 : intro
@@ -249,22 +248,14 @@ sudo passwd -l root
 
 ### 강의 38
 #### Linux -Add user
-~~~
-sudo useradd -m duru
-~~~
-* 명령을 실행한 사람의 password 입력
-* home 밑에 duru dir 생성
-~~~
-su - duru
-sudo passwd duru
-~~~
-* passwd 입력
-~~~
-sudo pwd
-~~~
-* sudoers file에 존재하지 않는다고 나옴
-* egoing 계정에서 duru 계정을 sudo 명령을 주자
-~~~
+~~~shell 
+sudo useradd -m duru # -m --> home 만들어줌
+cd /home # duru 라고 하는 사용자가 만듬
+
+sudo passwd duru # password 입력하면 됨
+
+# duru 라고 하는 사용자가 sudo 명령을 사용하게 하고 싶은 경우,
+sudo adduser duru sudo
 sudo usermod -a -G sudo duru
 ~~~
 
@@ -359,52 +350,48 @@ chmod -R o+w perm
 * 권한을 주고 싶은 사람에게 group으로 묶는다
 * Group : developer, designer 등 이름을 주고 , file에 group을 부여함
 * group은 중요하지 않음. linux는 다중 사용자이기 때문에 group 개념이 있지만 자주 사용되지 않음
-##### 실습
-* 그룹에 속한 사람들은 특정 파일을 수정할 수 있도록 하고, 아닌 사람들은 못하게 하는 실습해보자
-* group을 developer 로 지정하도록 해보자
-~~~
-cd var
-mkdir developer
-sudo echo 'hi, egoing' > egoing.txt (denied)
-~~~
-* 개발자들이 사용하는 디렉토리를 생성하려고 하면 denied
-why? 현재 디렉토리 권한은 root에게 있기 때문
-~~~
+
+#### 실습
+- 그룹에 속한 사람들은 특정 파일을 수정할 수 있도록 하고, 아닌 사람들은 못하게 하는 실습해보자
+- group을 developer 로 지정하도록 해보자
+- 3명의 사용자가 있다고 해보자(egoing, k8805, leezche). 각각의 사용자가 shell에 접속했을 때를 가정하여 실습을 진행해보자
+~~~shell
+# egoing shell
+cd /var # 해당 디렉토리에 개발자들이 공용으로 사용할 파일 하나 생성
+mkdir developer  # error 발생. Permission denied
+
+# 아래 . 디렉토리의 소유자는 root 는 rwx의 권한이 있지만, other는 w 권한이 없음
+ls -al 
 sudo mkdir developer
-cd developer/
+cd developer
+
+# group 을 developer 를 지정하고 아래 두 계정을 group 으로 포함시키면 됨
+sudo groupadd developer # group 생성
+sudo !!                 # 직전에 사용했던 명령어 수행
+
+vi /etc/group           # 해당 파일에 developer 가 추가됨을 확인
+
+# 아래 두 계정을 맴버로 추가
+usermod -a -G 
+
 ~~~
-* file 생성시 root 권한이 필요한데, root라고 잡혀있는 group을 변경해보자
+~~~shell 
+# k8805 shell
+cd /var/developer
+echo 'hi, egoing' > egoing.txt # permission denied. 
+ls -al # 현재 directory 의 권한이 root 에게만 있음
+
+
 ~~~
-groupadd developer(denied)
-sudo !!
+~~~shell
+# leezche shell
+cd /var/developer
 ~~~
-* !! : 직전에 명령했던 명령어를 지칭함
-~~~
-nano etc/group
-~~~
-* 해당 script 내 developer가 추가되었음을 확인
-~~~
-usermod -a -G developer egoing
-sudo !!
-sudo -a -G developer k8820
-~~~
-* usermod(modify) : 사용자를 수정
-* a(append) : 추가한다는 의미
-* G(group) : group
-~~~
-cd /var/developer/
-~~~
-* group을 만들었으므로, developer로 이동
-* 해당 dir의 권한을 보면 root 권한을 가지고 있음
-~~~
-sudo chown root:developer .
-~~~
-* chown : change file owner and  group
-* 현재 디렉토리의 소유자가 developer로 바뀐 것을 확인 가능
-~~~
-sudo chomd g+w .
-echo 'hi,egoing' > egoing.txt
-~~~
+
+
+
+
+
 ### 강의 43
 #### Linux - internet 1
 * 주소창에 입력하는 주소 -> domain name이라고 함  
