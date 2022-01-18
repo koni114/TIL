@@ -265,6 +265,7 @@ for i in range(ITERATIONS):
   w -= gradient * learning_rate
 ~~~
 
+
 #### 여러 종류의 Storage Level
 - MEMORY_ONLY : 메모리에만 저장
 - MEMORY_AND_DISK : 메모리와 디스크 모두 저장하는데, 메모리에 데이터가 없을 경우, 디스크에 저장
@@ -276,6 +277,7 @@ for i in range(ITERATIONS):
     - RDD: MEMORY ONLY
     - DataFrame: MEMORY_AND_DISK 
   - Persist : Storage Level 을 사용자가 원하는대로 지정 가능 
+
 
 ### Cluster Topology
 - Spark는 Master Worker Topology 로 구성
@@ -306,3 +308,80 @@ three = foods.take(3)
 - Action은 어떻게 분산된 환경에서 작동할까?  
 - 대부분의 Action 은 Reduction 인데, 여기서 말하는 reduction은 근접하는 요소들을 모아서 하나의 결과로 만드는 일
 - 파일 저장, collect() 등과 같이 Reduction 이 아닌 액션도 있음
+
+#### 병렬처리가 가능하려면 ? 
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_08.png)
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_09.png)
+
+- 대표적인 Reduction Actions
+  - Reduce
+  - Fold
+  - Group
+  - Aggregate
+
+#### Reduction Operations code - reduce
+~~~python
+from operator import add
+sc.paralleize([1, 2, 3, 4, 5]).reduce(add)
+
+# 아래 코드를 보면, 결괏값이 달라지게 됨
+# 분산된 파티션들의 연산과 합치는 부분을 나눠서 생각해야함 ** 중요
+# paralleize 함수의 2번째 parameter 는 partition 개수
+from operator import add
+sc.paralleize([1, 2, 3, 4, 5]).reduce(lambda x,y: (x*2)+y)  # 26
+sc.paralleize([1, 2, 3, 4], 1).reduce(lambda x,y: (x*2)+y)  # 26
+sc.paralleize([1, 2, 3, 4], 2).reduce(lambda x,y: (x*2)+y)  # 18
+sc.paralleize([1, 2, 3, 4], 3).reduce(lambda x,y: (x*2)+y)  # 18
+sc.paralleize([1, 2, 3, 4], 3).reduce(lambda x,y: (x*2)+y)  # 26
+
+# (1, 2, 3, 4) --> ((1*2 + 2)*2 + 3)*2 + 4 = 26
+# (1,2) (3,4)  --> ((1*2+2)*2 + (3*2)+4) = 18
+~~~
+- 파티션이 어떻게 나뉠지 프로그래머가 정확하게 알기 어려움
+- 연산의 순서와 상관 없이 결과값을 보장하려면 교환법칙과 결합법칙을 고려해서 코딩해야 함
+
+#### Reduction Operations code - Fold
+~~~python
+# fold 의 첫번째 인자는 시작값을 의미함
+# 즉 해당 파티션의 시작 값을 의미함. 
+from operator import add
+sc.parallelize([1, 2, 3, 4, 5]).fold(0, add) # 0 + 1 + 2 + 3 + 4 + 5 = 15
+
+# 예제 1 reduce vs fold
+rdd = sc.parallelize([2, 3, 4], 4)
+rdd.reduce(lambda x, y: x*y)
+rdd.fold(1, lambda x, y: x*y)
+
+# reduce = (2*3*4) = 24
+# fold   = (1*(1*2)*(1*3)*(1*4)) = 24
+
+rdd = sc.parallelize([2, 3, 4], 4)
+rdd.reduce(lambda x, y: x+y)
+rdd.fold(1, lambda x, y: x+y)
+
+# reduce = (0 + 2 + 3 + 4) = 9
+# fold   = (1 + 1) + (1 + 2) + (1 + 3) + (1 + 4) = 14
+~~~
+
+#### Reduction Operations code - GroupBy
+- RDD.groupBy(<기준 함수>)
+~~~python
+rdd = sc.parallelize([1, 1, 2, 3, 5, 8])
+result = rdd.groupBy(lambda x: x % 2).collect()
+sorted([(x, sorted(y)) for (x, y) in result])
+#  [(0, [2, 8]), (1, [1, 1, 3, 5])]
+~~~
+
+####  Reduction Operations code - Aggregate
+- RDD 데이터 타입과 Action 결과 타입이 다를 경우 사용
+- 파티션 단위의 연산 결과를 합치는 과정을 거침
+- `RDD.aggregate(zeroValue, seqOp, combOp)`
+  - zeroValue: 각 파티션에서 누적할 시작 값
+  - seqOp: 타입 변경 함수
+  - combOp: 합치는 함수 
+~~~python
+seqOp = (lambda x, y: (x[0] + y, x[1] + 1))
+combOp = (lambda x, y: (x[0] + y[0], x[1] + y[1]))
+sc.parallelize([1, 2, 3, 4]).aggregate((0, 0), seqOp, combOp)
+# (10, 4)
+~~~
