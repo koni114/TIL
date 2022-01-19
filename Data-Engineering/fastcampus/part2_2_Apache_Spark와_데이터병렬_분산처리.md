@@ -374,14 +374,212 @@ sorted([(x, sorted(y)) for (x, y) in result])
 
 ####  Reduction Operations code - Aggregate
 - RDD 데이터 타입과 Action 결과 타입이 다를 경우 사용
+- 자주 쓰이는 reduction action
 - 파티션 단위의 연산 결과를 합치는 과정을 거침
 - `RDD.aggregate(zeroValue, seqOp, combOp)`
   - zeroValue: 각 파티션에서 누적할 시작 값
-  - seqOp: 타입 변경 함수
-  - combOp: 합치는 함수 
+  - seqOp: 각 파티션별 reduction computation 수행 함수
+  - combOp: 파티션 각각의 결과를 합치는 함수 
 ~~~python
 seqOp = (lambda x, y: (x[0] + y, x[1] + 1))
 combOp = (lambda x, y: (x[0] + y[0], x[1] + y[1]))
 sc.parallelize([1, 2, 3, 4]).aggregate((0, 0), seqOp, combOp)
+
+# x[0] = 0, x[1] = 0 (zeroValue)
+# x[0] + y = (0 + 1), x[1] + 1 = (0 + 1) -> (1, 1)
+# x[0] + y = (1 + 2), x[1] + 1 = (1 + 1) -> (3, 2)
+
+# x[0] = 0, x[1] = 0 (zeroValue)
+# x[0] + y = (0 + 3), x[1] + 1 = (0 + 1) -> (3, 1)
+# x[0] + y = (3 + 4), x[1] + 1 = (1 + 1) -> (7, 2)
 # (10, 4)
 ~~~
+
+### Key-Value RDD Operations & Joins
+- Key-value RDD 에 적용할 수 있는 Transformation & Action function
+- Transformations
+  - `groupBykey`
+  - `reduceByKey`
+  - `mapValues`
+  - `keys`
+  - `join (+ leftOuterJoin, rightOuterJoin)` 
+- Actions
+  - `countByKey`
+
+#### groupByKey 
+- `groupBy` : 주어진 함수를 기준으로 Group
+- `groupByKey` : 주어지는 Key를 기준으로 Group
+
+~~~python
+# rdd --> a [1, 1], b [1]
+rdd = sc.parallelize([("a",  1), ("b",  1), ("a",  1)]) 
+sorted(rdd.groupByKey().mapValues(len).collect()) # [('a', 2), ('b', 1)]
+
+x = sc.parallelize([
+    ("MATH", 7), ("MATH", 2), ("ENGLISH", 7),
+    ("SCIENCE", 7), ("ENGLISH", 4), ("ENGLISH", 9),
+    ("MATH", 8), ("MATH", 3), ("ENGLISH", 4),
+    ("SCIENCE", 6), ("SCIENCE", 9), ("SCIENCE", 5)], 3)
+
+y = x.groupByKey()
+print(y.getNumPartitions())
+# 3
+
+# 직접 partition 개수를 지정하고 싶은 경우, parameter 로 지정
+y = x.groupByKey(2)
+print(y.getNumPartitions())
+# 2
+
+for t in y.collect():
+    print(t[0], list(t[1]))
+
+# MATH [7, 2, 8, 3]
+# ENGLISH [7, 4, 9, 4]
+# SCIENCE [7, 6, 9, 5]
+~~~
+
+#### reduceByKey
+- `reduce` : 주어지는 함수를 기준으로 요소들을 합침(action)
+- `reduceByKey`: Key를 기준으로 그룹을 만들고 합침(trans)
+~~~python
+from operator import add
+rdd = sc.parallelize([("a",  1), ("b",  1), ("a",  1)])
+sorted(rdd.reduceByKey(add).collect())
+~~~
+- 개념적으로는 groupByKey + reduction 
+- 하지만 groupByKey 보다 훨씬 빠름
+~~~python
+x = sc.parallelize([
+    ("MATH", 7), ("MATH", 2), ("ENGLISH", 7),
+    ("SCIENCE", 7), ("ENGLISH", 4), ("ENGLISH", 9),
+    ("MATH", 8), ("MATH", 3), ("ENGLISH", 4),
+    ("SCIENCE", 6), ("SCIENCE", 9), ("SCIENCE", 5)], 3)
+
+x.reduceByKey(lambda a,b: a+b).collect()
+# [('MATH', 20), ('ENGLISH', 24), ('SCIENCE', 27)]
+~~~
+
+#### mapValues
+- 함수를 value에게만 적용됨
+- 파티션과 키는 그대로. 이는 네트워크 cost를 줄일 수 있어 장점을 가지고 있음
+~~~python
+x = sc.parallelize([("a", ["apple", "banana", "lemon"]), ("b", ["grapes"])])
+def f(x): return len(x)
+x.mapValues(f).collect()
+# [('a', 3), ('b', 1)]
+~~~
+
+#### countByKey
+- 각 key가 가진 요소들을 셈
+~~~python
+rdd = sc.parallelize([("a",  1), ("b",  1), ("a",  1)])
+sorted(rdd.countByKey().items())
+~~~
+
+#### keys
+- Transformation
+- 모든 Key를 가진 RDD 생성
+~~~python
+m = sc.parallelize([(1, 2), (3, 4)]).keys()
+m.collect()
+# [1, 3]
+~~~
+
+#### Joins
+- Transformation
+- 여러개의 RDD를 합치는데 사용
+- 대표적으로 두 가지의 Join 방식이 존재  
+  - Inner Join(join)
+  - Outer Join(left outer, right outer)  
+~~~python
+rdd1 = sc.parallelize([("foo", 1), ("bar", 2), ("baz", 3)])
+rdd2 = sc.parallelize([("foo", 4), ("bar",  5), ("bar", 6), ("zoo", 1)])
+
+rdd1.join(rdd2).collect()
+# [('foo', (1, 4)), ('bar', (2, 5)), ('bar', (2, 6))]
+
+rdd1.leftOuterJoin(rdd2).collect()
+# [('foo', (1, 4)), ('bar', (2, 5)), ('bar', (2, 6)), ('baz', (3, None))]
+
+rdd1.rightOuterJoin(rdd2).collect()
+# [('foo', (1, 4)), ('bar', (2, 5)), ('bar', (2, 6)), ('zoo', (None, 1))]
+~~~
+
+### Shuffing & Partitioning
+- Shuffing 은 그룹핑시 데이터를 한 노드에서 다른노드로 옮길 때 성능을 많이 저하시킴
+- 예를 들어 `groupByKey`를 수행하면 shuffling 이 발생됨
+- Shuffling 을 일으킬 수 있는 작업들
+  - `Join`, `leftOuterJoin`, `rightOuterJoin` 
+  - `GroupByKey`
+  - `ReduceByKey`
+  - `CombineByKey`
+  - `Distinct`
+  - `Intersection`
+  - `Repartition`
+  - `Coalesce`
+- Shuffle 은 결과로 나오는 RDD가 원본 RDD의 다른 요소를 참조하거나 다른 RDD를 참조할 때 발생함
+
+#### GroupByKeys + Reduce
+- reduce 를 하기전에 GroupBy를 수행함으로 성능 저하가 일어남
+
+#### ReduceByKey
+- 각각의 partition 에서 reduce 연산을 수행하고, 이를 groupBy 하게 되면 연산 수행 속도를 최적화 시킬 수 있음
+
+#### Shuffle 최소화 방법
+- 미리 파티션을 만들어 두고 캐싱 후 reduceByKey 실행
+- 미리 파티션을 만들어 두고 캐싱 후 join 실행 
+- 둘다 파티션과 캐싱을 조합해서 최대한 로컬환경에서 연산이 실행되도록 하는 방식
+- 셔플을 최소화 해서 10배의 성능 향상이 가능 
+
+#### GroupByKey vs groupByKey code 
+~~~python
+# reduceByKey
+(textRDD
+ .flatMap(lambda line: line.split())
+ .map(lambda word: (word, 1))
+ .reduceByKey(lambda a, b: a + b))
+
+# groupByKey
+# --> out-of-memory 등 문제가 발생할 여지가 있음
+(textRDD
+ .flatMap(lambda line: line.split())
+ .map(lambda word: (word, 1))
+ .groupByKey()
+ .map(lambda (w, counts): (w, sum(counts))))
+~~~
+
+#### partition은 어떻게 결정될까? 
+- 데이터가 어느 노드/파티션에 들어가는지는 어떻게 결정될까? 
+- 데이터를 최대한 균일하게 퍼트리고 쿼리가 같이 되는 데이터를 최대한 옆에 두어 검색 성능을 향상 시키는 것
+- partition을 잘하는 것은 일반 RDD에서는 의미가 없음  
+  어차피 모든 데이터를 한번 scan 해야하기 때문
+- paired-RDD에서 partition 을 잘하게 되는 것이 의미가 있음  
+  예를 들어 hash 를 기준으로 partition 을 수행하면 key를 바로 찾을 수도 있음
+
+#### Partition 특징
+- RDD는 쪼개져서 여러 파티션에 저장됨
+- 하나의 파티션은 하나의 노드(서버)에, 하나의 노드는 여러개의 파티션을 가질 수 있음
+- 파티션의 크기와 배치는 자유롭게 설정 가능하며 성능에 큰 영향을 미침
+- Key-Value RDD를 사용할 때만 의미가 있음
+
+#### Partition 종류
+- Hash Partitioning
+  - 데이터를 여러 파티션에 균일하게 분배하는 방식
+  - [극단적인 예] 2개의 파티션이 있는 상황에서:
+    - 짝수의 key만 있는 데이터셋에 Hash 함수가 (x % 2) 라면?
+    - 한쪽 파티션만 사용하게 될 것  
+      Partition 1: [2, 4, 6, 8, 10, ...]
+      Partition 2: []
+  - dictionary와 매우 비슷
+- Range Partitioning
+  - 순서가 있는, 정렬된 파티셔닝
+  - 키의 순서, 키의 집합의 순서에 따라 파티셔닝이 수행됨
+  - 서비스의 쿼리 패턴이 날짜 위주면 일별 Range Partition 고려 
+
+#### Memory & Disk Partition
+- 디스크에서 파티션하기 
+  - `partitionBy()` (trans)
+- 메모리에서 파티션하기
+  - `repartition()` 
+  - `coalesce()`   
+- 보통은 partitionBy를 많이 사용하게 될 것임
