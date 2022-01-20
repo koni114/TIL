@@ -495,3 +495,7 @@ FROM
 """
 spark.sql(query).show()
 ~~~
+
+### 뉴욕 택시 데이터 분석
+- https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page 사이트에서 Yellow taxi trip record 데이터를 1월부터 7월까지 다운로드
+- 

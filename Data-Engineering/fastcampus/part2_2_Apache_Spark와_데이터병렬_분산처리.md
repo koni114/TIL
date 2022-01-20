@@ -580,6 +580,6 @@ rdd1.rightOuterJoin(rdd2).collect()
 - 디스크에서 파티션하기 
   - `partitionBy()` (trans)
 - 메모리에서 파티션하기
-  - `repartition()` 
-  - `coalesce()`   
+  - `repartition()`
+  - `coalesce()`
 - 보통은 partitionBy를 많이 사용하게 될 것임
