@@ -62,7 +62,7 @@ count = pairs.reduceByKey(lambda a, b, : a + b)
 #### reduceByKey 연산 예제
 ~~~python
 # reduceByKey 연산을 사용하여 key 별 평균값 계산하기
-
+# 카테고리(중식, 일식...) 별 평균 값 계산하기
 from pyspark import SparkConf, SparkContext
 conf = SparkConf().setMaster('local').setAppName("category-review-average")
 sc = SparkContext(conf=conf)
@@ -84,6 +84,8 @@ def parse(row):
 
 
 categoryReviews = filtered_lines.map(parse)
+
+# mapValues --> key 는 고정된 상태에서 values 값만 처리하기 위한 함수
 categoryReviewsCount = categoryReviews.mapValues(lambda x: (x,  1))
 
 

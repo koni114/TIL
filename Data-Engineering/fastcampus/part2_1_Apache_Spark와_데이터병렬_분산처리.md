@@ -40,6 +40,7 @@
 - 해당 코드를 다운로드 받고, data-engineering 폴더에 data 폴더를 생성하고, 다운로드 받은 파일을 넣으면 됨
 
 ### 우버 트립수 세기
+- 우버 택시의 일별 트립 수를 세보기
 - 01-spark directory 로 이동하여 `count_trips.py` 파일 오픈
 ~~~python
 # 패키지 가져오기

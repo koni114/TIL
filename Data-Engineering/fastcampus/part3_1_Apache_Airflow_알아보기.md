@@ -42,7 +42,20 @@
 - Executor - 테스크가 어떻게 실행되는지 정의
 - Worker - 테스크를 실행하는 프로세스
 
+#### Operator
+- Operator는 작업(task)를 정의하는 데 사용
+- Action Operators: 실제 연산을 수행
+- Transfer Operators: 데이터를 옮김
+- Sensor Operators: 테스크를 언제 실행시킬 트리거를 기다림
+- Operator를 실행시키면 하나의 Task가 됨
+- Task = Operator Instance
 
+#### Airflow 유용성
+- 데이터 웨어하우스
+- 머신러닝
+- 분석
+- 실험
+- 데이터 인프라 관리
 
 ### 용어 정리
 - Backfill
