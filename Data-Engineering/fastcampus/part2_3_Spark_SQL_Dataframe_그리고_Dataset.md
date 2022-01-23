@@ -222,10 +222,13 @@ spark.sql("select stocks.name, (stocks.price / earnings.eps) from stocks join ea
   - DataFrame에서의 Aggregation 작업들  
 
 #### DataFrame은 관계형 데이터
+- Spark SQL에서 사용하는 데이터 모델
 - DataFrame은 관계형 데이터셋: RDD + Relation
 - RDD가 함수형 API를 가졌다면 DataFrame은 선언형 API
 - 자동으로 최적화가 가능
 - 타입이 없음
+  - 타입이 완전히 없는 것이 아니라, DataFrame의 내부 row 타입이 존재하지 않음 
+
 
 #### DataFrame: RDD의 확장판
 - 지연 실행(Lazy Execution)
@@ -498,4 +501,10 @@ spark.sql(query).show()
 
 ### 뉴욕 택시 데이터 분석
 - https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page 사이트에서 Yellow taxi trip record 데이터를 1월부터 7월까지 다운로드
-- 
+
+### 용어 정리
+- 선언형(declarative) 프로그래밍
+  - 선언형 프로그래밍은 무엇을 할 것인가에 가까움
+  - 어떻게?에 대한 부분은 추상화를 하고 무엇을? 에 집중
+  - 필요한 것을 달성하는 과정을 하나 하나 기술하는 것보다, 어떤 것인지에 중점을 두고 구조를 세워나가는 프로그래밍
+

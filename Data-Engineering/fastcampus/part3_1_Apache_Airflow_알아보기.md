@@ -57,6 +57,92 @@
 - 실험
 - 데이터 인프라 관리
 
+### Airflow 의 구조
+- Airflow 의 실행 환경은 크게 2가지로 구분되는데, 하나의 서버에서 실행되는 one-node Architecture 와 분산된 환경에서 실행되는 multi-node Architecture 로 구분됨
+
+#### Airflow one-node Architecture
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_16.png)
+- one node Architecture 는 크게 4가지로 구분해 볼 수 있음
+  - Web Server
+  - Scheduler
+  - Meta store
+  - Exec 
+- meta store 에서 DAG에 대한 정보를 담고 있기 때문에, 이에 대한 정보를 Web Server 와 Scheduler가 정보를 읽어옴
+- 읽어온 정보를 기반으로 executor 에서 실제 작업을 수행
+- task instance 는 다시 meta store에 상태를 업데이트 함
+- 다시 web server 와 scheduler 가 meta store 에 있는 상태를 읽어와서 완료를 확인함
+- Executor 에는 queue 가 존재하여 task의 순서를 정하게 됨
+
+#### Airflow multi-node Architecture
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_17.png)
+
+- one-node architecture 와 다른 점은 queue 의 위치라고 할 수 있는데, 위의 그림에서 Celery Broker 가 queue 라고 할 수 있음
+- 크게 왼쪽에 있는 Airflow UI 와 Scheduler 가 있는 왼쪽 파트, 오른쪽에 worker node 가 있는 파트와 바깥에 queue 와 SQL Store 가 있는 파트 3개로 나누어 볼 수 있음
+- Airflow UI 와 Scheduler 가 SQL Store 에 있는 DAG 정보를 읽어와 순차적으로 Celery Broker 인 queue 에 저장하게 되고, 이를 순차적으로 worker node 에 실행시키는 방식
+- worker node 에서 완료된 결과를 celery Broker 를 지나 SQL meta-store 에 저장하게 됨
+- 완료된 정보를 다시 Airflow UI 와 Scheduler 가 읽어오게 됨
+
+#### Airflow 동작방식
+- DAG를 작성하여 Workflow를 만든다. DAG는 Task로 구성되어 있음
+- Task는 Operator가 인스턴스화 된 것 
+- DAG를 실행시킬 때 Scheduer는 DagRun 오브젝트를 만듬
+- DAGRun 오브젝트는 Task Instance를 만듬
+- Worker 가 Task 를 수행 후 DagRun 의 상태를 "완료"로 바꿔 놓음 
+
+#### DAG 생성과 실행
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_18.png)
+
+- 유저가 새로운 DAG를 작성 후 Folder DAGs 안에 배치
+- Web server 와 Scheduler 가 DAG를 파싱
+- Scheduler 가 Metastore 를 통해 DagRun 오브젝트를 생성
+- DagRun 은 사용자가 작성한 DAG의 인스턴스  
+  DagRun status: Running
+- Scheduler 는 Task Instance 를 스케줄링 하며, 이는 DagRun 의 Instance 
+- Task Instance를 Executor 로 보냄
+- Scheduler 는 DAG 실행이 완료됐나 확인하고, 완료되었으면 DagRun status 를 Completed로 변경
+- Meta store 의 정보를 웹서버가 다시 읽어드림
+
+### Airflow 설치
+- Airflow 는 flask 기반으로 웹 서버를 구동시킴
+
+~~~shell
+pip --version # 버전 확인 3.6 이상 필요
+pip install apache-airflow  # apache-airflow 설치
+
+airflow # 정상 실행되는지 확인
+
+# home dir 안에 airflow dir 이 생김
+airflow db init  
+
+# initialize 된 DB 를 기반으로 Web server 구동
+airflow webserver -p 8080 # p는 port 를 뜻함
+
+# localhost:8080 을 통해 airflow 로그인 화면 확인 !
+# 아직 아이디가 없음 -> user 만들기
+
+airflow users create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin
+
+# airflow UI 접속 가능
+~~~
+
+### Airflow CLI
+- 다음 명령어를 통해 airflow command 에 대해서 알아볼 수 있음
+~~~shell
+airflow -h  
+~~~
+- airflow webserver 를 open
+~~~shell
+airflow webserver
+~~~
+
+
+
+
+
+
+
+
+
 ### 용어 정리
 - Backfill
   - 우선순위가 높은 작업(top job)의 작업 시작 시간에 방해되지 않는 선에서 후순위 작업을 먼저 실행 시키는 정책 

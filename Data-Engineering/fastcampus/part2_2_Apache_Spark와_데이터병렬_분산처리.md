@@ -330,7 +330,7 @@ sc.paralleize([1, 2, 3, 4, 5]).reduce(add)
 # 분산된 파티션들의 연산과 합치는 부분을 나눠서 생각해야함 ** 중요
 # paralleize 함수의 2번째 parameter 는 partition 개수
 from operator import add
-sc.paralleize([1, 2, 3, 4, 5]).reduce(lambda x,y: (x*2)+y)  # 26
+sc.paralleize([1, 2, 3, 4, 5]).reduce(lambda x,y: (x*2)+y)  # 57
 sc.paralleize([1, 2, 3, 4], 1).reduce(lambda x,y: (x*2)+y)  # 26
 sc.paralleize([1, 2, 3, 4], 2).reduce(lambda x,y: (x*2)+y)  # 18
 sc.paralleize([1, 2, 3, 4], 3).reduce(lambda x,y: (x*2)+y)  # 18
@@ -533,7 +533,7 @@ rdd1.rightOuterJoin(rdd2).collect()
 - 둘다 파티션과 캐싱을 조합해서 최대한 로컬환경에서 연산이 실행되도록 하는 방식
 - 셔플을 최소화 해서 10배의 성능 향상이 가능 
 
-#### GroupByKey vs groupByKey code 
+#### reduceByKey vs groupByKey code 
 ~~~python
 # reduceByKey
 (textRDD
