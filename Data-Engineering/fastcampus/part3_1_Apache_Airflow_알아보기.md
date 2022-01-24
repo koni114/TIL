@@ -74,7 +74,7 @@
 - Executor 에는 queue 가 존재하여 task의 순서를 정하게 됨
 
 #### Airflow multi-node Architecture
-![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_17.png)
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_16_1.png)
 
 - one-node architecture 와 다른 점은 queue 의 위치라고 할 수 있는데, 위의 그림에서 Celery Broker 가 queue 라고 할 수 있음
 - 크게 왼쪽에 있는 Airflow UI 와 Scheduler 가 있는 왼쪽 파트, 오른쪽에 worker node 가 있는 파트와 바깥에 queue 와 SQL Store 가 있는 파트 3개로 나누어 볼 수 있음
@@ -90,7 +90,7 @@
 - Worker 가 Task 를 수행 후 DagRun 의 상태를 "완료"로 바꿔 놓음 
 
 #### DAG 생성과 실행
-![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_18.png)
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_17.png)
 
 - 유저가 새로운 DAG를 작성 후 Folder DAGs 안에 배치
 - Web server 와 Scheduler 가 DAG를 파싱
@@ -126,22 +126,98 @@ airflow users create --role Admin --username admin --email admin --firstname adm
 ~~~
 
 ### Airflow CLI
-- 다음 명령어를 통해 airflow command 에 대해서 알아볼 수 있음
+#### 명령어 확인 및 web server 구동
+- `-h` 명령어를 통해 airflow command 에 대해서 알아볼 수 있음
 ~~~shell
 airflow -h  
 ~~~
-- airflow webserver 를 open
+- `webserver` 명령어를 통해 airflow UI 서버를 구동시킬 수 있음
+- Host 서버를 확인하여, 잡속. Host: 0.0.0.0:8080 이므로, localhost:8080 으로 접속
 ~~~shell
 airflow webserver
 ~~~
 
+#### 계정 생성
+- user-name 과 password 를 만들어야함
+~~~shell
+airflow users -h  # help 확인
 
+# 다음의 명령어를 사용하여 계정 생성
+airflow users create -u admin2 -p admin2 -f Jaehun -l Huh -e admin2@admin.com 
+~~~
 
+#### airflow 스케줄러 기동
+~~~shell
+airflow scheduler 
+~~~
 
+#### airflow db
+- airflow database(metadata store) 에 기본 파이프라인 생성
+- 초기화가 되는 것이기 때문에 조심히 써야 함
+~~~shell
+airflow db init
+~~~
 
+#### airflow dag, task 실행(trigger 실행)
+~~~shell
+airflow dags list                # 현재 돌아가는 dag 들 출력
+airflow tasks list example_xcom  # example_xcom dag 안의 task 확인
+airflow dags trigger -e 2022-01-01 example_xcom  # 해당 example_xcom 를 2022-01-01 날짜로 dag 실행
+~~~
+- 위의 마지막 명령어 수행시, airflow UI 에서 queue 가 생성된 것을 확인 가능  
+  이는 UI에서 자유롭게 삭제할 수 있음
 
+### airflow UI
+#### airflow 첫 화면에서 로그인 후 메인 화면
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_18.png)
 
+- DAGs 라는 list가 보이며, database 상에 존재하는 list를 출력
+- DAGs의 컬럼 별로 기능을 알아보자
+  - `Pause/Unpause DAG` : 해당 DAG 을 실행/중지 시키는 기능
+  - `DAG` : DAG의 이름, example, example2 라는 tag를 확인  
+    프로젝트 별로 tag를 별도로 지정 가능
+  - `Owner` : 해당 프로젝트를 누가 관리하는지 확인 가능
+  - `Runs` : 현재 실행 중인 DAG의 상태(queued, success, running, failed)
+  - `Schedule` : 해당 DAG의 schedule 정보 확인(crontab)  
+    crontab.guru 사이트에서 쉽게 crontab 에 대해서 확인 가능 
+  - `Last Run` : DAG의 마지막 상태를 확인 가능
+  - `Next Run` : 다음 run 이 언제 스케줄링 되는지 확인 가능
+  - `Recent Tasks` : 실행된 테스크 들의 상태 확인 가능  
+    - up_for_retry : 실패해서 다시 실행 중
+    - upstream_failed : 의존성이 있는 상태에서 위에 있는 task가 실패된 것을 의미
+  - `Actions` : 지금 바로 실행/삭제 시킬 수 있는 버튼  
+    지운다는 의미는 DAG meta 정보 자체를 DB에서 삭제하는 것이 아니라, Instsance 만 삭제
+  - `Links` : 여러가지 상세 정보를 확인하기 위한 기능 제공
 
+#### DAG View 확인 화면 - Tree
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_19.png)
+- Tree View 가 보이고, 밑에 보면 workflow 확인 가능
+- 해당 task 들의 상태 확인 가능  
+- refresh를 해보면 현재 진행되고 있는 task 들의 상태를 확인 가능
+
+#### DAG View 확인 화면 - Graph
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_20.png)
+- `Graph` View 는 해당 task 들의 의존성을 확인 가능 
+- 해당 task 를 클릭하면 modal 창이 뜨는 것을 확인 가능
+
+#### DAG View 확인 화면 - calander
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_21.png)
+- 해당 task 들이 날짜 별로 정상적으로 수행이 됐는지 확인 가능
+
+#### DAG View 확인 화면 - Gantt
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_22.png)
+
+- 각각의 task 가 얼마나 task 를 소비했는지 확인 가능  
+  bottle neck 구간을 확인 가능
+- task 들이 병렬 처리가 정상적으로 됐는지를 확인 가능(같은 시간대에 겹쳐 있을 것임)
+- 전체적인 DAG의 시간을 효율화할 수 있게 됨
+
+#### DAG View 확인 화면 - Graph Modal 창 확인
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_23.png)
+- 각각의 `Task` 를 `control` 할 수 있음  
+  예를 들어, task 가 망가졌을 때, `clear` ,  `run` 을 누르면 재 실행 가능
+- `Mark Failed` 는 강제로 실패했다고 표시하고 싶은 경우
+- 상단의 `Log` 버튼을 눌러, 해당 task 가 발생하는 로그를 확인 가능
 
 ### 용어 정리
 - Backfill
