@@ -195,6 +195,16 @@ creating_table >> is_api_available >> extract_nft >> process_nft >> store_nft
 - 해당 정보를 airflow UI 에서 확인이 가능
 - ** 주의. error 가 날 수 있는데, sqlite table(nfts) 에 key가 중복될 수 있기 때문
 
+### Backfill
+- 매일 주기적으로 돌아가는 파이프라인을 멈췄다가 몇일 뒤 실행시키면 어떻게 될까? 
+- 다음과 같은 일별 파이프라인이 있다고 가정해보자
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_24.png)
+
+- 예를 들어 1월 1일에는 정상적으로 작동했으며, 1/2일 장애 발생 1/3일 복구 작업, 1/4일에 재기동 되었다고 가정해보자
+- 그렇다면 1/4일날 돌린 배치는 언제 배치일까? 이는 1/2일 배치일 수도있고, 1/4일 파이프라인일 수 있음
+- 이를 컨트롤 하는 방법에 대해서 알아보자
+- 이를 컨트롤 하지 못하면 원하지 않은 DagRun이 돌아감
+- `catchup` 이라는 Field 로 작업이 가능함. 해당 값을 `True`로 설정 해두게 되면 1/2 ~ 1/4까지 차례로 실행됨
 
 
 ### 용어 정리

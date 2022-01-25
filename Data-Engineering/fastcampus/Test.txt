@@ -1,0 +1,19 @@
+안녕하세요,
+
+apache airflow 실습을 진행하고 있는 중에 'airflow tasks test nft-pipeline is_api_available 2021-01-24' command 명령어 수행 시 403 Forbidden error 가 발생합니다. 
+
+현재 구글링을 통해 여러가지 조치를 해보았는데도 여전히 에러가 발생해 문의해 봅니다.
+
+실행은 local PC 에서 진행 중입니다.
+
+- airflow version : 2.2.3
+- 실행 환경 : macOS Catalina 10.15.7
+
+조치해본 사항
+1. airflow.cfg 파일 내 auth_backend = airflow.api.auth.backend.default 로 변경
+2. environment variable 설정 
+   AIRFLOW__API__AUTH_BACKEND="airflow.api.auth.backend.basic_auth"
+	
+에러 본문은 파일로 첨부하였습니다.
+
+제가 놓치고 있는 부분이 있는지, 혹시 아시는 분이 계시면 답변 주시면 감사하겠습니다!

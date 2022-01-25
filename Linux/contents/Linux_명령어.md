@@ -194,4 +194,10 @@ crontab -l > /home/bak/crontab_bak.txt
 # 크론탭 내용을 txt 파일로 만들어 저장해 둠.
 50 23 * * * crontab -l > /home/bak/crontab_bak.txt
 ~~~
-- 
+
+## 데이터 확인
+- csv file 의 head 몇 줄만 확인하고 싶은 경우
+~~~shell
+head -3 test.csv
+~~~
+
