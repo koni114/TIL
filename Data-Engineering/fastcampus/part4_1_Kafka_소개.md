@@ -84,8 +84,15 @@
 #### Kafka Producer & Consumer
 - Producer 는 Message 를 topic 으로 보내는 역할을 하는 클라이언트 어플리케이션   
   메세지를 어느 파티션에 넣을지 결정(key)
-- Consumer 는 메세지를 소비하는 역할 수행
-  
+- Consumer 는 메세지를 소비하는 역할 수행(클라이언트 어플리케이션)
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_36.png)
+
+- Consumer는 따로 group을 지정하지 않으면 독립적인 새로운 consumer group이 생성됨
+- 각 counsumer group 은 모든 파티션으로부터 데이터를 받을 수 있고, consumer는 지정된 파티션으로부터 데이터를 받을 수 있음  
+- 위의 그림에서 Consumer group 1 은 P1, P2, P3, P4 의 데이터를 받을 수 있으며, 각각 consumer1, consumer2 는 지정된 데이터(p1, p3), (p2, p4) 만 받을 수 있음
+- 또한 partition 을 consumer에게 균등하게 배분하기 위하여 <b>rebalancing</b> 수행
+
 
 #### Kafka Partition
 ![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/fastcampus/img/DE_31.png)
@@ -113,6 +120,7 @@
 
 #### Kafka Consumer group
 - 여러 개의 consumer 가 모여 group 을 형성할 수 있음
+
 
 #### Kafka cluster
 - kafka 는 고가용성과 확장성을 위해 cluster 형성
@@ -150,5 +158,20 @@
 - 각 브로커는 복제된 파티션중 대표를 하는 파티션 리더를 가지게 됨
 - 모든 Read/Write 는 파티션 리더를 통해 이루어지게 됨
 - 다른 파티션들은 파티션 리더를 복제
+ 
+### kafka zookeeper
+- Consumer와 통신, 메타데이터 정보 저장, 카프카 상태관리
+- zookeeper는 분산 시스템
+  - 분산 시스템간의 정보 공유, 상태 체크, 서버들 간의 동기화
+  - 분산 시스템의 일부이기 때문에 동작을 멈춘다면 분산 시스템에 영향을 미치므로, 클러스터로 구성됨
+  - 클러스터는 홀수로 구성되어 문제가 생겼을 경우 과반수가 가진 데이터를 기준으로 일관성 유지 
+- zookeeper가 하는 일
+  - 클러스터 관리: 클러스터에 존재하는 브로커를 관리하고 모니터링
+  - Topic 관리: 토픽 리스트를 관리하고 토픽에 할당된 파티션과 Replication 관리
+  - 파티션 리더 관리: 파티션의 리더가 될 브로커를 선택하고, 리더가 다운될 경우 다름 리더를 선택
+  - 브로커들끼리 서로를 발견할 수 있도록 정보 전달
 
-
+### kafka 설치
+- `bin` 폴더 안에 있는 bash shell이 실제 사용할 shell
+- `window` 에서는 `bat` 파일을 사용하면 됨
+- 예를 들어, kafka 를 실행하고 싶으면, `kafka-server-start.sh` 파일 실행
