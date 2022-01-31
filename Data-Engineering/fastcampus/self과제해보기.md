@@ -66,6 +66,11 @@ transactions = [
 schema = ["name", "datetime", "price", "currency"]
 ~~~
 
+### kafka 과제
+1. 2개의 consumer 와 2개의 producer 를 실행시킬 kafka server 를 실행시켜 보세요  
+ 이 때, 2개의 producer 에서 각각 message 를 post 할 때, 동시 2개의 consumer에 get 되어야 합니다.  
+이러한 구조를 만들기 위해서 어떻게 옵션을 처리했으며, 그러한 이유가 무엇인지도 같이 설명해주세요
+
 
 ### spark 과제 해답
 
@@ -93,4 +98,34 @@ query = """
     GROUP BY  pickup_date
 """
 spark.sql(query).show()
+~~~
+
+### kafka 과제 답변
+1. 2개의 consumer 와 2개의 producer 를 실행시킬 kafka server 를 실행시켜 보세요  
+ 이 때, 2개의 producer 에서 각각 message 를 post 할 때, 동시 2개의 consumer에 get 되어야 합니다.  
+이러한 구조를 만들기 위해서 어떻게 옵션을 처리했으며, 그러한 이유가 무엇인지도 같이 설명해주세요
+- 2개의 consumer 를 동일한 group으로 묶게되면 producer 가 message 를 해당 group 으로 post 했을 때, 하나의 consumer 에만 post 됨  
+그 이유는 topic 이 가지고 있는 partition 이 하나만 있기 때문. 이 partition은 반드시 한 개의 consumer 와 매핑되기때문
+- 따라서 이를 방지하기 위해 partition이 여러 개여야 함  
+  partition 개수가 2인 second-topic 생성
+~~~shell
+# topic 생성.
+# 이 때, partition 의 개수를 2개 이상해야 consumer group 내에 분산 처리됨
+ ./bin/kafka-topics.sh --create --topic second-topic --bootstrap-server localhost:9092 --partitions 2 --replication-factor 1
+~~~
+~~~shell
+# producer_1
+./bin/kafka-console-producer.sh --topic second-topic --bootstrap-server localhost:9092
+~~~
+~~~shell
+# producer_2 --> producer_1 과 동일
+./bin/kafka-console-producer.sh --topic second-topic --bootstrap-server localhost:9092
+~~~
+~~~shell
+# consumer_1
+./bin/kafka-console-consumer.sh --topic second-topic --bootstrap-server localhost:9092 --group second-group
+~~~
+~~~shell
+# consumer_2
+./bin/kafka-console-consumer.sh --topic second-topic --bootstrap-server localhost:9092 --group second-group
 ~~~

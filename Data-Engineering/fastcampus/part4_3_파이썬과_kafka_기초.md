@@ -120,7 +120,8 @@ services:
    3개의 kafka(broker)를 사용하기 위해 port를 9091, 9092, 9093 으로 설정
 - `environment`
   - `KAFKA_ADVERTISED_LISTENERS` kafka listener 설정  
-  docker_internal, docker_external 설정
+  docker_internal, docker_external 설정  
+  kafka broker를 가리키는 사용 가능 주소 목록. kafka는 초기 연결시 이를 client에게 보냄
   - `KAFKA_LISTENER_SECURITY_PROTOCOL_MAP`: 
   - `KAFKA_ZOOKEEPER_CONNECT` : zookeeper 와 연결하기 위한 connection 정보 삽입
 - `volumes` : kafka 와 local host 상의 directory mount 설정
@@ -158,7 +159,10 @@ kafdrop:
 - 그러기 위해서는 `docker exec -it 03-kafka_kafka1_1` 명령어 사용  
   이는 docker 내 kafka의 이름(docker app에서 확인 가능)
 ~~~shell
-docker exec -it 03-kafka_kafka1_1 kafka-topics --bootstrap-server=localhost:19091 --create --topic first-cluster-topic --partitions 3 --replication-factor 1
+# 03-kafka-kafka1-1
+docker exec -it 03-kafka-kafka1-1 kafka-topics --bootstrap-server=localhost:19091 --create --topic first-cluster-topic --partitions 3 --replication-factor 1
+
+
 ~~~
 - 위의 명령어 수행시 first-cluster-topic 이라는 topic 이 추가되며, partition도 3개가 추가되는 것을 확인 가능
 - kafdrop 을 사용시, 굉장히 쉽게 관리가 가능
@@ -193,7 +197,7 @@ for message in consumer:
 
 #### producer-consumer test
 - 먼저 하나의 terminal 창에서 `python cluster_consumer.py` 실행
-- 다른 하나의 terminal 창에서 `python cluster_producer.py`를 실행하면, 해당 스크립트에서 작성한 message가 정상적으로 송신되는 것을 확인
+- 다른 하나의 terminal 창에서 `python cluster_producer.py`를 실행하면, 해당 스크립트에서 작성한 message가 정상적으로 송신되는 것을 확인ㅈ
 
 ### kafdrop으로 메세지 확인하기
 - kafdrop UI 에서 topic 클릭 후, View-Messages 를 클릭하면 각각의 message 들을 확인 가능

@@ -134,7 +134,7 @@ bin/kafka-topics.sh --describe --bootstrap-server localhost:9092
 ~~~
 - consumer의 first-group의 상세 정보를 확인하려면 `--describe group first-group` 으로 확인
 ~~~shell
-./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --describe group first-group
+./bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group first-group
 ~~~
 
 ### Consumer와 Partitions
@@ -144,6 +144,25 @@ bin/kafka-topics.sh --describe --bootstrap-server localhost:9092
 - 따라서 이를 방지하기 위해 partition이 여러 개여야 함  
   partition 개수가 2인 second-topic 생성
 ~~~shell
-./bin/kafka-topics.sh --create --topic second-topic --bootstrap-server localhost:9092 --partitions 2 --replication-factor 
+# topic 생성.
+# 이 때, partition 의 개수를 2개 이상해야 consumer group 내에 분산 처리됨
+ ./bin/kafka-topics.sh --create --topic second-topic --bootstrap-server localhost:9092 --partitions 2 --replication-factor 1
 ~~~
+~~~shell
+# producer_1
+./bin/kafka-console-producer.sh --topic second-topic --bootstrap-server localhost:9092
+~~~
+~~~shell
+# producer_2 --> producer_1 과 동일
+./bin/kafka-console-producer.sh --topic second-topic --bootstrap-server localhost:9092
+~~~
+~~~shell
+# consumer_1
+./bin/kafka-console-consumer.sh --topic second-topic --bootstrap-server localhost:9092 --group second-group
+~~~
+~~~shell
+# consumer_2
+./bin/kafka-console-consumer.sh --topic second-topic --bootstrap-server localhost:9092 --group second-group
+~~~
+
 - 이렇게 되면 consumer가 message를 균등하게 받아 분산처리가 가능하게 됨 
