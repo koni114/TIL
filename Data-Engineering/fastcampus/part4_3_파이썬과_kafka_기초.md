@@ -202,7 +202,12 @@ for message in consumer:
 ### kafdrop으로 메세지 확인하기
 - kafdrop UI 에서 topic 클릭 후, View-Messages 를 클릭하면 각각의 message 들을 확인 가능
 
+### CSV를 스트림으로 바꿔주는 Producer
+- 저번에 만들어둔 클러스터를 활용해서 실습 진행
+- 뉴욕 trip data를 이용해서 csv 파일을 stream 으로 변경해보는 실습 수행
+- 새롭게 `trips` folder 를 만들고, 안에 `yellow_tripdata_2021_01.csv` 넣기
+- csv 읽어오면서 stream event 를 동시에 발생시키면 알아보기 어렵기 때문에, sleep 사용
 
 ### 용어 정리
 - listener
-  - 특정 이벤트(특정한 사건)이 발생하기를 귀 귀울여 기다리다가 실행되는 컴포넌트(메소드, 함수) 
+  - 특정 이벤트(특정한 사건)이 발생하기를 귀 귀울여 기다리다가 실행되는 컴포넌트(메소드, 함수)
