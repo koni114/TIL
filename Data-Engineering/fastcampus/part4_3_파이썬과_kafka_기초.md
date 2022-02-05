@@ -197,7 +197,7 @@ for message in consumer:
 
 #### producer-consumer test
 - 먼저 하나의 terminal 창에서 `python cluster_consumer.py` 실행
-- 다른 하나의 terminal 창에서 `python cluster_producer.py`를 실행하면, 해당 스크립트에서 작성한 message가 정상적으로 송신되는 것을 확인ㅈ
+- 다른 하나의 terminal 창에서 `python cluster_producer.py`를 실행하면, 해당 스크립트에서 작성한 message가 정상적으로 송신되는 것을 확인
 
 ### kafdrop으로 메세지 확인하기
 - kafdrop UI 에서 topic 클릭 후, View-Messages 를 클릭하면 각각의 message 들을 확인 가능
@@ -208,6 +208,134 @@ for message in consumer:
 - 새롭게 `trips` folder 를 만들고, 안에 `yellow_tripdata_2021_01.csv` 넣기
 - csv 읽어오면서 stream event 를 동시에 발생시키면 알아보기 어렵기 때문에, sleep 사용
 
-### 용어 정리
+### 비정상 데이터 탐지 - Producer
+- 반드시 consumer 와 producer 가 다른 서버(or program)일 필요는 없음  
+  예를 들어, data feed 를 받아서 처리 후 다른 서비스에 전달을 하는 경우
+- 앞선 예제들과 구분을 하기 위하여, 별도의 디렉토리를 만들어 `fraud_detection` 디렉토리를 생성하고, `payment_producer.py` 를 생성
+- `payment_producer` 는 가상의 payment 데이터를 만들어, broker -> topic 에게 전달하는 역할 수행
+- `payment_producer` 에서 생성된 데이터는 `fraud_detector` 에서 정상/비정상 유무를 판별하고 정상인 데이터는 `legit_processor` 에서 처리하며, 비정상 데이터는 `fraud_processor` 에서 처리
+~~~python
+from kafka import KafkaProducer
+import datetime
+import pytz
+import time
+import random
+import json
+
+brokers = ["localhost:9091", "localhost:9092", "localhost:9093"]
+producer = KafkaProducer(bootstrap_servers=brokers)
+TOPIC_NAME = 'payments'
+
+def get_time_date():
+    utc_now = pytz.utc.localize(datetime.datetime.utcnow())
+    kst_now = utc_now.astimezone(pytz.timezone("Asia/Seoul")) # 우리의 time zone 으로 변경됨
+    date_str = kst_now.strftime("%m/%d/%Y")
+    time_str = kst_now.strftime("%H:%M:%S")
+    return date_str, time_str
+
+
+def generate_payment_data():
+    card = random.choice(["VISA", "MASTERCARD", "BITCOIN"])
+    amount = random.randint(0, 100)
+    to = random.choice(["me", "mom", "dad", "friend", "stranger"])
+    return card, amount, to
+
+
+while True:
+    date_str, time_str = get_time_date()
+    card, amount, to = generate_payment_data()
+    new_data = {
+        "DATE": date_str,
+        "TIME": time_str,
+        "CARD": card,
+        "AMOUNT": amount,
+        "TO": to
+    }
+
+    # data 를 python object 를 그대로 보낼 수 없음.
+    # json 의 형태로 변경 한 후, utf-8 로 encoding 하는 과정을 거쳐야 함
+    producer.send(TOPIC_NAME, json.dumps(new_data).encode('utf-8'))
+    print(new_data)
+    time.sleep(1)
+~~~
+
+### 비정상 데이터 탐지 - Detector
+- `producer` 에서 생성된 msg 에서 `PAYMENT_TYPE` 이 `BITCOIN` 인 경우를 비정상으로 탐지하여 FRAUD_TOPIC 으로 전송하고, 나머지 정상인 경우는 LEGIT_TOPIC 으로 전송하는 예제를 만들어보자
+~~~python
+import time
+
+from kafka import KafkaProducer, KafkaConsumer
+import json
+
+PAYMENT_TOPIC = "payments"
+FRAUD_TOPIC = "fraud_payments"
+LEGIT_TOPIC = "legit_payments"
+
+brokers = ["localhost:9091", "localhost:9092", "localhost:9093"]
+
+consumer = KafkaConsumer(PAYMENT_TOPIC, bootstrap_servers=brokers)
+producer = KafkaProducer(bootstrap_servers=brokers)
+
+
+def is_suspicious(transactions):
+    """
+    데이터 수상 여부 확인 함수
+    """
+    if transactions["PAYMENT_TYPE"] == "BITCOIN":
+        return True
+    return False
+
+
+for message in consumer:
+    msg = json.loads(message.value.decode())
+    topic = FRAUD_TOPIC if is_suspicious(msg) else LEGIT_TOPIC
+    producer.send(topic, value=json.dumps(msg).encode('utf-8'))
+    print(f"topic : {topic}, is_suspicious : {is_suspicious(msg)}")
+    print(f"msg : {msg}")
+    time.sleep(1)
+~~~
+
+### 비정상 데이터 탐지 - Processor
+~~~python
+# legit_processor.py
+from kafka import KafkaConsumer
+from fraud_detector import LEGIT_TOPIC
+import json
+
+brokers = ["localhost:9091", "localhost:9092", "localhost:9093"]
+consumer = KafkaConsumer(LEGIT_TOPIC, bootstrap_server=brokers)
+
+for message in consumer:
+    msg = json.loads(message.value.decode())
+    py_type = msg["PAYMENT_TYPE"]
+    to = msg['TO']
+    amount = msg["AMOUNT"]
+    if py_type == "VISA":
+        print(f"[VISA] --> to : {to} - {amount}")
+    elif py_type == "MASTERCARD":
+        print(f"[MASTERCARD] --> to : {to} - {amount}")
+    else:
+        print("[ALERT] unable to process payments")
+~~~
+~~~python
+from kafka import KafkaConsumer
+from fraud_detector import FRAUD_TOPIC
+import json
+
+brokers = ["localhost:9091", "localhost:9092", "localhost:9093"]
+consumer = KafkaConsumer(FRAUD_TOPIC, bootstrap_server=brokers)
+
+for message in consumer:
+    msg = json.loads(message.value.decode())
+    to = msg['TO']
+    amount = msg["AMOUNT"]
+    if msg["TO"] == "stranger":
+        print(f"[ALERT] --> fraud detected ! to : {to} - {amount}")
+    else:
+        print(f"[PROCESSING BITCOIN] to : {to} - {amount}")
+~~~
+- 앞서 작성한 4개의 script를 실행시키면 스트리밍 결과의 데이터가 출력되는 것을 확인 가능
+
+ ### 용어 정리
 - listener
   - 특정 이벤트(특정한 사건)이 발생하기를 귀 귀울여 기다리다가 실행되는 컴포넌트(메소드, 함수)
