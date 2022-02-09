@@ -1,5 +1,5 @@
 ## day - 1 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%의네트워크원리/img/network_01.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_01.jpeg)
 ![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%의네트워크원리/img/network_02.jpeg)
 
 - 웹 브라우저
