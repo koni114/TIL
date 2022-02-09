@@ -35,7 +35,7 @@
 - URL(Uniform Resource Locator)는 `http` 뿐만 아니라, `ftp`, `file`, `mailto` 로 시작하는 것 등 여러가지가 있음
 - 브라우저의 기능은 웹 서버 엑세스, FTP의 클라이언트, 메일의 클라이언트 기능도 가지고 있음 
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%의네트워크원리/img/network_03.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_03.jpeg)
 
 #### 브라우저는 먼저 URL을 해독한다
 - 브라우저가 처음 하는 일은 웹 서버에 리퀘스트 메세지 작성을 위해 URL을 해독함
