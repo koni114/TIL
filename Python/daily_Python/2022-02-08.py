@@ -84,7 +84,7 @@ np.any([[True, False], [True, True]], axis=1)
 b = np.array([0, 1, 2, 3, 4])
 np.logical_not(b <= 2)
 
-
+x = np.arange(12).reshape(3, 4)
 
 
 
