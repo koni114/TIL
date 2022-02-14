@@ -1,6 +1,6 @@
 ## day - 1 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_01.jpeg)
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_02.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_01.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_networkimg/network_02.jpeg)
 
 - 웹 브라우저
   - URL을 브라우저에 입력하면, 브라우저는 결정된 규칙에 따라 URL 의미 조사 후, 그 의미에 따라 리퀘스트 메세지 생성. 이를 웹서버에 보냄
@@ -35,7 +35,7 @@
 - URL(Uniform Resource Locator)는 `http` 뿐만 아니라, `ftp`, `file`, `mailto` 로 시작하는 것 등 여러가지가 있음
 - 브라우저의 기능은 웹 서버 엑세스, FTP의 클라이언트, 메일의 클라이언트 기능도 가지고 있음 
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_03.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_03.jpeg)
 
 #### 브라우저는 먼저 URL을 해독한다
 - 브라우저가 처음 하는 일은 웹 서버에 리퀘스트 메세지 작성을 위해 URL을 해독함

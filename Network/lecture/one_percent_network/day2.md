@@ -24,7 +24,7 @@
 - 통신 데이터의 받는 사람 기입란에 액세스 대상의 주소를 기입하면 라우터가 받는 사람을 보고 이것이 어느 방향에 있는지를 조사하여 그 방향으로 데이터를 중계
 - 이러한 작업을 반복하여 엑세스 대상에 데이터가 도착함
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_04.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_04.png)
 
 - 실제 IP 주소는 32비트의 디지털 데이터고, 8 비트씩 점으로 구분하여 10진수로 표기하는데, 이것만으로는 어디가 호스트 번호이며 네트워크 번호인지 알수 없음
 - IP 주소의 규칙에서는 네트워크 번호와 호스트 번호의 두 가지를 합쳐서 32비트로 한다는 것만 결정되어 있을 뿐 내역은 결정되어 있지 않기 때문
@@ -32,7 +32,7 @@
 - 넷마스크는 IP 주소에서 32비트 부분의 디지털 데이터이며, 왼쪽에 1이 나열되고 오른쪽에 0이 나열된 값이 됨  
 0인 부분은 호스트 번호를 나타냄
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/성공과실패를결정하는1%25의네트워크원리/img/network_05.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_05.png)
 
 - 호스트 번호 부분이 모두 0인 IP 주소는 각각의 기기(컴퓨터)를 나타내는 것이 아니라, 서브넷 기기 자체를 나타냄
 - 호스트 번호 부분이 모두 1이면 서브넷에 있는 기기 전체에 패킷을 보내는 브로드캐스트를 나타냄
