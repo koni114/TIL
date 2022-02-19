@@ -195,6 +195,18 @@ crontab -l > /home/bak/crontab_bak.txt
 50 23 * * * crontab -l > /home/bak/crontab_bak.txt
 ~~~
 
+## chkconfig 명령어
+~~~shell
+$ chkconfig sshd on
+~~~
+- 리눅스 시스템 부팅시 특정 데몬의 자동시작여부를 결정하고 제어할 수 있는 명령어
+
+## ssh 명령어 
+- `ssh server_name -p port_number -l login_id`
+~~~shell
+ssh server208.web-hosting.com -p 21098 -l my_username
+~~~
+
 ## 데이터 확인
 - csv file 의 head 몇 줄만 확인하고 싶은 경우
 ~~~shell
