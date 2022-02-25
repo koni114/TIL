@@ -169,6 +169,6 @@ aws_secret_access_key = bar
 
 
 ## boto3 관련 참고 블로그 
-[Boto3 자격 증명 정보](https://planbs.tistory.com/entry/client%EB%82%98-resource%EC%97%90-access-key-id-secret-access-key%EB%A5%BC-%EC%A7%81%EC%A0%91-%EC%A0%84%EB%8B%AC%ED%95%98%EA%B8%B0)
-[Boto3 source code from git](https://github.com/boto/boto3)
-[Boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)
+[Boto3 자격 증명 정보](https://planbs.tistory.com/entry/client%EB%82%98-resource%EC%97%90-access-key-id-secret-access-key%EB%A5%BC-%EC%A7%81%EC%A0%91-%EC%A0%84%EB%8B%AC%ED%95%98%EA%B8%B0)  
+[Boto3 source code from git](https://github.com/boto/boto3)  
+[Boto3 documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/index.html)  
