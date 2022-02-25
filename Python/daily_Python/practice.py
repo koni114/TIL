@@ -1,4 +1,19 @@
-import numpy as np
-x = np.arange(18).reshape(3, 6)
+import boto3
 
-x = np.arange(18).reshape(3, 6)
+ACCESS_KEY = '...'
+SECRET_KEY = '...'
+SESSION_TOKEN = '...'
+
+client = boto3.client(
+    's3',
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+    aws_session_token=SESSION_TOKEN
+)
+
+s3 = boto3.resource(
+    's3',
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+    aws_session_token=SESSION_TOKEN
+)
