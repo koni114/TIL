@@ -4,7 +4,7 @@ D=$(date + %d)
 
 Ym=$Y-$M
 Ymd=%Y-%M-%d
-GitRep= "TIL"
+GitRep="TIL"
 
 HomeDir="/Users/heojaehun/gitRepo"
 GitDir="$HomeDir/$GitRep"
