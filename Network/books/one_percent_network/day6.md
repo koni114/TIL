@@ -7,7 +7,7 @@
 
 ### 01. 웹 서버의 설치 장소
 #### 사내에 웹 서버를 설치하는 경우
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_22.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_22.png)
 - 인터넷을 빠져나와 서버에 도착할 때까지의 여정은 서버의 설치 장소에 따라 다름
 - 가장 간단한 것은 위의 그림의 (a)와 같이 사내 LAN에 서버를 설치하고, 인터넷에서 직접 엑세스 하는 경우
 - 이 방법은 주류에서 밀려났는데, 크게 2가지 이유
@@ -29,7 +29,7 @@
 - 그 중에서 가장 보편화 된 것이 패킷 필터링형이 가장 많이 보급됨
 
 #### 패킷 필터링의 조건 설정 개념
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_23.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_23.png)
 
 - 공개용 서버를 설치하는 LAN과 사내 LAN이 분리되어 있고, 웹 서버는 공개용 서버 LAN에 접속되어 있다고 가정해보자
 - <b>인터넷에서 웹 서버에 대한 액세스를 허가하지 않으면 웹서버에서 인터넷의 액세스를 금지하도록 패킷을 차단</b>
@@ -148,7 +148,7 @@
 - 보통 말하는 프록시는 웹 서버측에 두고 캐시 기능을 사용하는 것이지만, 클라이언트 측에 캐시 서버를 두는 방법도 있는데, 이를 <b>포워드 프록시</b>라고 함
 - 포워드 프록시가 실제 프록시의 원형이며, 캐시 이용과 방화벽 실현이 주 목적이였음
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_24.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_24.png)
 
 - 프록시에서 리퀘스트 메세지를 받아 인터넷을 향해 전송하면 필요한 것을 통과시킬 수 있다는 개념  
   이 때 프록시의 캐시를 이용하면 좀 더 효과적

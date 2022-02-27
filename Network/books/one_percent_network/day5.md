@@ -45,7 +45,7 @@
 #### 스위칭 허브는 주소 테이블로 중계한다
 - 스위칭 허브(=스위치)는 이더넷의 패킷을 그대로 목적지를 향해(특정 port) 중계하도록 만들어져 있음
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_18.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_18.png)
 
 - 스위칭 허브 송수신 프로세스 
   - 신호가 들어옴 
@@ -69,7 +69,7 @@
   - 수신처 MAC 주소가 브로드캐스트 주소인 경우에도 수신 포트를 제외하고 모든 포트에서 패킷을 송신
 
 #### 전이중 모드에서 송신과 수신을 동시에 실행한다
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_19.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_19.png)
 
 - 전이중 모드는 송신과 수신을 동시에 실행할 수 있는 성질인데, 이는 리피터 허브에는 없고 스위치 허브에만 있는 특징
 - 스위칭 허브의 포트 부분, PHY 회로, MAC 회로의 내부도 송신과 수신이 나뉘어져 있어 신호가 따로 흐르기 때문에 충돌하지 않음
@@ -100,7 +100,7 @@
   허브 자체가 송신처나 수신처가 되지 않음
 
 #### 경로표에 등록된 정보
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_20.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_20.png)
 - 라우터는 IP 주소로 중계 대상을 판단. 즉 경로표에는 IP 주소가 매핑되어 있음
 - 라우터의 테이블은 <b>라우팅 테이블</b>, 또는 <b>경로표</b> 라고 부름
 - 위 그림의 맨 왼쪽의 항목은 수신처가 들어가 있으며, 서브넷 자체를 나타내는 주소가 들어가 있음  
@@ -184,7 +184,7 @@
   - 172.16.0.0 ~ 172.31.255.255
   - 192.168.0.0 ~ 192.168.255.255
 - 사내 네트워크를 인터넷에 접속할 때는 다음과 같이 구성해야 함 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_21.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_21.png)
 
 #### 주소 변환의 기본 동작
 - 주소 변환의 구조는 패킷을 중계할 때 IP 헤더에 기재된 IP 주소와 포트 번호를 바꿔쓰는 것임
