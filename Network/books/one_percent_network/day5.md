@@ -9,8 +9,8 @@
 - 이번 장에서는 클라이언트 PC가 송신한 패킷이 리피터 허브 -> 스위칭 허브 -> 라우터를 경유하여 인터넷에 나가는 것으로 간주
 
 #### LAN 케이블은 신호를 약화시키지 않는 것이 핵심이다
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_15.png)
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_16.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_15.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_16.png)
 
 - LAN 어댑터의 PHY(MAU) 회로에서 전기 신호로 형태를 바꾼 패킷은 RJ-45 커넥터를 통해 <b>트위스트 페어 케이블(꼰 선쌍)</b> 에 들어감
 - 이더넷의 신호의 실체는 플러스와 마이너스의 전압이므로 LAN 어댑터의 PHY(MAU) 회로의 플러스와 마이너스 신호 단자에서 신호가 나온다고 생각하면 됨
@@ -18,7 +18,7 @@
 - 신호는 케이블 속을 흘러 리피터 허브의 커넥터 부분에 도착
 - 송출한 신호는 허브에 도착시 신호가 약해져있으며, 케이블의 길이가 더 길어질수록 신호가 약해짐
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_17.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_17.png)
 
 - 위의 그림처럼 사각형의 각진 신호를 사용하지만, 이 각이 뭉개져서 둥글게 됨
 - 이 현상은 주파수가 높을수록 에너지가 떨어지는 비율이 높다는 전기 신호의 성질과 관계가 있음
