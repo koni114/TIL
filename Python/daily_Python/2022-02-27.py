@@ -118,3 +118,11 @@ df['max_col'] = df.groupby(['group_1', 'group_2']).col.transform('max')
 
 
 
+
+
+
+
+
+
+
+

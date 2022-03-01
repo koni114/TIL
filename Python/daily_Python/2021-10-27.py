@@ -22,3 +22,5 @@ print(f"scheme : {parsed_url.scheme}")
 print(f"port : {parsed_url.port}")
 print(parsed_url.geturl())
 
+
+
