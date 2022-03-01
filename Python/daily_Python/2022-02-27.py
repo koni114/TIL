@@ -20,9 +20,6 @@ df = pd.DataFrame({'grp_col_1': ['a', 'a', 'a', 'a', 'a', 'b', 'b', 'b', 'b', 'b
 # val_2 --> max, min, range
 
 
-
-
-
 def stat_func(x):
     d = dict()
     d['val_1_mean'] = x['val_1'].mean()
