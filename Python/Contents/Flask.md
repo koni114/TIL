@@ -202,7 +202,6 @@ url_for('static'), filename="style.css")
 - 이렇게 처리하는 것이 context를 지능적으로 처리하는 방식이고, 이렇게 하여 애플리케이션이 끊어짐없이 다른 애플리케이션을 호출할 수 있음 
 
 
-
 ## 용어 정리
 - CGI(Common Gateway Interface)
   - Web Server와 Web Application의 대화 방식의 모태가 됨
