@@ -203,23 +203,52 @@ url_for('static'), filename="style.css")
 
 
 ## 용어 정리
-- CGI(Common Gateway Interface)
-  - Web Server와 Web Application의 대화 방식의 모태가 됨
-  - 작동 프로세스 원리
-    - Web Server가 Client로 부터 HTTP Request를 받음
-    - Web Server는 Request에 대한 정보를 Environment Variable과 Standard input 을 통해 전달하면서 Script 실행
-    - Script는 비즈니스 로직을 수행하고 Standard Output 으로 결과를 Web Server 에게 전달
-    - Web Server는 이를 다시 Client에게 전달 
-    
-- WSGI(Web Server Gateway Interface)
-  - `Callable Object` 라는 녀석을 통해 Web Server가 요청에 대한 정보를 Application에 전달
-  - `Callable Object` 는 function 이나 Object 의 형태가 될 수 있으며, Web Server는 Callable Object를 통해 2가지 정보를 전해주어야 함
-    - HTTP Request 정보
-    - Callback 함수  
-  - Web Application 은 HTTP Request에 대한 정보를 가지고 Business Logic을 수행한 뒤에 Callback Funciton을 통해 결과를 반환
-  - Web hook
-    - 하나의 앱/웹이 다른 애플리케이션으로 앱관련 이벤트 정보를 실시간으로 제공하기 위한 방법
-    - 여기서 말하는 실시간이란, 해당 앱에서 특정 이벤트가 일어나는 즉시, 미리 지정해놓은 URL을 통해 다른 애플리케이션으로 이벤트 관련 정보를 보낸다는 의미 
-    - 웹페이지, 웹앱에서 발생하는 특정 행동(event)들을 커스텀 Callback으로 변환해주는 방법
-- Routing
-  - 어떤 네트워크 안에서 데이터의 최적의 경로를 선택하는 과정을 말함  
+### CGI(Common Gateway Interface)
+![img](https://github.com/koni114/TIL/blob/master/Python/img/CGI.jepg)
+
+- 서버와 애플리케이션(클라이언트 아님) 간의 데이터를 주고받는 방식 또는 convention
+- CGI도 말 그대로 Interface인데, web server의 요청을 받아 처리해줄 로직을 담고 있는 web application 프로그램 사이의 interface
+- CGI를 통해 동적인 contents를 전달하는 방법
+  - 서버의 cgi-bin 이라는 폴더를 만들어두고, 그 내부의 script 파일을 만들어둠
+  - web-server가 CGI를 통해 cgi-bin에 접속해서 내부의 파일을 실행시키고, 그 결과를 클라이언트에게 전송 
+
+### WSGI(Web Server Gateway Interface)
+- Web server가 받은 호출을 python 애플리케이션에 전달하고 응답받기 위한 호출규약
+- 파이썬 스크립트가 웹 서버와 통신하도록 도와주며, 웹 서버와 웹 애플리케이션 사이에 위치
+![img](https://github.com/koni114/TIL/blob/master/Python/img/WSGI.jepg)
+
+- private physical Server 위의 녹색 선으로 그려진 모든 것들을 합쳐 WAS(Web Application Server)라고 부름
+- application을 담을 Web Server라고 생각하면 이해가 쉬움
+- <b>WSGI Module + WSGI Process를 합쳐서 WSGI middleware 라고 부름</b>  
+  하나로 구성된 것이 아니라, 일부는 Nginx에 내장되어있고 일부는 프로세스로 띄어진 형태
+- 결과적으로 WSGI Middleware는 Web 서버와 application 을 연결시켜줌
+- WSGI module과 WSGI process는 WSGI protocol로 주고받음
+- WSGI는 `Callable Object` 를 통해 Web Server가 요청에 대한 정보를 Application에 전달
+- `Callable Object`는 Function이나 Object 의 형태가 될 수 있으며, Web Server는 Callable Object를 통해 2가지 정보를 전해주어야 함
+  - HTTP Request에 대한 정보(Method, URL, Data, ...)
+  - Callback 함수
+- 다음은 함수로 정의된 callable object의 형태의 예
+~~~python
+# environ --> HTTP request 정보를 가지고 있음
+# start_response --> web server 에게 결과를 돌려주기 위한 callback function
+def application(environ, start_response):
+  body = b'Hello world!\n'
+  status = '200 OK'
+  headers = [('Content-type', 'text/plain')]
+  start_reponse(status, headers)
+  return [body]
+~~~
+
+#### WSGI Middleware Component 기능
+- 호출된 url에 대한 라우팅 기능
+- 하나의 프로세스에서 다중 어플리케이션을 동작하도록 처리
+- 로드밸런싱
+- 컨텐츠 전처리
+
+### Web hook
+  - 하나의 앱/웹이 다른 애플리케이션으로 앱관련 이벤트 정보를 실시간으로 제공하기 위한 방법
+  - 여기서 말하는 실시간이란, 해당 앱에서 특정 이벤트가 일어나는 즉시, 미리 지정해놓은 URL을 통해 다른 애플리케이션으로 이벤트 관련 정보를 보낸다는 의미 
+  - 웹페이지, 웹앱에서 발생하는 특정 행동(event)들을 커스텀 Callback으로 변환해주는 방법
+
+### Routing
+- 어떤 네트워크 안에서 데이터의 최적의 경로를 선택하는 과정을 말함  
