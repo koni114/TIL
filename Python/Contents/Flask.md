@@ -204,7 +204,7 @@ url_for('static'), filename="style.css")
 
 ## 용어 정리
 ### CGI(Common Gateway Interface)
-![img](https://github.com/koni114/TIL/blob/master/Python/img/CGI.jepg)
+![img](https://github.com/koni114/TIL/blob/master/Python/img/CGI.jpeg)
 
 - 서버와 애플리케이션(클라이언트 아님) 간의 데이터를 주고받는 방식 또는 convention
 - CGI도 말 그대로 Interface인데, web server의 요청을 받아 처리해줄 로직을 담고 있는 web application 프로그램 사이의 interface
@@ -215,7 +215,7 @@ url_for('static'), filename="style.css")
 ### WSGI(Web Server Gateway Interface)
 - Web server가 받은 호출을 python 애플리케이션에 전달하고 응답받기 위한 호출규약
 - 파이썬 스크립트가 웹 서버와 통신하도록 도와주며, 웹 서버와 웹 애플리케이션 사이에 위치
-![img](https://github.com/koni114/TIL/blob/master/Python/img/WSGI.jepg)
+![img](https://github.com/koni114/TIL/blob/master/Python/img/WSGI.jpeg)
 
 - private physical Server 위의 녹색 선으로 그려진 모든 것들을 합쳐 WAS(Web Application Server)라고 부름
 - application을 담을 Web Server라고 생각하면 이해가 쉬움

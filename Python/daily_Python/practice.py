@@ -1,23 +1,15 @@
-def remainder(number, divisor):
-    return number % divisor
+def trace(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} --> {args!r}"
+              f"--> {kwargs!r}")
+        return result
+    return wrapper
+
+@trace
+def test(x):
+    """test 입니다."""
+    return x
 
 
-assert remainder(20, 7) == 6
-
-
-remainder(20, 7)
-remainder(20, divisor=7)
-remainder(divisor=7, number=20)
-
-my_kwargs = {
-    "number": 20,
-    "divisor": 7
-}
-
-remainder(** my_kwargs)
-
-my_kwargs = {
-    "divisor": 7
-}
-
-remainder(number=20, ** my_kwargs)
+help(test)
