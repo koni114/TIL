@@ -23,6 +23,9 @@ list(map(lambda x: x**2, filter(lambda x: x % 2 == 0, range(10))))
 
 ### 29-대입식을 사용해 컴프리헨션 안에서 반복 작업을 피하자
 ~~~python
+#- (공구)의 개수가 들어있는 stock을 조사해서 batch_size 를 입력하여 각 공구별 batch 값을 구하는 예제
+#- 주문이 들어오면 batch size를 계산
+
 stock = {
     '못': 125,
     '나사못': 35,
@@ -129,6 +132,9 @@ print(next(it))
 - 다음의 코드는 미국 텍사스 주의 여행자 수를 분석하는데, 데이터가 도시별 방문자 수라고 가정하자
 - 이 때 각 도시가 전체 여행자 수 중에서 차지하는 비율을 계산하고 싶음
 ~~~python
+#- america_travel_normalize 
+#  --> 해당 도시 여행자 수 / 전체 여행자 수 * 100 인 비율을 나타내는 값을 계산하여 배열에 저장하는 함수
+
 def america_travel_normalize(num_list):
     total = sum(num_list)
     result = []
@@ -266,7 +272,7 @@ percentages = normalize_defensive(numbers=ReadVisits('test.txt'))
 ### 기억해야 할 내용
 - 입력 인자를 여러번 이터레이션하는 함수나 메서드를 조심해라. 입력받은 인자가 이터레이터면 함수가 이상하게 작동할 수 있다
 - 파이썬의 이터레이터 프로토콜은 컨테이너와 이터레이터가 iter, next 내장 함수나 for 루프 등의 관련 식과 상호작용하는 절차를 정의
-- __iter__ 메서드를 제너레이터로 정의하면 쉽게 이터러블 컨테이너 타입을 정의할 수 있음
+- `__iter__` 메서드를 제너레이터로 정의하면 쉽게 이터러블 컨테이너 타입을 정의할 수 있음
 - 어떤 값이 이터레이터인지 감지하려면, 이 값을 iter 내장 함수에 넘겨서 반환하는 값이 원래 값과 같은지 확인하면 됨  
   다른 방법으로 `collections.abc.Iterator` 클래스를 `isinstance`와 함께 사용할 수 있음
 

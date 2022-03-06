@@ -1,15 +1,14 @@
-def trace(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        print(f"{func.__name__} --> {args!r}"
-              f"--> {kwargs!r}")
-        return result
-    return wrapper
+class Worker:
+    def __init__(self, input_data):
+        self.input_data = input_data
+        self.result = None
 
-@trace
-def test(x):
-    """test 입니다."""
-    return x
+    def map(self):
+        raise NotImplementedError
 
+    def reduce(self):
+        raise NotImplementedError
 
-help(test)
+class LineCounterWorker(Worker):
+    def map(self):
+        data = self.input_data.read()
