@@ -14,7 +14,7 @@ $ docker run -it --name test1 centos:7-git bash
 ~~~
 - @ 이후의 문자열은 해당 컨테이너 ID 이자 컨테이너의 호스트명
 - `--name` 명령어를 생략하면 자동으로 랜덤으로 container 명이 생성되어 지정됨
-- 컨테이너명을 지정할 때 CONTAINER ID 대신에 이 일므을 사용할 수 있음 
+- 컨테이너명을 지정할 때 CONTAINER ID 대신에 이 이름을 사용할 수 있음 
 
 ### 대화형 모드에서 컨테이너 정지
 - 셸에서 `exit`를 입력하면 됨. 그러면 셸이 종료되면서 컨테이너도 종료됨
@@ -71,6 +71,7 @@ my-centos                  0.1       ccada7dfbfc2   About a minute ago   724MB
 - 실행 중인 컨테이너의 IP 주소는 도커 커맨드로 확인 가능.   
   `docker inspect [옵션] 컨테이너 ID | 컨테이너명`을 실행하면 컨테이너의 상세 정보를 JSON 형식으로 표시해줌
 ~~~shell
+$ docker inspect test1 -f="{{ range.NetworkSettings.Networks }}{{.IPAddress}}{{end}}"
 $ docker inspect ubuntu -f="{{ range.NetworkSettings.Networks }}{{.IPAddress}}{{end}}" 
 ~~~
 
@@ -175,4 +176,13 @@ $ ps axf
 - TTY 열에서, 터미널 1은 `pts/0`, 터미널 2는 `pts/1`, 터미널 3은 `pts/2`와 연결되어 있음
 - 중요한 것은 <b>컨테이너의 실체는 호스트의 프로세스임. 컨테이너는 하나의 독립적인 운영체제처럼 보이지만, 실은 호스트의 커널을 공유하여 동작하는 리눅스 프로세스임</b>
 
-
+## 용어 정리
+- Vagrant
+  - VirtualBox, VMWare 등으로 만들어진 가상 머신들을 관리하는 툴이라고 생각하면 됨
+  - 가상 머신들을 실행할 수 있으며, 종료하거나 삭제하는 모든 기능을 제공
+  - 가장 중요한 기능으로는 Provisioning 기능 
+  - 다음과 같은 기능들을 제공
+    - 가상 머신 IP 설정
+    - SSH 접속 후, 스크립트 실행 기능
+    - CHEF, Puppet, Docker 등의 프로비저닝 기능
+    - 등등 

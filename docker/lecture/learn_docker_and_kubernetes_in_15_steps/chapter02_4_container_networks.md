@@ -121,5 +121,3 @@ $ docker run -d --name webserver01 -p 8080:80 nginx:latest
 $ curl http://192.168.1.25:8080/
 ~~~
 - 작성한 컨테이너 네트워크는 `docker network rm my-network` 혹은 `docker network prune`으로 삭제 가능
-
-## AP 컨테이너와 DB 컨테이너의 연동 예
