@@ -243,7 +243,7 @@ $ docker logs myd -f # myd container의 Log를 tail -f 로 확인
 
 $ docker attach --sig-proxy=false myd # 백그라운드에서 동작하는 컨테이너를 포그라운드로 전환
 ~~~
-- 옵션 `--sig-proxy=false` 는 터미널에서 ctrl+c 를 눌렀을 때, 컨테이너 자체를 종료하지 않고 터미널과 분리하기 위해서 사용 
+- 옵션 `--sig-proxy=false` 는 터미널에서 ctrl+c 를 눌렀을 때, 컨테이너 자체를 종료하지 않고 터미널과 분리하기 위해서 사용
 
 
 ## 용어 정리
