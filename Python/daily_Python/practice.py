@@ -1,81 +1,20 @@
-import os
-from threading import Thread
-import random
+import pandas as pd
+import numpy as np
 
-class InputData:
-    def read(self):
-        raise NotImplementedError
+# 다음의 데이터를 활용하여 연속형 변수 C1 을 이산형화 시켜보세요
+# - C1 컬럼의 데이터를 10개의 구간으로 나누고, 이를 (1 ~ 10) 까지로 만들어본 후, C1_bin 컬럼에 넣어 보세요.
+# - 만든 C1_bin 컬럼 값을 다시 one-hot encoding 을 수행해보세요
+# - 이 때, 첫 번째 변수를 삭제해보세요
 
+from sklearn.preprocessing import MinMaxScaler
 
-class PathInputData(InputData):
-    def __init__(self, path):
-        super().__init__()
-        self.path = path
+np.random.seed(10)
+df = pd.DataFrame({'C1': np.random.randn(20),
+                   'C2': ['a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'a',
+                          'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b', 'b']})
 
-    def read(self):
-        with open(self.path) as f:
-            return f.read()
+np_lin = np.linspace(np.min(df["C1"]), np.max(df["C1"]), 10)
+df["C1_bin"] = np.digitize(df["C1"], np_lin)
 
-class Worker:
-    def __init__(self, input_data):
-        self.input_data = input_data
-        self.result = None
-
-    def map(self):
-        raise NotImplementedError
-
-    def reduce(self, other):
-        raise NotImplementedError
-
-
-class LineCountWorker(Worker):
-    def map(self):
-        data = self.input_data.read()
-        self.result = data.count("\n")
-
-    def reduce(self, other):
-        self.result += other.result
-
-
-def generate_inputs(data_dir):
-    for name in os.listdir(data_dir):
-        yield PathInputData(os.path.join(data_dir, name))
-
-def create_workers(input_list):
-    workers = []
-    for input_data in input_list:
-        workers.append(LineCountWorker(input_data))
-    return workers
-
-def execute(workers):
-    threads = [Thread(target=w.map) for w in workers]
-    for thread in threads: thread.start()
-    for thread in threads: thread.join()
-
-    first, * rest = workers
-    for worker in rest:
-        first.reduce(worker)
-    return first.result
-
-def mapreduce(data_dir):
-    inputs = generate_inputs(data_dir)
-    workers = create_workers(inputs)
-    return execute(workers)
-
-def write_test_files(tmpdir):
-    os.makedirs(tmpdir)
-    for i in range(100):
-        with open(os.path.join(tmpdir, str(i)), 'w') as f:
-            f.write('\n' * random.randint(0, 100))
-
-
-tmpdir = 'test_inputs'
-write_test_files(tmpdir)
-
-result = mapreduce(tmpdir)
-
-
-
-
-
+pd.get_dummies(df["C1_bin"], prefix="x", drop_first=True)
 

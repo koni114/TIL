@@ -7,4 +7,6 @@
 
 ### Contents summary
 ```
+├── daily_Python
+    └── 2022-03-16.py: pd.Series, np.ndarray, list 비교
 ```
