@@ -71,7 +71,26 @@ def select_by_args(db_conn, query, args: dict):
         raise e
 
 """
-String format
+파이썬의 문자열 형식화(String format)
+- 문자열을 형식화하는 방법은 % 기호를 사용한 방식과 format 메서드를 사용한 방식
+- 그리고 f 문자열을 사용하는 방식이 있음
 """
 
-##
+# % 기호를 사용한 문자열 형식화
+# 문자열 뒤에 % 기호를 붙이고 그 뒤에 다른 값을 붙이면 뒤에 붙은 값이 문자열 안으로 들어감
+
+print("내 이름은 %s 입니다." % "홍길동")
+print("나는 %d 살 입니다." % 12)
+
+print("원주율의 값은 %f 입니다." % 3.141592)
+
+print("%d 곱하기 %d는 %d 이다." % (2, 3, 6))
+
+#  name 과 age 라는 변수에 각각 이름과 나이를 넣고 다음과 같이 출력하는 코드를 만들어라
+
+print("%s is %d years old" % ("Tom", 13))
+
+value = "test"
+print("{value} is test".format(value=value))
+print("{a} 점수:, {x} 점, {b} 점수: {y} 점".format(a="영어", b="수학", x=100, y=10))
+
