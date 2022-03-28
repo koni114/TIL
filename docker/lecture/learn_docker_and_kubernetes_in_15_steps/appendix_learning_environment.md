@@ -41,7 +41,7 @@ $ git clone https://github.com/Jpub/15_DandK.git
 $ cd 15_Dandk/vagrant-minikube
 $ vagrant up           # 해당 명령어를 vagrant-minikube dir 위치에서 실행해야함
                        # 약 5분 ~ 10분정도 소요
-$ vagrant ss
+$ vagrant ssh
 $ docker version       # -- Docker CE 확인
 $ sudo minikube start  #  
 ~~~
