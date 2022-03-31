@@ -73,6 +73,7 @@ def set_logging_level(logger_name=None, logging_level=None):
         c_logger = logging.getLogger(logger_name)
         c_logger.setLevel(logging_level)
 
+
 _stream_handler_enabled = [] # logger 의 스트림 여부
 _file_handlers = []           # logger 의 파일 로깅 여부
 _default_format = '%(asctime)s %(levelname)s %(message)s'
@@ -104,7 +105,6 @@ def create_logger(log_file, logger_name=None, err_logfile=True, max_bytes=104857
 
     # 핸들러 중복 선언 방지
     # ** stream_handler --> console 에 메세지를 전달
-    # ** file_handler   --> file 에 메세지를 전달
     if stream_enabled and logger_name not in _stream_handler_enabled:
         _stream_handler_enabled.append(logger_name)
         stream_handler = logging.StreamHandler()
@@ -112,11 +112,16 @@ def create_logger(log_file, logger_name=None, err_logfile=True, max_bytes=104857
         clogger.addHandler(stream_handler)
 
     # log 경로 생성
+
     # os.path.dirname --> 경로 중 directory 명만 얻기
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)  # exist_ok --> 해당 디렉토리가 있으면 무시
 
+    # ** file_handler --> file 에 메세지를 전달
+    # RotatingFileHandler -> 필요한 갯수 만큼 백업 file 을 생성하여 관리
+    # .log / .err file 을 생성.
+    #  - .log --> 사용자가 app_properties.yml 에서 설정한 logger level 에 따라 logger level 이 설정
     if log_file not in _file_handlers:
         _file_handlers.append(log_file)
         file_handler = logging.handlers.RotatingFileHandler(log_file,
@@ -125,6 +130,7 @@ def create_logger(log_file, logger_name=None, err_logfile=True, max_bytes=104857
         file_handler.setFormatter(formatter)
         clogger.addHandler(file_handler)
 
+    # .err -> log 중 ERROR 라고 지정한 것들만 따로 저장하기 위하여 .err file 지정
         if err_logfile:
             err_file_handler = logging.handlers.RotatingFileHandler(log_file.replace(".log", ".err"),
                                                                     maxBytes=max_bytes,

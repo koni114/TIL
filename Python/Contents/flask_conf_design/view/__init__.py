@@ -1,2 +1,4 @@
+# view/__init__.py
 from .view import create_endpoints
-s
+
+__all__ = ['view']
