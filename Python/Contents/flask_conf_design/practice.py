@@ -1,8 +1,6 @@
 import os
 import sys
 
-import time
-
-for i in range(10):
-    print(i, end=' ')
-    time.sleep(1)
+print(f"sys.argv[0] --> {sys.argv[0]}")
+# print(f"sys.argv[1] --> {sys.argv[1]}")
+# print(f"sys.argv[2] --> {sys.argv[2]}")

@@ -13,6 +13,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="logging.Logger.logc" />
+          <option value="logging.Logger.logcc" />
         </list>
       </option>
     </inspection_tool>
