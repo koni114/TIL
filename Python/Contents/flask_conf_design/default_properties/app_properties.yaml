@@ -12,7 +12,7 @@ server_port: 5000
 debug: false
 
 # py_server 실행 환경. dev, test, prod 중 하나 선택
-execute_env: prod
+execute_env: test
 prod_threads: 50    # 가동 시 thread 수
 
 data_tmp_dir: ''

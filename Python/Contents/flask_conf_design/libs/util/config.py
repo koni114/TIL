@@ -35,7 +35,7 @@ app_run_env_list = ['pp', 'pt', 'kp', 'kt', 'cp', 'ct']
 if not APP_RUN_ENV in app_run_env_list:
     print(f"환경변수에 실행환경이 정의되지 않았습니다. APP_RUN_ENV --> {APP_RUN_ENV}")
 
-config_file = "/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/app_properties.yaml"
+
 def load_yaml(config_file):
     """
         config_file 위치의 yaml file 을 dict2obj object 로 return
@@ -89,15 +89,15 @@ def input_args_parser(git_info):
             if e.__class__.__name__ != "TypeError":
                 logger.logc(WARNING, f"{repr(app_args_file)} | {e.__class__.__name__} | {e}")
 
-    logger.logc(DETAIL, f"loaded items = {dict2obj(vars(args_parser.parse_args()))}")
+    logger.logc(DETAIL, f"loaded items = {dict2obj(vars(args_parser.parse_known_args()[0]))}")
     args_parser.add_argument('--version', action='version', version=git_info.get("tagId"))  # git tagId 추출(version)
 
-    args = dict2obj(vars(args_parser.parse_args()))
+    args = dict2obj(vars(args_parser.parse_known_args()[0]))
 
     return args
 
 
-class DefaultConfig:
+class DefaultConfig(object):
     logger.log(INFO, "load default config ")
     GIT_INFO = get_git_info(base_dir)
     logger.log(INFO, f"application git info = {GIT_INFO}")
@@ -129,8 +129,8 @@ class DefaultConfig:
 
     # os env 에 정보가 없으면 app 설정에서 읽음
     # app 설정에도 없으면 error 발생
-    if not APP_RUN_ENV in ('pp', 'pt', 'kp', 'kt', 'cp', 'ct'):
-        APP_RUN_ENV = APP_PROPERTIES.get("app_run_dev", None)
+    if APP_RUN_ENV not in ('pp', 'pt', 'kp', 'kt', 'cp', 'ct'):
+        APP_RUN_ENV = APP_PROPERTIES.get("app_run_env", None)
 
     APP_PROPERTIES['app_run_env'] = APP_RUN_ENV
     APP_CONN_INFO = ALL_CONN_INFO[APP_RUN_ENV]
@@ -158,11 +158,13 @@ class ProductionConfig(DefaultConfig):
     SERVER_PORT = 7090
 
 
+config_by_name = dict(
+    dev=DevelopmentConfig,
+    test=TestingConfig,
+    prod=ProductionConfig
+)
 
-
-
-
-
+config = config_by_name[EXECUTE_ENV]  # 실행환경 기준의 config 값
 
 
 

@@ -49,7 +49,7 @@ class AppInfo:
         if app_dir:
             AppInfo.__app_dir = app_dir
         # app_dir 이 저장되어 있으면, 저장값 리턴
-        # sys.argv[0] --> python script 를 싫행한 main.py 를 출력.
+        # sys.argv[0] --> python script 를 싫행한 main.py 를 출력해줌.
         elif AppInfo.__app_dir:
             return AppInfo.__app_dir
         elif sys.argv[0].endswith('pytest'):
@@ -134,7 +134,8 @@ class dict2obj(dict):
             item = self[key]
             if isinstance(item, list):
                 for idx, it in enumerate(item):
-                    item[idx] = dict2obj(it)
+                    if isinstance(it, dict):
+                        item[idx] = dict2obj(it)
             elif isinstance(item, dict):
                 self[key] = dict2obj(item)
 
@@ -172,16 +173,6 @@ def _add_update_obj(dict_org, dict_):
     return dict_org
 
 
-
-
-
-
-
-
-
-
-
-
 def daemonize(func, *args, **kwargs):
     """
     daemon 생성기
@@ -190,15 +181,17 @@ def daemonize(func, *args, **kwargs):
     """
     try:
         # fork. --> 자식 프로세스를 만들기 위해 사용되는 프로세스 생성기.
+        # 자식에서는 0을 반환하고, 부모에서는 자식의 프로세스 ID를 반환합니다.
         pid = os.fork()
         if pid > 0:  # 자식 프로세스를 생성한 부모 프로세스에서 코드가 실행되는 경우, pid > 0. --> 프로세스 종료
             logger.logc(INFO, f"forked to background run | PID = {pid}")
             sys.exit()  # --> process 종료
-    except OSError as error:
-        logger.logc(ERROR, f"Unable to fork. Error: {error.errno} ({error.strerror})")
+    except OSError as e:
+        logger.logc(ERROR, f"Unable to fork. Error: {e.errno} ({e.strerror})")
         sys.exit()
     os.setsid()  # 새로운 세션을 생성
 
+    # buffer flush
     sys.stdout.flush()
     sys.stderr.flush()
 
@@ -216,6 +209,10 @@ def daemonize(func, *args, **kwargs):
     #      --> 이를 통해 파일의 입출력의 방향을 변경할 수 있음
     # 일반적으로 알려진 file descriptor 로는 표준 입력(0), 표준 출력(1), 표준 오류(2) 가 있음
     # dup2 로 복사를 하면, 표준 입출력은 화면 입출력이 아닌 파일 입출력으로 바뀌게 됨.
+
+    # sys.stdin.fileno()  --> 0
+    # sys.stdout.fileno() --> 1
+    # sys.stderr.fileno() --> 2
 
     os.dup2(si.fileno(), sys.stdin.fileno())   # 표준 입력 -> si
     os.dup2(so.fileno(), sys.stdout.fileno())  # 표준 출력 -> so

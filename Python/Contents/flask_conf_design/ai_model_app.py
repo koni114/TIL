@@ -18,7 +18,7 @@ def create_app(app_name, app_config):
     app = Flask(app_name)
     app.config.from_object(app_config)
 
-    CORS(app) #
+    CORS(app)  #
     services = Services
 
     import model.wf_pos_data_org_csv_sql as wf_pos_data_org_csv_sql

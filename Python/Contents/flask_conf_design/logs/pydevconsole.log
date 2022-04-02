@@ -1,0 +1,49 @@
+2022-04-02 00:24:20,351 INFO load default config 
+2022-04-02 00:24:20,351 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 00:24:20,352 INFO [load_yaml] skipped load | '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/conn_properties.yaml' does not exists
+2022-04-02 00:30:04,744 INFO load default config 
+2022-04-02 00:30:04,744 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 00:30:50,676 INFO load default config 
+2022-04-02 00:30:50,677 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 00:30:50,688 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 09:57:59,967 INFO load default config 
+2022-04-02 09:57:59,969 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 09:57:59,978 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 09:58:12,103 INFO load default config 
+2022-04-02 09:58:12,103 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 09:58:12,111 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 09:59:00,527 INFO load default config 
+2022-04-02 09:59:00,531 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 09:59:00,542 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 09:59:35,734 INFO load default config 
+2022-04-02 09:59:37,576 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 09:59:52,473 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:00:59,098 INFO load default config 
+2022-04-02 10:01:36,911 INFO [<module>] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:13:26,885 INFO load default config 
+2022-04-02 10:13:27,409 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:14:08,197 INFO [<module>] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:26:37,273 INFO load default config 
+2022-04-02 10:26:37,274 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:26:37,288 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:27:11,188 INFO load default config 
+2022-04-02 10:27:11,189 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:27:20,342 INFO [<module>] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:46:21,227 INFO load default config 
+2022-04-02 10:46:21,232 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:46:21,242 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:46:38,695 INFO load default config 
+2022-04-02 10:46:38,696 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:46:38,710 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:52:59,395 INFO load default config 
+2022-04-02 10:52:59,396 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:52:59,405 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:53:14,655 INFO load default config 
+2022-04-02 10:53:15,059 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:53:26,871 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 10:55:57,668 INFO load default config 
+2022-04-02 10:55:57,669 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 10:55:57,677 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'
+2022-04-02 18:57:16,564 INFO load default config 
+2022-04-02 18:57:16,565 INFO application git info = {'commit': '8bf26ea64055199c53d67af06dc0a15b101fbe97', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '022706a8e49ebc00b69022c29a3c0a251cf1ffc9'}
+2022-04-02 18:57:16,575 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/Contents/flask_conf_design/default_properties/args_properties.yaml'

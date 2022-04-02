@@ -1,0 +1,61 @@
+ai_conn_infos:
+  pp: &pp
+    vip: &ppshc001_vip
+    ldap:
+      search: &ai_pp_ldap
+        host:
+        port:
+        binddn:
+        bindpw:
+        basedn:
+    epas:
+      host:
+      port:
+      database:
+      user:
+      password:
+  pt: &pt
+    vip: &tpshc001_vip
+    ldap:
+      search: &ai_pt_ldap
+        host:
+        port:
+        binddn:
+        bindpw:
+        basedn:
+    epas:
+      host:
+      port:
+      database:
+      user:
+      password:
+  kp: &kp
+    vip: &pkshc001_vip
+    ldap:
+      search:
+        host:
+        port:
+        binddn:
+        bindpw:
+        basedn:
+    epas:
+      host:
+      port:
+      database:
+      user:
+      password:
+  kt: &kt
+    vip: &tkshc001_vip
+    ldap:
+      search:
+        host:
+        port:
+        binddn:
+        bindpw:
+        basedn:
+    epas:
+      host:
+      port:
+      database:
+      user:
+      password:

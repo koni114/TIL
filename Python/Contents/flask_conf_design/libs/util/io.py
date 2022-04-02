@@ -29,6 +29,28 @@ def read_file(file_name, data_type="string"):
         return None
 
 
+def write_file(file_name, data, dump_type='json'):
+    """
+        string, dict data to file
+        dic_dump = ['json', 'yaml']
+    """
+    data = "hello world \n"
+    with open(file_name, 'w', encoding="UTF-8") as f:
+        if isinstance(data, str):
+            if data and data[-1] is not "\n":
+                data += "\n"
+            f.write(data)
+        elif dump_type == "json":
+            json.dump(data, f, ensure_ascii=False, sort_keys=True, indent=4)
+        elif dump_type == "yaml":
+            yaml.dump(data, f, default_flow_style=False, allow_unicode=True, explicit_start=True)
+
+
+def remove_file(file_path):
+    if os.path.isfile(file_path):
+        os.chmod(file_path, 0o777)
+        os.remove(file_path)
+
 
 
 
