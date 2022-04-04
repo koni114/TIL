@@ -49,8 +49,6 @@ def sleep_sec(secs):
 def sleep_mins(mins):
     time.sleep(mins * 60)
 
-date = "20220401111111"
-parse(date)
 
 def str_date_time(date=None, days=0, seconds=0, minutes=0, hours=0, weeks=0, time_stamp=None,
                   show_milliseconds=False, sep_disable=False):

@@ -3,13 +3,11 @@ import sys
 from libs.util.common import AppInfo
 import time
 import datetime
+from dateutil.parser import parse
 
-app_info = AppInfo()
-app_info.app_dir()
-app_info.app_full_name()
-app_info.app_name()
+date = "2022-04-01 10:20:30"
+parsing_date = parse(date)
 
-for i in range(10):
-    print(i)
-    time.sleep(1)
+print(parsing_date)
 
+datetime.datetime.now()
