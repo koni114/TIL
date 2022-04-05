@@ -121,7 +121,7 @@ def get_git_info_dir(path):
                 "git_dir": path,
                 "message": ""}
 
-    if not os.path.isfile(head_message_file):
+    if not os.path.isxrfile(head_message_file):
         object_path = os.path.join(path, "objects", "pack")
         # for idx_file in glob.glob(object_path + "/*.idx"):
         #     r = get_pack_info(idx_file, git_dict)
