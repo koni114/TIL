@@ -34,7 +34,7 @@ def main():
 
     # 결과 건수
     # ProcessPoolExecutor
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=worker) as executor:
         # map -> 작업 순서를 유지, 즉시 실행
         #     -> map 은 모든 실행 결과가 끝나기만을 기다렸다가 끝난 후 return 해옴
 

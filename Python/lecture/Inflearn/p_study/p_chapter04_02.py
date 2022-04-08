@@ -32,8 +32,8 @@ print(m, id(m))
 # ** 중요!
 l *= 2
 m *= 2
-print(l, id(l)) # 주소 값이 고정됨
-print(m, id(m)) # 주소 값이 바뀜
+print(l, id(l)) # 주소 값이 바뀜
+print(m, id(m)) # 주소 값이 고정됨
 
 # sort vs sorted
 # sorted : 정렬 후 새로운 객체 반환

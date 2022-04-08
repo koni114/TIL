@@ -61,7 +61,7 @@ def main():
 
     # 결과 건수
     # ProcessPoolExecutor
-    with futures.ProcessPoolExecutor() as executor:
+    with futures.ProcessPoolExecutor(max_workers=worker) as executor:
         # map -> 작업 순서를 유지, 즉시 실행
         result = executor.map(sum_generator, WORK_LIST)
 
