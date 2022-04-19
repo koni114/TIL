@@ -212,3 +212,39 @@ ssh server208.web-hosting.com -p 21098 -l my_username
 ~~~shell
 head -3 test.csv
 ~~~
+
+## 파일 링크(ln - link)
+- `ln [OPTION] ... [TAEGET][LINKNAME]`  
+  파일에 하드링크/소프트링크(심볼릭 링크) 민들기
+- 사전 준비  
+  `touch hello.txt`  
+- 소프트링크(심볼릭 링크)  
+  `ln -s hello.txt hellosymlink`  
+- 하드링크  
+  `ln hello.txt hellolink`  
+- 파일 링크 확인  
+  `ls -ali`  
+
+## 기본 명령어 - 파일 속성 보기(file)
+- `file [OPTION] ... [FILE]`  
+  파일의 속성 보여주기  
+- `file hello`  
+  `file /etc/passwd`  
+  `file dir1`  
+  `file /usr/bin/file`  
+  `file hellosymlink`   
+
+## 기본 명령어 - 시스템 종료(reboot, poweroff, shutdown)
+- 시스템이 돌아가고 있는 상황에서 전원을 갑자기 꺼버리는 상황은 위험할 수 있음
+- `reboot`, 재부팅
+- `poweroff`, 종료, reboot, poweroff 두 명령어 모두 바로 적용되니 사용시 주의
+- `shutdown [OPTION] [TIME]`  
+  주어진 시간에 종료 (기본값+1, -1분후)
+  - `shutdown -P now`, `shutdown -r now`
+
+## 권한 관련 명령어
+- `whoami`: 내가 누군지 확인하는 명령어. 리눅스는 앞에 내 계정명이 나오므로 궂이 사용할 필요는 없음
+- `id`: 내 계정에 대한 상세 정보 확인.
+- `sudo`: 슈퍼유저의 권한을 수행(do) 한다.  
+  - `sudo cat /etc/shadow`
+  - root 권한으로 아무 파일이나 실행하고 수정하게 된다면 보안 취약화됨. (습관적으로 사용해서는 안됨)
