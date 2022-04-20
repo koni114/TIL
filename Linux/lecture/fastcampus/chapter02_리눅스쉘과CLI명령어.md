@@ -45,6 +45,7 @@ $ sudo cat /etc/suduers
   - `useradd -aG user1 wheel` # Amazon AMI
 
 ### 사용자 계정 - 권한의 대여 - su
+- 위의 `sudo`를 사용하면, 항상 할때마다 sudo 명령어를 통해 접근해야하는 불편함이 있는데, 이 때 `su`를 사용하면 로그인을 한 것과 같은 효과를 가짐
 - `su[username]`
   - 사용자의 권한을 대여(즉, 사용자로 로그인 한 것과 같은 효과)
   - 언제 사용하느냐? 관리자가 사용자 계정을 관리하고 이슈/장애를 분석할 때 
@@ -54,4 +55,35 @@ $ sudo cat /etc/suduers
   - `su -user2`  
     user2의 id로 로그인 한다(user2의 home 디렉토리 사용)
   - `su`, `su root`  
-    root의 id로 로그인한다. (root의 pw 필요. 하지만 우분투는 root 암호 비활성화) 
+    root의 id로 로그인한다. (root의 pw 필요. 하지만 우분투는 root 암호 비활성화 -> 접속할 수는 없음) 
+
+#### 리눅스에서 root로 접속하는 방법
+- `sudo su`  
+  - 내 권한을 상승하여 root 사용자의 권한으로 로그인함(현재 디렉토리 사용)
+- `sudo su -`
+  - 내 권한을 상승하여 root 사용자 권한으로 홈 디렉토리 사용(root의 home)
+- `sudo su - user2`  
+  - user2 사용자의 권한으로 홈 디렉토리 사용(sudoer(user01)의 pw 필요, user2 의 home)
+
+### 사용자 계정과 그룹 계정
+- `cat /etc/passwd` : 사용자 계정 확인
+- `cat /etc/shadow` : 사용자 암호
+- `cat /etc/group` : 사용자 그룹 확인
+
+#### 사용자 계정과 그룹 계정 - /etc/passwd
+
+![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_09.png)
+
+- 사용자 계정은 보통 uid가 1000번 부터 시작함. 꼭 그런것은 아니지만, ubuntu는 그러함
+- 기본적으로 웹 서비스는 `www-data` 라는 권한으로 실행되며, <b>특정 프로세스를 사용하기 위해서 사용하는 계정을 서비스 계정</b>이라고 함. 여기서 `www-data`는 서비스 계정임
+- 특정 프로세스를 실행하기 위해서 필요한 계정일 뿐, 사용자가 로그인 할 필요는 없음  
+  따라서 로그인 쉘이 `/usr/sbin/nologin` 로 되어 있음
+- 리눅스 계정 uid 할당 번호
+  - 0: root
+  - 1~99: predefined
+  - 100~999: administrative and system accounts
+  - 1000: user
+- 과거에서는 해당 passwd 파일에서 암호화된 패스워드를 볼 수 있었기 때문에 passwd 인데, 최근에는 컴퓨팅 파워가 좋아지면서 hash 값을 crack할 수 있기 때문에 해커들이 쉽게 접근해서 탈취할 수 있기 있음
+- 이 때문에 분리해서 `shadow` 파일로 옮겨짐
+
+#### 사용자 계정과 그룹 계정 - /etc/shadow
