@@ -87,8 +87,44 @@ $ sudo cat /etc/suduers
 - 이 때문에 분리해서 `shadow` 파일로 옮겨짐
 
 #### 사용자 계정과 그룹 계정 - /etc/shadow
-
 ![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_10.png)
 
 - 해당 파일에서 암호 같은 것들이 저장됨
--  
+- `최종수정일`이 의미하는 것은 1970년 1월 1일을 기점으로 얼마나 시간이 흘렀는지를 의미  
+  이를 액셀에서 계산해보면 확인 가능
+- `패스워드` 필드는 root 계정은 패스워드가 `!`로 되어있는데, 이는 잠김 계정을 의미함
+- 사용자 계정(user01)에서는 패스워드에 `$6$`가 붙어있는 것을 확인할 수 있는데, 이 암호파일이 어떠한 알고리즘으로 암호화가 되어있는지를 확인할 수 있음
+- `www-data`는 따로 터미널을 통해 접속을 하지 않는 계정이므로, 패스워드가 `*`로 되어 있음
+
+## 파일의 권한
+![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_11.png)
+
+- 사용자 접근 권한의 부분
+- 소유자(User) / 그룹(Group) / 그외(Other) 
+- 링크 같은 경우는 디렉토리의 경우 나자신과 재 상위 디렉토리는 반드시 자기 자신을 거쳐서 가기 때문에 최소 링크수는 2개
+
+## 파일의 생성 권한(umask - user mask)
+- 파일/디렉토리 생성 권한의 확인
+- 소유자(User) / 그룹(Group) / 그외(Other)
+- 리눅스의 기본 파일 권한: 666
+- 리눅스 기본 디렉토리 권한: 777   
+  이 말은, umask 가 0일 경우 새로 생성되는 파일의 권한은 666, 디렉토리 권한은 777을 갖게 됨
+- 여기서 umask가 2(혹은 0002)일 경우에는  
+  파일 기본권한 666에서 002를 빼면 
+  - 110 110 110 = 666
+  - 000 000 010 = 002
+  - 110 110 100 = 664, 즉 rw-rw-r--로 생성됨
+
+## 파일의 권한 - 권한 변경(chmod - change mode)
+- `chmod [Options] [MODE] file`  
+  파일 디렉토리 권한의 변경
+- 소유자(User) / 그룹(Group) / 그외(Other)
+
+## 파일의 권한 - 소유권 변경(chown - change owner, chgrp - change group)
+- `chown [Option] ... [USER][:GROUP] FILE`  
+  파일/디렉토리의 소유자/그룹 변경
+~~~shell
+$ chown user2 hello.txt        # 해당 파일(hello.txt)의 소유자를 user2로 변경
+$ chown user2:user2 hello.txt  # 해당 파일(hello.txt)의 소유자와 그룹을 모두 user2 로 변경
+$ chown:user2 hello.txt        # 해당 파일(hello.txt)의 그룹을 user2 로 변경
+~~~ 

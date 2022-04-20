@@ -248,3 +248,78 @@ head -3 test.csv
 - `sudo`: 슈퍼유저의 권한을 수행(do) 한다.  
   - `sudo cat /etc/shadow`
   - root 권한으로 아무 파일이나 실행하고 수정하게 된다면 보안 취약화됨. (습관적으로 사용해서는 안됨)
+
+## 사용자 추가(adduser - add user)
+- `adduser [options][--home DIR][--shell SHELL][--disabled-password][--disabled-login] user`
+- 관리자만 사용자 추가가 가능(sudo)
+~~~shell
+$ sudo adduser user2
+~~~
+
+## 사용자 추가(useradd)
+- ubuntu 16 버전 이하에서는 useradd 추가시, default로 `/bin/sh`로 보이는데, 이는 원래 `/bin/bash`로 적용됨  
+  이는 오래된 버그 중 하나
+~~~shell
+$ sudo useradd user3           # 사용자 user3 추가
+$ sudo useradd -D              # 사용자 생성 기본값 확인
+$ sudo useradd -D -b /usr      # 사용자 기본 홈 디렉토리 /usr 로 변경
+$ sudo useradd -D -s /bin/bash # 사용자 기본 쉘 bash 로 변경
+$ sudo useradd -e 2022-12-31   # 사용자 계정 만료일 설정
+~~~
+
+## 사용자 암호 정책 변경 / 암호 변경(chage -change age / passwd)
+- `chage [option] user`: 사용자 암호 정책 변경
+- `passwd [options] user` : 암호 변경
+- `passwd -l user` : 계정 잠금
+- `passwd -u user` : 계정 잠금 해제
+- `passwd -S user` : 계정 상태 확인
+- `passwd -n <mindays> user` : 암호 최소 기간
+- `passwd -x <maxdays> user` : 암호 최대 기간
+- `man passwd`
+~~~shell
+$ chage user2    # 암호 정책 변경
+$ chage -l user2 # 암호 정책 확인
+$ chage -E 2020-12-31 -m 1 -M 90 -W 7 user2 
+~~~
+
+## 사용자 삭제(deluser - delete user)
+- 사용자 계정 삭제시, 해당 사용자의 파일을 삭제하지는 않음
+- 남아있는 파일들을 다른 계정을 생성할 때 userId가 중복된다면 기존 파일을 다시 매핑시킬수도 있음
+- 따라서 확실하게 삭제하려면 home 디렉토리도 함께 삭제해야 함
+- 삭제된 파일은 다시 살릴 수는 없음
+~~~Shell
+$ sudo deluser user2               # user2 계정 삭제
+$ sudo deluser user2 --remove-home # 해당 계정 home 디렉토리도 삭제
+$ userdel user                     # non-interative 모드로 모두 삭제
+$ userdel user2                    # 사용자 계정 삭제(홈 삭제) 
+$ userdel -f user2                 # 로그인 중이더라도 삭제
+~~~
+
+## 그룹 생성(addgroup - add group)
+- `addgroup [options] group`  
+  그룹계정 생성. 회사 내에서 그룹을 만들어서 같은 자원을 공유하게 만들기 위함
+- group에는 primary group과 secondary group이 있음. 사용자 내가 포함된 그룹을 primary group,   
+  내가 포함되지 않은 그룹이면서 접근 권한을 받은 경우는 secondary group 이라고 함
+~~~shell
+$ sudo addgroup developers
+$ cat /etc/group | grep devleopers
+~~~
+
+## 그룹삭제(delgroup - delete group)
+~~~shell
+$ sudo delgroup developers
+~~~
+
+## 그룹 계정 / 사용자 할당(또는 사용자 정보 수정)(usermod - user mod)
+- `usermod [options] user`
+- 사용자 정보 수정 (moduser 는 없음 (interactive 방식인))
+- 사용자를 그룹에 추가
+~~~shell
+$ usermod -c user2        # 사용자 이름 수정
+$ usermod -a -G sudo user # user2 를 sudo 그룹에 추가
+$ deluser user2 sudo      # user2 를 sudo 그룹에서 제거(실행 후 결과 번역 오류) 
+~~~
+
+## 파일의 권한
+- 사용자 접근 권한의 부분
+- 소유자(User) / 그룹(Group) / 그외(Other) 
