@@ -87,3 +87,8 @@ $ sudo cat /etc/suduers
 - 이 때문에 분리해서 `shadow` 파일로 옮겨짐
 
 #### 사용자 계정과 그룹 계정 - /etc/shadow
+
+![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_10.png)
+
+- 해당 파일에서 암호 같은 것들이 저장됨
+-  
