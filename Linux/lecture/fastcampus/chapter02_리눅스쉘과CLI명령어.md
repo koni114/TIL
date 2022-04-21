@@ -128,3 +128,159 @@ $ chown user2 hello.txt        # 해당 파일(hello.txt)의 소유자를 user2�
 $ chown user2:user2 hello.txt  # 해당 파일(hello.txt)의 소유자와 그룹을 모두 user2 로 변경
 $ chown:user2 hello.txt        # 해당 파일(hello.txt)의 그룹을 user2 로 변경
 ~~~ 
+
+## 리눅스 쉘(shell) 이란 ? 
+- 운영체제와 통신하기 위한 사용자 인터페이스
+- 사용자 명령어 및 프로그램을 실행할 수 있는 공간
+
+## 리눅스 쉘(shell)의 종류
+- 두 개의 메인 타입
+  - Bourne shell - 특징 $ 프롬프트(Prompt)
+  - C shell - 특징 % 프롬프트
+- Bourne Shell 의 변천사
+  - Bourne shell -> sh
+  - Korn shell -> ksh
+  - Bourne Again shell -> bash
+  - POSIX shell -> sh
+- `cat /etc/shells` 을 통해 사용하능한 shell을 확인 가능
+- `cat /etc/passwd | grep user --color=none` 을 통해 해당 계정 로그인시 사용되는 shell 확인 가능
+
+## 리눅스 쉘(shell) - 프롬프트(prompt)
+- 사용자와 인터렉티브(interactive)한 입력을 주고 받을 수 있는 명령 대기 표시자
+- 우분투 기본 프롬프트  
+  [username@hostname]<directory>$
+- 환경변수 PS1에 기록됨(PS1 = Prompty Statement One)
+- 프롬프트 구성은 내가 원하는대로 구성을 변경할 수 있음.
+
+## 기본 명령어 - 출력(echo)
+- 화면에 글자를 출력,(에코는 메아리라는 뜻. 즉 내가 작성한 글씨를 다시 출력해줌!)
+- `echo [OPTION] [STRING]`
+- 옵션
+  - -n : 뉴라인 제외
+  - -e : Escape 코드 지원
+  - -E : Escape 모드 미지원(기본값)
+
+## 기본 명령어 - 리다이렉션(>, >>, 2>, 2>&)
+- 결과물을 다른 장치로 보냄(Output, append, error, merge)
+~~~shell
+$ echo "hello" > hello.txt            # 파일로 출력
+$ echo "hello another" > hello.txt    # 기존 파일을 덮어씀
+$ echo "Hello again" >> hello.txt     # 기존 파일에 누적
+$ ls > file.txt                       # 출력 결과물을 파일로 출력(단, stdout만)
+$ aaa > file.txt                      # 아무런 내용도 기록되지 않음
+$ aaa 2> file.txt                     # 실패한 결과물을 파일로 출력
+~~~
+- 출력 장치의 유형
+  - stdout : 표준출력, 장치번호 1
+  - stderr : 에러출력, 장치번호 2 
+  - stdin : 입력장치, 장치번호 0
+- 복합 사용 예시
+  - `ls /tmp/* > result.txt 2>&1`  
+    출력 결과물의 성공값을 `result.txt`로 보내고 에러값을 1번과 같은 곳으로 보내라
+    `ls /tmp/* &> result.txt`: 줄여쓰는 표현법 
+
+## 기본 명령어 - 재지향(리다이렉션)(<, <<)
+- 입력값 리다이렉션(표준 입력 - stdin) 및 delimiter
+- echo 명령어에 stdin 을 받아 화면에 출력하고 싶지만, echo는 interactive 하게 주고 받을 수는 없음
+- 
+- 사용 예시
+  - `echo "Hello" > hello.txt` : 파일로 출력
+  - `echo < hello.txt`         : 입력값을 받고 싶으나 동작하지 않음. stdin 입력 지원여부  
+  - `cat < hello.txt`          
+- Delimiter 사용 예시
+  - `cat << end`  
+    표준입력으로부터 end 값이 들어올때까지 입력
+  - `cat << end > hello.txt`  
+    표준입력으로부터 end 값이 들어올떄까지 입력 결과를 파일로 출력
+
+## 기본 명령어 - 파이프 (|)
+- 출력값 프로세스간 전달
+  - `ls -l | grep hello` : 출력값 내에서 검색
+  - `ls -l | wc -l`      : 출력값 내에서 줄 개수 확인
+  - `ls -l | grep hello | wc - l` : 다중 파이프 활용
+  - `cat hello.txt | more` : 출력값 내에서 페이징 처리 
+ 
+## 기본 명령어 - history
+- 쉘에서 입력한 명령어들의 기록(몇 개나? 최대 1000개, 파일에 총 2000개)
+~~~shell
+$ echo $HISTSIZE       # 1000
+$ echo $HISTFILESIZE   # 2000
+
+$ history 10  # 최근 10개의 히스토리 보기
+$ history -c  # 히스토리 버퍼 삭제(clear)
+
+$ !18         # 15번째 라인 다시 실행
+$ !!          # 바로 이전 명령어 다시 실행
+~~~
+## 환경변수 - PATH
+- 명령어 실행(어디에?)
+- 배포판에 따라 현재 디렉토리를 가장 1순위로 하여 실행하는 배포판도 있으나, 우분투는 그렇지 않음
+- `echo $PATH`  
+  `export PATH=$PATH:<추가할디렉토리>`
+- 환경변수 확인 순서
+  - '1. PATH 디렉토리 확인
+  - '2. PATH 디렉토리가 있으면 실행권한 확인
+    - 2.1. 권한이 없으면 SetUID 확인 
+  - '3. 권한이 있으면 명령어를 해당 사용자ID 로 실행
+    - 3.1 안되면 해당 명령어의 소유주 권한으로 명령어 실행
+- 바이너리 실행파일은 PATH의 순차적으로 검색이 되어 실행됨
+
+## 환경변수 - PATH - which
+- `which [FILENAME]`  
+  내가 실행하는 바이너리가 어디에서 실행되는가? 
+~~~shell
+$ which ls  
+$ which python 
+~~~
+
+## 환경변수 - printenv, env
+- `printenv` : 다양한 환경변수 확인
+- 주요 환경변수
+
+![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_12.png)
+
+- 확인방법 및 변경방법
+  - `echo $환경변수`
+  - `환경변수 = 값`(해당 터미널에서만) 
+  - `export 환경변수  = 값`(전체 터미널에서)
+
+## 환경변수  - LANGUAGE / LANG
+- 언어(LANGUAGE) 및 언어셋(LANG) 활용
+- 환경변수 활용방법:
+  - echo $LANGUAGE
+  - echo $LANG
+- 언어 (한시적으로) 변경
+  - `LANGUAGE=en COMMAND [ARGS]`
+- 언어셋 (한시적으로) 변경
+  - `LANG=c COMMAND  [ARGS]`
+- 영구적으로 변경 시에는
+  - `export LANGUAGE=en`
+       
+## 환경변수 - LANG - locale
+- 언어와 언어셋(케릭터셋), 그리고 다양한 지역 설정값을 확인(= 로케일)
+- 현재 로케일(locale) 정보 확인
+  - `locale`
+  - `localectl(status)` 
+- 설정 가능한 모든 로케일(locale) 정보 확인
+  - `locale -a`
+- 누락된 로케일(locale)을 새로 활성화 하라면? 
+  - `/etc/locale-gen` : 주석처리 확인
+  - `locale-gen` : 로케일 재빌드 
+~~~shell
+$ date
+$ LC_TIME=en_US date
+$ LC_TIME=en_ZM date
+~~~
+
+## 단축명령어(alias)
+- bash 쉘의 장점 - 축약어 가능(alias)
+- 자주 쓰는 긴 명령어를 짧게 요약
+  - ls 명령어는 이미 `ls --color=auto` 의 축약어
+  - ll 명령어는 이미 `ls -alF`의 축약어 
+- alias 기능은 매번 실행할 때마다 사라짐
+
+## 쉘 부팅(시작) 시퀀스(.profile, .bashrc 등)
+~~~
+$ ls -al .profile
+$ ls -al .bash*
+~~~
