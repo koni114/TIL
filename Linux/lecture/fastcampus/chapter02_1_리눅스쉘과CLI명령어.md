@@ -284,3 +284,13 @@ $ LC_TIME=en_ZM date
 $ ls -al .profile
 $ ls -al .bash*
 ~~~
+- BASH의 interactive shell 시작 시퀀스
+- '1. `/etc/profile` 수행(공통 수행 - 환경 설정 등)
+  - '1.1. `/etc/profile.d/*.sh` 수행(공통 수행)
+  - '1.2. `/etc/bash.bashrc` (공통 수행 - 시스템 alias 등)
+- '2. `~/.profile` 수행 (사용자별 디렉토리 - 시작 프로그램 등)
+  - '2.1 `~/.bashrc` 수행 (사용자별 디렉토리 - alias 등)
+  - '2.2 `~/.bash_aliases` (이 파일을 추가적으로 있다면 수행 - 기본은 없음)
+- BASH 의 종료 시퀀스
+  - `~/.bash_logout`
+
