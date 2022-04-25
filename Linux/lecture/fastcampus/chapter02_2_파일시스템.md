@@ -59,4 +59,44 @@ $ find . -size +100000000c        # <-- 100000000c 대신 100000k 또는 100M �
 # 최근 생성된 파일만 찾아보기(2020년 5월 15일 이후 변경된 파일)
 $ find -newerct "15 May 2020" -ls # <-- newerct 대신 newermt 로 할 경우 최근 변경된 
                                   # 최근 2일에서 5일 사이에 변경된 파일 찾기 
-~~~ 
+
+# 최근 2일에서 5일 사이에 변경된 파일 찾기 
+$ find . -mtime +2 -a -mtime -5 -ls
+~~
+
+## 파일 시스템 명령어 - 속성(stat)
+- `stat [OPTIONS] [FILE]`  
+  원하는 파일의 속성(주로 시간) 확인
+- 시간의 유형(atime, mtime, ctime)
+  - `Access`: 파일에 최근 접근 시간(고전적으로는 read 시에도 올라갔으나 지금은 다소 변경됨)
+  - `Modify`: 파일의 내용 변경 시간  
+  - `Change`: 파일의 수정 시간(inode 관점에서의 변화 시간 - 생성, 변경, 속성수정 등) 
+~~~shell
+$ stat hello.txt
+
+# 결과
+File: 'hello.txt'
+Size: 386       	Blocks: 8          IO Block: 4096   regular file
+Device: 801h/2049d	Inode: 544397      Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/ koni114)   Gid: ( 1000/ koni114)
+Access: 2022-04-25 22:54:28.675808891 +0900
+Modify: 2022-04-23 08:50:50.901705729 +0900
+Change: 2022-04-23 08:50:50.901705729 +0900
+~~~
+- ls 명령어에서의 시간 확인
+  - `ls -l` : 기본값(mtime)
+  - `ls -l -u` : atime
+  - `ls -l -c` : ctime 
+
+## 파일 시스템 명령어 - 검색 (find) advanced
+- 루트 디렉토리로부터 파일 사이즈가 100M 이상인 파일을 찾아서 ls 로 상세 표시하기  
+  `find / -size 100M -exec ls -l {} \; 2>/dev/null`
+- 루트 디렉토리로부터 txt 파일을 찾아서 그 안에 "HELP"라는 글자가 포함된 파일과 내용 표시  
+  `find / -name "*.txt" -exec grep "HELP" {} \; -print 2>/dev/null`
+- 루트 디렉토리로부터 특정 [조건]의 파일 찾아서 특정 [디렉토리]로 복사하기  
+  `find / [조건문] -print -exec cp {} [경로] \; 2>/dev/null`
+
+## 검색 명령어 - 필터링(grep)
+- `grep [OPTION] PATTERN [FILE]`  
+  특정 패턴 검색(또는 정규표현식 패턴 검색)
+- 파일 내에서 usage 라는 단어 검색
