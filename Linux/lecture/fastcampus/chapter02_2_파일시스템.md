@@ -99,4 +99,127 @@ Change: 2022-04-23 08:50:50.901705729 +0900
 ## 검색 명령어 - 필터링(grep)
 - `grep [OPTION] PATTERN [FILE]`  
   특정 패턴 검색(또는 정규표현식 패턴 검색)
-- 파일 내에서 usage 라는 단어 검색
+- 파일 내에서 usage 라는 단어 검색  
+  `grep "usage" [FILE]`
+- 파일 내에서 "vim" 또는 "Vim" 이라는 단어 각각 찾는 법(대소문자 구분 없이)  
+  `grep "vim" [FILE]`  
+  `grep "Vim" [FILE]`  
+  `grep -i "vim" [FILE]` (대소문자 무시) 
+- 하위 디렉토리 모두 검색    
+  `grep -r "vim" [PATH]`
+
+## 검색 명령어 - 필터링(grep) advanced 정규표현식
+- 기본 정규 표현식(Basic Regular Expression)
+- 실습: `grep -n "PATTERN" /usr/share/doc/vim/copyright`
+  - `^s` : 문장의 시작이 s로 시작하는 줄 
+  - `e$` : 문장의 끝이 e로 끝나는 줄
+  - `..e$` : 문장의 끝의 3글자에서 끝이 e로 끝나는 줄
+  - `app*` : 문장의 시작/중간/끝이 ap와 p의 "0개혹은 그 이상"의 개수를 가지고 있는 줄
+  - `^[at]`: 문장의 시작 첫 단어가 a 또는 t로 시작하는 줄
+  - `[0-9]`: 문장의 중간에 숫자 0~9 까지를 포함하고 있는 줄
+- 확장 정규 표현식(Extended Regular Expression)
+  - 실습: `grep -E "PATTERN" /usr/share/doc/vim/copyright`  
+    - `[p]{2}` : 문장 내 p라는 글자가 연속 두번 나오는 경우
+    - `^[a-zA-Z0-9]{3,9}` : 문장의 시작이 소문자/대문자/숫자로 시작하는 3~9길이 
+
+## 검색 명령어 - 필터링(grep) 응용
+- 더 일반적인 활용 사례
+  - 파이프로 연결한 grep의 응용
+- 파일 목록에서 특정 단어 검색
+  - `ls -al | grep txt`
+- 로그 파일에서 경고만 검색
+  - `cat /var/log/syslog | grep -i "warn"`
+- 프로세스 목록에서 특정 단어 검색(및 특정 단어 예외)
+  - `ps x | grep "/bin"`
+  - `ps x | grep "/bin" | grep -v "grep"`
+- 특정 포트가 열려 있는지 확인       
+  - `netstat -a | grep 80`
+  - `netstat -a | grep ":80"` 
+
+## 정렬 명령어 - 소팅(sort)
+- `sort [OPTION][FILE]`  
+  파일의 내용을 특정 순서(옵션)로 정렬(그러나 현실적으로는 FILE 보다는 PIPE와 더 많이 연동)
+- 디렉토리 목록을 소팅(기본값 : 첫 번째 컬럼)  
+  `ls -l | sort`
+- 디렉토리 목록을 두번째 컬럼으로 소팅(기본값: 캐릭터 소팅)  
+  `ls -l | sort -k 2`
+- 디렉토리 목록을 두번째 컬럼으로 숫자로 소팅  
+  `ls -l | sort -k 2 -n`(또는 -k2n 붙여써도 무방)
+- 디렉토리 목록을 파일 사이즈별로 소팅(기본값: 오름차순)  
+  `ls -l | sort -k 5 -n`
+- 디렉토리 목록을 파일 사이즈별로 역순 소팅(내림차순)  
+  `ls -l | sort -k 5 -n -r`
+- 두 개 이상의 키로 소팅(두 번째 컬럼(숫자) & 다섯번째 컬럼)    
+  순차적으로 적용됨
+  `ls -l | sort -k2n -k5`
+- 파이프 외에 인풋 리디렉션도 가능  
+  `sort -k 2 | -k 5 < dir.txt`
+
+## 내용 검색/편집 명령어(awk)
+- 패턴 검색 및 텍스트 프로세싱
+- 독자적으로 awk 를 사용하기보다는 shell programming 등에 함께 사용됨
+- 디렉토리 목록 중 첫번째 컬럼만 출력  
+  `ls -l | awk '{print $1}'`
+- 디렉토리 목록 중 파일명과 사이즈만 출력 (아홉번째 컬럼, 다섯번째 컬럼)  
+  `ls -l | awk '{print $9, $5}'`  
+  `ls -l | awk '{print "FILENAME:"$9, "SIZE: $5"}'`
+- 디렉토리 목록 중 사이즈를 모두 더해서 결과만 출력  
+  `ls -l | awk '{sum += $5} END {print sum}'`
+- 디렉토리 목록 중 파일 사이즈별로 소팅해서 10000 바이트보다 큰 것만 출력  
+  `ls -l | sort -k 5 | awk '$5 >= 10000 {print}'`
+- 암호 파일에서 콜론(:)을 구분자로 잘라서 첫번째 컬럼만 출력  
+  `cat /etc/passwd | awk -F":" '{print $1}'`
+
+## 내용 검색/편집 명령어(sed)
+- sed's/패턴/변환/g'  
+  스트림라인 편집기(search and replace)
+- 파일 내의 모든 book을 books로 변경  
+  `cat /usr/share/doc/vim/copyright | sed's/book/books/g`
+- (글자가 있는) 모든 줄의 맨 끝을 ! 표로 끝나도록 변경  
+  `cat /usr/share/doc/vim/copyright | sed 's/.$/!/g'`  
+- 출력 결과를 소문자에서 대문자로 변경  
+  `ls -l | sed 's/[a-z]/\U&/g`
+- 출력 결과를 대문자에서 소문자로 변경  
+  `cat /etc/passwd | sed's/[A-Z]/\L&/g`
+
+## 기타 명령어 - 분석(uniq / wc)
+- 중복제거 유틸(uniq) 및 단어분석(word-count)
+- 파일 내에 중복되는 줄 제거   
+  `cat hello.txt | uniq`
+- 파일 내의 "라인수/단어수/문자수" 출력  
+  - `wc hello.txt` 또는 `cat hello.txt | wc`
+  - `wc -l hello.txt` (라인수만 출력)
+
+## 파일 시스템 주요 명령어(디스크 용량) -du (disk usage)
+- `du [OPTION] [FILE]`  
+  파일 용량 출력
+- 현재 디렉토리로부터 사용된 용량 확인  
+  `du` 
+- 사용 예시
+  - `du -S | sort -n` : 디렉토리별 용량을 오름차순으로 소팅해서 출력
+  - `du / -h 2>/dev/null | grep [0-9]G` : 디렉토리별 누적 용량을 출력하여 GB이상의 디렉토리 출력
+  - `du --max-depth=1` : 디렉토리 용량을 최대 1 디렉토리 depth 까지만 출력 
+
+## 파일시스템 주요 명령어(묶음/압축) - tar (tape archive)
+- `tar [OPTION][FILE][PATH]`  
+  파일 묶음
+- 각종 옵션
+  - `c`: create
+  - `x`: extract(해지)
+  - `v`: verbose(디테일한 상황 보고 - 실행 중 파일 목록 출력)
+  - `f`: file(저장될 파일명 지정하기 위해)
+  - `t`: list(목록 확인)
+  - `z`: zip(압축)
+  - `j`: bzip2(압축) 
+- 활용 예시
+- `tar cvf myzip.tar dir1`: tar 아카이브 만들기
+- `tar tf myzip.tar`: tar 아카이브 내용 확인
+- `tar xvf myzip.tar`: tar 아카이브 풀기
+- `tar cvfz myzip.tgz dir1`: tar.gz 아카이브 만들기
+- `tar tf myzip.tgz` : tar 아카이브 내용 확인
+- `tar xvfz myzip.tgz`: tar 아카이브 풀기 
+
+## 파일 시스템 주요 명령어(묶음/압축) - gz, bz2, xz
+- `gzip [OPTION] [FILE]`: 파일 압축
+- 다양한 압축 유틸리티들(시대의 변화에 따라, 압축 알고리즘의 발전에 따라..)  
+  `gzip`, `bzip2`, `xz`
