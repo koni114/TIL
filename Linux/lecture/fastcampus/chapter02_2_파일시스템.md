@@ -223,3 +223,14 @@ Change: 2022-04-23 08:50:50.901705729 +0900
 - `gzip [OPTION] [FILE]`: 파일 압축
 - 다양한 압축 유틸리티들(시대의 변화에 따라, 압축 알고리즘의 발전에 따라..)  
   `gzip`, `bzip2`, `xz`
+- 압축 용량(작은게 좋음) : `xz` < `bzip2` < `gzip`
+- 압축 시간(작은게 좋음) : `gzip` < `bzip2` << `xz`
+- 압축 해지 시간(작은게 좋음) : `gzip` < `xz` < `bzip2`
+
+## 사용 방법 - 압축하기
+- `gzip filename`, `bizp2 filename`, `xz filename`  
+  각각 filename.gz, filename.bz2, filename.xz 형태로 압축됨
+- 압축풀기  
+  gzip -d filename  
+  gzip2 -d filename  
+  xz -d filename  
