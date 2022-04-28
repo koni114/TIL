@@ -42,6 +42,10 @@ $ find . -name TMP -empty # TMP라는 이름의 빈 디렉토리 또는 크기�
 $ find . -name "*.EXT" -delete # 확장자 검색 후 파일 삭제.
 $ find . -name [FILE] -print0  # 검색한 결과를 줄 바꿈 없이 출력
 $ find . -name "*.ipynb" -exec basename {} \; # 해당 디렉토리에 해당 파일명을 디렉토리는 제외하고 출력
+
+# usr directory 밑에 있는 50MB 보다 큰 파일들을 /tmp 밑에 복사.  
+# 이 때 error 발생나는 경우는 출력 안함(2>/dev/null )
+$ find /usr -size +50M -exec cp {} /tmp \; 2>/dev/null
 ~~~
 - 파일 또는 디렉토리만 검색하기
   - b : block special
@@ -323,3 +327,21 @@ $ deluser user2 sudo      # user2 를 sudo 그룹에서 제거(실행 후 결과
 ## 파일의 권한
 - 사용자 접근 권한의 부분
 - 소유자(User) / 그룹(Group) / 그외(Other) 
+
+## 필요한 컬럼만 확인하기 - awk
+~~~shell
+$ ls -al | awk '{print $1}' # 첫 번째 컬럼만 출력
+$ ls -al | awk '{sum += $5} END {print sum}' # 파일의 size를 모두 더해 출력
+$ cat /etc/passwd | awk -F":" '{print $1}'   # passwd text에서 : 를 구분자로 첫 번째 컬럼만 출력
+~~~
+
+## 특정 텍스트의 단어를 대체 - sep 's/원본단어/대체단어/g'
+~~~shell
+$ cat /usr/share/doc/vim/copyright | sed 's/book/books/g' > mycopyright
+~~~
+
+## 디렉토리의 용량 파악 - du
+~~~shell
+$ du --max-depth=1 -h 2>/dev/null
+$ 
+~~~
