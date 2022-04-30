@@ -1,0 +1,32 @@
+# 이상치 처리 기준
+1. IQR1.5
+2. IQR1.8
+3. PCT95
+4. PCT90
+5. 임의값
+
+# 이상치 대체 기준
+1. Min/Max
+2. NA
+3. 임의값
+
+# 이상치 Table
+ms -> 이상치 처리 Rule
+tr -> 이상치 대체 Rule
+gcs_comp_code,
+biz_op_code,
+ds_id,
+var_id,
+ms_tp,     IQR,      PCT
+ms_op,     1.5, 1.8, 90, 95
+ms_dir,
+ms_ucl,    이상치라고 판단하는 기준 상한선 값
+ms_lcl,    이상치라고 판단하는 기준 하한선 값
+tr_tp,     mM, NA,
+tr_ucl,    이상치를 대체할 기준 상한선 값
+tr_lcl,    이상치를 대체할 기준 하한선 값
+tr_v,      이상치를 대체할 평균(?) 값
+attr1,
+attr2
+
+모든 값을 반올림하여 8자리 수까지 만들어야 함.

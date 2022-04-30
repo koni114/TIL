@@ -343,5 +343,4 @@ $ cat /usr/share/doc/vim/copyright | sed 's/book/books/g' > mycopyright
 ## 디렉토리의 용량 파악 - du
 ~~~shell
 $ du --max-depth=1 -h 2>/dev/null
-$ 
 ~~~
