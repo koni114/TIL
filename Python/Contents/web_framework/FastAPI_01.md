@@ -1,4 +1,4 @@
-# FastAPI
+# FastAPI 소개 및 기본 호출
 ## What is FastAPI? 
 - 웹 프레임워크: Spring Framework, Django, Flask, Sanic etc
 - 마이크로프레임워크: Flask, Sanic
@@ -779,5 +779,3 @@ $ http :8000/header X-Token:some.secret.token
 - 추가로 `Header`는 다른 클래스와 다르게 `convert_underscores` 옵션을 갖는데 `False`를 줄 경우 하이픈을 언더스코어로 변환하지 않음
 - `X-token`이 아니라 `X_token` 이라는 헤더를 위해 존재하는 옵션.  
   하지만 애초에 언더스코어를 사용하는 건 관례를 벗어나므로 왠만해서는 하지 않아야 함
-
-
