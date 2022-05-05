@@ -9,6 +9,7 @@
           <option value="W292" />
           <option value="E266" />
           <option value="E302" />
+          <option value="E305" />
         </list>
       </option>
     </inspection_tool>
@@ -16,6 +17,11 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="ssl._create_unverified_context" />
+          <option value="sqlalchemy.orm.scoping.scoped_session.add" />
+          <option value="sqlalchemy.orm.scoping.scoped_session.commit" />
+          <option value="sqlalchemy.orm.scoping.scoped_session.query" />
+          <option value="sqlalchemy.orm.scoping.scoped_session.new" />
+          <option value="sqlalchemy.orm.scoping.scoped_session.rollback" />
         </list>
       </option>
     </inspection_tool>
