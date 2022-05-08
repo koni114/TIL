@@ -13,7 +13,7 @@ class SomeError(Exception):
         self.code = code
 
     def __str__(self):
-        return f"<{self.name}> is occured. code: <{self.code}>"
+        return f"<{self.name}> is occurred. code: <{self.code}>"
 
 
 users = {

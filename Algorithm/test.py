@@ -1,11 +1,11 @@
-# 지수 기반 스케줄링
-def exponential_decay_fn(epoch):
-    return 0.1 * 0.01 ** (epoch / 20)
+from collections import defaultdict
+from collections import Counter
 
-def exponential_decay(lr0, s):
-    def exponential_decay_fn(epoch):
-        return lr0 * 0.1 ** (epoch / s)
-    return exponential_decay_fn
+a = defaultdict(int)
+a["A"] = 5
+a["B"] = 10
 
-exponential_decay_fn = exponential_decay(lr0=0.01, s=20)
+a = [1, 2, 3, 4, 5, 5, 5, 6, 6]
+counter_a = Counter(a)
+counter_a.most_common(1)
 
