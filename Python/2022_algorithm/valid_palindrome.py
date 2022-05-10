@@ -1,12 +1,13 @@
-import re
-s = "A man, a plan, a canal: Panama"
-s = re.sub("[^a-zA-Z0-9]", "", s)
-
-
-
-
 class Solution:
     def isPalindrome(self, s: str) -> bool:
-        s_alnum = [c.lower() for c in s if c.isalnum()]
-        return s_alnum == s_alnum[::-1]
+        strs: deque = deque()
 
+        for char in s:
+            if char.isalnum():
+                strs.append(char.lower())
+
+        while len(strs) > 1:
+            if strs.popleft() != strs.pop():
+                return False
+
+        return True
