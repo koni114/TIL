@@ -1,30 +1,32 @@
 # 높이를 입력받아 비 온 후
 from typing import List
+nums = [-1, 0, 1, 2, -1, -4]
+
+tㅋ
 
 class Solution:
-    def trap(self, height: List[int]) -> int:
-        if not height:
-            return 0
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()
+        three_sums = set()
+        three_sums.
+        for idx in range(len(nums) - 2):
 
-        volume = 0
-        left, right = 0, len(height) - 1
-        left_max, right_max = height[left], height[right]
+            left, right = idx + 1, len(nums) - 1
+            while left < right:
+                if nums[idx] + nums[left] + nums[right] < 0:
+                    left += 1
+                elif nums[idx] + nums[left] + nums[right] > 0:
+                    right -= 1
+                else:
+                    three_sums.append([nums[idx], nums[left], nums[right]])
+                    left += 1
+                    right -= 1
 
-        while left < right:
-            left_max, right_max = max(left_max, height[left]), \
-                                  max(right_max, height[right])
-
-            if left_max <= right_max:
-                volume += left_max - height[left]
-                left += 1
-            else:
-                volume += right_max - height[right]
-                right -= 1
-
-        return volume
+        return three_sums
 
 
-
+s = Solution()
+s.threeSum(nums)
 
 
 
