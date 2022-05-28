@@ -1,0 +1,77 @@
+# 기본 파라미터 설정
+# null 값을 사용하는 값들은 app_properties 에 정의하고 args_properties 에 값이 있는 경우만
+# args 로 업데이트
+
+# ** 입력시에만 적용되어야 하는 값들은 반드시 default: null 을 등록해야 함
+# - arg: ['command']
+#  help: 'command = create, drop, fix, audit, desc, compute_stats'
+
+# required - 명령행 옵션을 생략할 수 있는지 없는지, True 인 경우 필수로 옵션이 주어져야 함
+# dest -  parse_args() 가 반환하는 객체에 추가될 어트리뷰트의 이름.
+# action - 명령행에서 이 인자가 발견될 때 수행 할 액션의 기본형.
+
+- arg: ['--restart']
+  required: False
+  dest: 'run'
+  action: 'store_const'
+  const: 'restart'
+  default: 'start'
+  help: 'restart program'
+
+- arg: ['--stop']
+  required: False
+  dest: 'run'
+  action: 'store_const'
+  const: 'stop'
+  default: 'start'
+  help: 'stop running program'
+
+- arg: ['--background', '-bg']
+  dest: 'run_mode'
+  action: 'store_const'
+  const: 'background'
+  default: null
+  help: 'run background mode'
+
+- arg: ['--foreground', '-fg']
+  dest: 'run_mode'
+  action: 'store_const'
+  const: 'foreground'
+  default: null
+  help: 'run foreground mode'
+
+- arg: ['--debug']
+  required: False
+  dest: 'debug'
+  action: 'store_const'
+  const: True
+  default: null
+  help: 'debug option'
+
+- arg: ['--logging_level']
+  required: False
+  dest: 'logging_level'
+  default: null
+  help: 'logging = info, more, detail, debug'
+
+- arg: ['--without_confirmed', '-wc']
+  required: False
+  action: 'store_true'
+  dest: 'without_confirmed'
+  default: null
+  help: 'run without confirmed'
+
+- arg: ['--port', '-p']
+  required: False
+  dest: 'server_port'
+  default: null
+  help: 'server port'
+
+
+
+
+
+
+
+
+

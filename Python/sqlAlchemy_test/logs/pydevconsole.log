@@ -1,0 +1,16 @@
+2022-05-28 22:20:31,749 INFO load default config 
+2022-05-28 22:20:41,493 INFO load default config 
+2022-05-28 22:21:14,803 INFO load default config 
+2022-05-28 22:21:53,391 INFO load default config 
+2022-05-28 22:22:00,287 INFO load default config 
+2022-05-28 22:22:00,288 INFO application git info = {'commit': '1476d6f7eb6e81ed622ef1c21c312c0c41b45893', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '539314bfca0048717a0c29575f3e65fdb1571c81'}
+2022-05-28 22:22:00,295 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/sqlAlchemy_test/default_properties/args_properties.yaml'
+2022-05-28 23:17:13,468 INFO load default config 
+2022-05-28 23:17:13,471 INFO application git info = {'commit': '1476d6f7eb6e81ed622ef1c21c312c0c41b45893', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '539314bfca0048717a0c29575f3e65fdb1571c81'}
+2022-05-28 23:17:13,486 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/sqlAlchemy_test/default_properties/args_properties.yaml'
+2022-05-28 23:17:29,033 INFO load default config 
+2022-05-28 23:17:29,033 INFO application git info = {'commit': '1476d6f7eb6e81ed622ef1c21c312c0c41b45893', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '539314bfca0048717a0c29575f3e65fdb1571c81'}
+2022-05-28 23:17:29,044 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/sqlAlchemy_test/default_properties/args_properties.yaml'
+2022-05-28 23:35:30,190 INFO load default config 
+2022-05-28 23:35:30,191 INFO application git info = {'commit': '1476d6f7eb6e81ed622ef1c21c312c0c41b45893', 'git_dir': '/Users/heojaehun/gitRepo/TIL/.git', 'message': '', 'tree': '539314bfca0048717a0c29575f3e65fdb1571c81'}
+2022-05-28 23:35:30,200 INFO [input_args_parser] load '/Users/heojaehun/gitRepo/TIL/Python/sqlAlchemy_test/default_properties/args_properties.yaml'
