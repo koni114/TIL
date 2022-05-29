@@ -4,7 +4,7 @@ from models.database import DMBase
 
 
 class Customers(DMBase):
-    __tablename__ = "Customers"
+    __tablename__ = "CUSTOMERS"
 
     cust_id = Column(String(10), primary_key=True, nullable=False)
     cust_name = Column(String(50), nullable=False)
@@ -16,9 +16,14 @@ class Customers(DMBase):
     cust_contact = Column(String(50), default=True)
     cust_email = Column(String(255), default=True)
 
+    @staticmethod
+    def col_names():
+        return ["cust_id", "cust_name", "cust_address", "cust_city"
+                "cust_state", "cust_zip", "cust_country", "cust_contact", "cust_email"]
+
 
 class OrderItems(DMBase):
-    __tablename__ = "OrderItems"
+    __tablename__ = "ORDERITEMS"
 
     order_num = Column(Integer, primary_key=True, nullable=False)
     order_item = Column(Integer, primary_key=True, nullable=False)
@@ -26,17 +31,25 @@ class OrderItems(DMBase):
     quantity = Column(Integer, nullable=False)
     item_price = Column(Float, nullable=False)
 
+    @staticmethod
+    def col_names():
+        return ["order_num", "order_item", "prod_id", "quantity", "item_price"]
+
 
 class Orders(DMBase):
-    __tablename__ = "Orders"
+    __tablename__ = "ORDERS"
 
     order_num = Column(Integer, primary_key=True, nullable=False)
     order_date = Column(DateTime, nullable=False)
     cust_id = Column(String(10), nullable=False)
 
+    @staticmethod
+    def col_names():
+        return ["order_num", "order_date", "cust_id"]
+
 
 class Products(DMBase):
-    __tablename__ = "Products"
+    __tablename__ = "PRODUCTS"
 
     prod_id = Column(String(10), primary_key=True, nullable=False)
     vend_id = Column(String(10), nullable=False)
@@ -44,9 +57,13 @@ class Products(DMBase):
     prod_price = Column(Float, nullable=False)
     prod_desc = Column(String(1000), nullable=True)
 
+    @staticmethod
+    def col_names():
+        return ["prod_id", "vend_id", "prod_name", "prod_price", "prod_desc"]
+
 
 class Vendors(DMBase):
-    __tablename__ = "Vendors"
+    __tablename__ = "VENDORS"
 
     vend_id = Column(String(10), primary_key=True, nullable=False)
     vend_name = Column(String(50), nullable=False)
@@ -55,4 +72,9 @@ class Vendors(DMBase):
     vend_state = Column(String(5), nullable=True)
     vend_zip = Column(String(10), nullable=True)
     vend_country = Column(String(50), nullable=True)
+
+    @staticmethod
+    def col_names():
+        return ["vend_id", "vend_name", "vend_address", "vend_city", "vend_state",
+                "vend_zip", "vend_country"]
 
