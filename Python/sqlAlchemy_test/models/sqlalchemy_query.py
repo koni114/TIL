@@ -254,3 +254,5 @@ df = pd.DataFrame([[1000000006, 'Toy Land', '123 Any Street', 'New York','NY',
 
 df.to_sql('customers', engine, schema="testuser", if_exists="append", index=False)
 
+
+
