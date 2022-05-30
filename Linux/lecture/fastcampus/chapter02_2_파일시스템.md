@@ -233,4 +233,4 @@ Change: 2022-04-23 08:50:50.901705729 +0900
 - 압축풀기  
   gzip -d filename  
   gzip2 -d filename  
-  xz -d filename  
+  xz -d filename

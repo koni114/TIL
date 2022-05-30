@@ -1,5 +1,10 @@
 """
 connection pool 객체 클래스 제작
+- DB Source 에 따라 별도 connector 연결
+- 연결 상태를 CURRUNNING, CURCLOSED, CONNCLOSED 로 나눠 설정
+- list 자료구조에 여러개의 connection pool 관리.(_pools)
+  즉, _pools list 에는 _conn 과 _curs 라는 list connection pool 을 관리함
+  동시에 config 정보도 list 로 관리(_configs)
 """
 import os
 import threading
@@ -60,7 +65,7 @@ class ConnectionPool:
             elif c_type in ["epas", "ppas", "psycopg2"]:
                 connector = pconnect
 
-        # pool 존재 시, pool return
+        # config 정보에 해당하는 pool 존재 시, pool return
         if config in ConnectionPool._configs:
             idx = ConnectionPool._configs.index(config)
             pool = ConnectionPool._pools[idx]

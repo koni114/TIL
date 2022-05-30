@@ -28,6 +28,5 @@
         └── 2022-05-12.py
               - sqlAlchemy 와 cx_Oracle 성능 비교
         └── 2022-05-29.py
-              - connection pool 객체 클래스 제작
-        
+              - connection pool 객체 클래스 제작     
 ```

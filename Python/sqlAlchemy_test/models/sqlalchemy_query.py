@@ -107,10 +107,10 @@ HAVING COUNT(*) >= 2;
 
 with DBSession() as db:
     query = db.query(Orders.cust_id,
-                     func.count(Orders.cust_id).label("orders")
+                     func.count().label("orders")
                      ) \
         .group_by(Orders.cust_id) \
-        .having(func.count(Orders.cust_id) >= 2)
+        .having(func.count() >= 2)
 df = pd.read_sql(query.statement, engine)
 print(df)
 
