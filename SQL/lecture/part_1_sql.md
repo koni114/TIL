@@ -508,6 +508,7 @@ AND Orders.order_num = OrderItems.order_num
 GROUP BY cust_name, Orders.order_num
 ORDER BY cust_name, order_num;
 
+
 --3
 SELECT order_date
 FROM Orders INNER JOIN OrderItems
