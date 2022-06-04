@@ -9,6 +9,8 @@
 - 소프트링크(심볼릭 링크)
   - 직접적으로 파일을 바라보는 것이 아니라, 파일을 가리키는 포인터가 만들어지게 됨
   - 파일의 불필요한 복사를 방지하여 파일 시스템을 유연하게 활용하거나 여러 디렉토리에서 동일한 라이브러리를 요구할 경우 등 사용
+- 소프트링크의 장점
+  - 원본 파일이 변경되거나 다른 파일로 변경되어도 링크는 그대로 사용할 수 있어 편리함 
 
 ### 기본 명령어 - 파일 시스템 구조(inode 맛보기)
 ![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_08.png)
@@ -23,7 +25,7 @@
 ### 사용자 계정 - superuser 와 user
 - 슈퍼유저란? 
   - 시스템 운영 관리자 계정으로 일반적으로 리눅스 운영체제에서는 루트(Root) 유저를 말함
-  - 관리자 권한을 이반 사용자 권한과 구분하며 사용자의 부주의로 발생하는 시스템 손상과 바이러스, 악성코드의 침입에 의한 피해를 보호 
+  - 관리자 권한을 사용자 권한과 구분하며 사용자의 부주의로 발생하는 시스템 손상과 바이러스, 악성코드의 침입에 의한 피해를 보호 
 - `whoami` - 내가 누구인지 내 계정 확인
 - `id` - 내가 갖고있는 권한(포함된 그룹) 확인
 
@@ -34,7 +36,7 @@
   - 사용자 권한
   - %그룹 권한
 ~~~shell
-$ sudo cat /etc/suduers
+$ sudo cat /etc/sudoers
 ~~~
 - 특정 사용자 별로 권한을 줄 수도 있음.
 - 특정 사용자만 sudo 명령어를 사용하게 하거나, 특정 명령어만 sudo를 사용하게 할 수 있음.
@@ -43,6 +45,9 @@ $ sudo cat /etc/suduers
 - 이럴 때는 사용자를 sudo 권한에 추가하는 것을 추천
   - `useradd -aG user1 sudo`  # Ubuntu
   - `useradd -aG user1 wheel` # Amazon AMI
+- sudo 권한을 부여받은 계정 확인
+  - `sudo users` 
+
 
 ### 사용자 계정 - 권한의 대여 - su
 - 위의 `sudo`를 사용하면, 항상 할때마다 sudo 명령어를 통해 접근해야하는 불편함이 있는데, 이 때 `su`를 사용하면 로그인을 한 것과 같은 효과를 가짐
@@ -83,7 +88,7 @@ $ sudo cat /etc/suduers
   - 1~99: predefined
   - 100~999: administrative and system accounts
   - 1000: user
-- 과거에서는 해당 passwd 파일에서 암호화된 패스워드를 볼 수 있었기 때문에 passwd 인데, 최근에는 컴퓨팅 파워가 좋아지면서 hash 값을 crack할 수 있기 때문에 해커들이 쉽게 접근해서 탈취할 수 있기 있음
+- 과거에서는 해당 passwd 파일에서 암호화된 패스워드를 볼 수 있었기 때문에 passwd 인데, 최근에는 컴퓨팅 파워가 좋아지면서 hash 값을 crack할 수 있기 때문에 해커들이 쉽게 접근해서 탈취할 수 있음
 - 이 때문에 분리해서 `shadow` 파일로 옮겨짐
 
 #### 사용자 계정과 그룹 계정 - /etc/shadow
@@ -162,6 +167,10 @@ $ chown:user2 hello.txt        # 해당 파일(hello.txt)의 그룹을 user2 로
 
 ## 기본 명령어 - 리다이렉션(>, >>, 2>, 2>&)
 - 결과물을 다른 장치로 보냄(Output, append, error, merge)
+- `>` : Output
+- `>>` : append
+- `2>` : error
+- `2>&1` : error 를 output 으로 redirection(--> &)
 ~~~shell
 $ echo "hello" > hello.txt            # 파일로 출력
 $ echo "hello another" > hello.txt    # 기존 파일을 덮어씀
@@ -176,22 +185,22 @@ $ aaa 2> file.txt                     # 실패한 결과물을 파일로 출력
   - stdin : 입력장치, 장치번호 0
 - 복합 사용 예시
   - `ls /tmp/* > result.txt 2>&1`  
-    출력 결과물의 성공값을 `result.txt`로 보내고 에러값을 1번과 같은 곳으로 보내라
-    `ls /tmp/* &> result.txt`: 줄여쓰는 표현법 
+    출력 결과물의 성공값을 `result.txt` 로 보내고 에러값을 1번과 같은 곳으로 보내라     
+    `ls /tmp/* &> result.txt`: 줄여쓰는 표현법  
 
 ## 기본 명령어 - 재지향(리다이렉션)(<, <<)
 - 입력값 리다이렉션(표준 입력 - stdin) 및 delimiter
 - echo 명령어에 stdin 을 받아 화면에 출력하고 싶지만, echo는 interactive 하게 주고 받을 수는 없음
-- 
 - 사용 예시
   - `echo "Hello" > hello.txt` : 파일로 출력
-  - `echo < hello.txt`         : 입력값을 받고 싶으나 동작하지 않음. stdin 입력 지원여부  
-  - `cat < hello.txt`          
+  - `echo < hello.txt` : 입력값을 받고 싶으나 동작하지 않음. stdin 입력 지원여부  
+  - `cat < hello.txt`  
 - Delimiter 사용 예시
   - `cat << end`  
-    표준입력으로부터 end 값이 들어올때까지 입력
+    커맨드 창으로부터 입력받음  
+    입력으로부터 마지막으로 end 값이 들어오게되면 화면에 출력되면서 종료
   - `cat << end > hello.txt`  
-    표준입력으로부터 end 값이 들어올떄까지 입력 결과를 파일로 출력
+    표준입력으로부터 end 값이 들어올떄까지 입력 결과를 파일로 출력  
 
 ## 기본 명령어 - 파이프 (|)
 - 출력값 프로세스간 전달
