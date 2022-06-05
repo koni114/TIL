@@ -217,7 +217,10 @@ Change: 2022-04-23 08:50:50.901705729 +0900
 - `tar xvf myzip.tar`: tar 아카이브 풀기
 - `tar cvfz myzip.tgz dir1`: tar.gz 아카이브 만들기
 - `tar tf myzip.tgz` : tar 아카이브 내용 확인
-- `tar xvfz myzip.tgz`: tar 아카이브 풀기 
+- `tar xvfz myzip.tgz`: tar 아카이브 풀기
+- tar.gz vs tar 의 차이
+  - tar: 리눅스 환경에서 자주 사용하는 방식으로, 실제로 압축되지는 않음
+  - tar.gz: 용량을 줄여서 압축됨
 
 ## 파일 시스템 주요 명령어(묶음/압축) - gz, bz2, xz
 - `gzip [OPTION] [FILE]`: 파일 압축
