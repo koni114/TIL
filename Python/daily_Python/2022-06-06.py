@@ -62,7 +62,7 @@ class posCalDerivedVar:
                             var_name=col_var_list)
 
         return result_df
-    
+
 
 
 

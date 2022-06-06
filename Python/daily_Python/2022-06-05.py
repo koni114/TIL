@@ -1,3 +1,9 @@
+"""
+histogram, scatter, boxplot, density plot
+plotly, seaborn 을 통해 그리기.
+"""
+
+
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -62,7 +68,7 @@ good_label = "Versicolor"
 good_color = "rgba(175, 152, 207, 0.8)"
 bad_color = "rgba(104, 193, 130, 0.8)"
 hue_col = "구분"
-
+h
 class posGetDensity:
     """
         정적, 동적 density plot 을 만드는 클래스
