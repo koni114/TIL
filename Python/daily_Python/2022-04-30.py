@@ -48,5 +48,6 @@ df["country_level_check_3"] = np.where(df.Country == 'United Kingdom', df.countr
                                        np.where(df.Country == 'France', 100, df.CustomerID))
 
 
+
 # apply 와 np.select, np.where 를 사용하여 적용 가능하나, np.where/select 가 성능이 훨씬 좋음.
 
