@@ -81,7 +81,7 @@ dag=DAG(
 - `end_date`를 지정하여 종료 날짜도 지정 가능
 
 
-## Cron 기반의 스케줄 간격 설정하기
+### Cron 기반의 스케줄 간격 설정하기
 - Airflow 는 더 복잡한 스케줄 간격 설정을 지원하기 위해 cron과 동일한 구문을 사용해 스케줄 간격을 정의할 수 있음
 - cron 구문은 5개의 구성 요소가 있으며, 다음과 같이 정의됨
 ~~~
@@ -114,4 +114,56 @@ dag=DAG(
   - `@weekly`: 매주 일요일 자정에 1회 실행
   - `@monthly`: 매월 1일 자정에 1회 실행
   - `@yearly`: 매년 1월 1일 자정에 1회 실행
+- cron 식은 기능이 좋지만 헷갈릴 수 있으므로, Airflow를 적용하기 전, 작성된 태스크에 대해서 테스트 하는 것이 좋음  
+  https://crontab.guru 에서 테스트 가능
 
+### 빈도(frequency) 기반의 스케줄 간격 작성하기
+- cron 식의 제약은 특정 빈도(frequency) 마다 스케줄을 정의할 수 없다는 것  
+  예를 들어 3일에 한 번씩 실행하는 cron 식은 어떻게 정의해야 할까요? 매월 1, 4, 7, ...로 표현 할 때 이번 달 31일과 다음 달 1일을 포함해 생각하면, 다음 달에 원하는 결과를 얻을 수 없음
+- Airflow는 이런 상대적인 시간 간격으로 스케줄 간격을 정의할 수 있도록 지원함.  
+  빈도 기반 스케줄을 사용하려면 `timedelta`(표준 라이브러리인 datetime 모듈에 포함된) 인스턴스를 사용하면 됨
+~~~python
+dag=DAG(
+    dag_id="04_time_delta",
+    schedule_interval=dt.timedelta(day=3),  # timedelta 는 빈도 기반 스케줄을 사용할 수 있는 기능을 제공
+    start_date=dt.datetime(year=2019, month=1, day=1),
+    end_date=datetime(year=2019, month=1, day=5),
+)
+~~~
+- 이렇게 설정하면 DAG가 시작 시간으로부터 3일마다 실행됨(2019년 1월 4일, 1월 7일 ..)
+
+## 데이터 증분 처리하기
+- `@daily` 로 설정시, DAG가 매일 사용자 이벤트 카탈로그 전체에 대해 다운로드하고 계산하는 작업은 효율적이지 못함
+
+### 이벤트 데이터 증분 가져오기
+- 이런 문제를 해결하는 방법은 데이터를 순차적으로 가져올 수 있도록 DAG를 변경하는 것
+- 스케줄 간격에 해당하는 일자의 이벤트만 로드하고 새로운 이벤트만 통계를 계산
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_04.png)
+- 이러한 증분 방식(incremental approach)는 스케줄된 하나의 작업에서 처리해야 할 데이터 양을 크게 줄일 수 있기 때문에, 전체 데이터 세트를 처리하는 것보다 훨씬 효율적
+- 날짜별로 분리된 단일 파일로 저장하고 있기 때문에 API가 제한하고 있는 30일간의 내용을 하나로 저장하지 않고 시간이 지남에 따라 매일 순차적으로 파일을 저장할 수 있음
+- 워크플로에서 증분 데이터 처리를 구현하려면 DAG를 수정하여 특정 날짜의 데이터를 다운로드함  
+- 시작 및 종료 날짜 매개변수를 함께 정의하여 해당 날짜에 대한 이벤트 데이터를 가져오도록 API 호출을 조정할 수 있음
+~~~shell
+curl -O http://localhost:5000/events?start_date=2019-01-01&end_date=2019-01-02
+~~~
+- 두 날짜 매개변수는 이벤트 데이터의 시간 범위를 나타내며, <b>예제에서 `start_date`는 포함되는 날짜, `end_date`는 포함하지 않는 날짜</b>
+- 두 날짜를 포함하도록 배시 명령을 변경하여 DAG에서 증분 데이터를 가져오도록 구현할 수도 있음
+~~~python
+fetch_events=BashOperator(
+    task_id="fetch_events",
+    bash_command=(
+    "mkdir -p /data && "
+    "curl -o /data/events.json "
+    "http://localhost:5000/events?"
+    "start_date=2019-01-01&"
+    "end_date=2019-01-02"
+    ),
+    dag=dag, 
+)
+~~~
+
+### 실행 날짜를 사용하여 동적 시간 참조하기
+- Airflow는 태스크가 실행되는 특정 간격을 정의할 수 있는 추가 매개변수를 제공함
+- 이런 매개변수 중 가장 중요한 매개변수는 DAG가 실행되는 날짜와 시간을 나타내는 `execution_date` 임
+- <b>execution_date 는 DAG를 시작하는 시간의 특정 날짜가 아니라 `schedule_interval`로 실행하는 시작 시간을 나타내는 타임스탬프임</b>  
+  아래 그림을 보면서 설명
