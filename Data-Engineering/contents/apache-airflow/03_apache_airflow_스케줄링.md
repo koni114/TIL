@@ -166,4 +166,90 @@ fetch_events=BashOperator(
 - Airflow는 태스크가 실행되는 특정 간격을 정의할 수 있는 추가 매개변수를 제공함
 - 이런 매개변수 중 가장 중요한 매개변수는 DAG가 실행되는 날짜와 시간을 나타내는 `execution_date` 임
 - <b>execution_date 는 DAG를 시작하는 시간의 특정 날짜가 아니라 `schedule_interval`로 실행하는 시작 시간을 나타내는 타임스탬프임</b>  
-  아래 그림을 보면서 설명
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_05.png)
+- 위의 그림에서 보면 현재 시점을 기준으로 `schedule_interval`이 실행된 시작시간은 2019-01-03 00:00 이며, 이 시간이 `execution_date`가 됨
+- 다음 실행일(2019-01-04 00:00)이 `next_execution_date`며, 이전 실행 시간(2019-01-02 00:00)이 `previous_execution_date` 매개변수임
+- Airflow 에서는 이러한 실행 날짜를 오퍼레이터에서 참조하여 사용할 수 있음. 예를 들어 BashOperator 에서 Airflow 의 탬플릿 기능을 사용하여 배시 명령이 실행될 날짜를 동적으로 포함할 수 있음
+~~~python
+fetch_events = BashOperator(
+    task_id="fetch_events",
+    bash_command=(
+        "mkdir -p /data && "
+        "curl -o /data/events.json "
+        "http://localhost:5000/events?"
+        "start_date={{execution_date.strftime('%Y-%m-%d')}}"
+        "&end_date={{next_execution_date.strftime('%Y-%m-%d')}}"
+    ),
+    dag=dag,
+)
+~~~
+- {{variable_name}} 구문은 Airflow 의 특정 매개변수 중 하나를 참조하기 위해 Airflow의 Jinja 탬플릿 구문을 사용하는 예
+- `execution_date` 매개변수는 종종 날짜를 형식화된 문자열로 참조하여 사용되기 때문에 Airflow 는 일반적인 날짜 형식에 대한 여러 유형의 축약 매개변수(shorthand parameters)를 제공함
+- 예를 들어 `ds` 및 `ds_nodash` 매개 변수는 각각 YYYY-MM-DD 및 YYYYMMDD 형식으로 된 execution_date 의 다른 표현임
+- `next_ds`, `next_df_nodash`, `prev_ds`, `prev_ds_nodash`는 각각 다음, 이전 실행 날짜에 대한 축약 표기법
+- 축약 표기법을 사용하여 다음과 같이 증분 데이터를 가져올 수 있음
+~~~python
+fetch_events = BashOperator(
+    task_id="fetch_events",
+    bash_command=(
+        "mkdir -p /data && "
+        "curl -o /data/events.json "
+        "http://localhost:5000/events?"
+        "start_date={{ds}}"       # ds 는 YYYY-MM-DD 형식의 execution_date 를 제공
+        "&end_date={{next_ds}}"   # next_ds 는 next_execution_date 에 대해 동일하게 제공
+    ),
+    dag=dag,
+)
+~~~
+
+### 데이터 파티셔닝
+- 위의 BashOperator 의 경우, 새로운 스케줄한 간격으로 점진적인 이벤트 데이터를 가져와 전일의 데이터를 덮어쓰게 됨  
+  (events.json 파일명이 동일하기 때문)
+- 한가지 방법은 events.json 파일에 새 이벤트를 추가하는 것. 하지만 이는 JSON 파일에 모든 데이터를 작성할 수 있음  
+  그러나 이 방법의 단점은, 특정 날짜의 통계 게산을 하려고 해도 전체 데이터 세트를 로드하는 다운스트림 프로세스 작업이 필요
+- 또한 파일이 손상될 위험이 있음
+- 이를 해결하는 다른 방법은 태스크의 출력을 해당 실행 날짜의 이름이 적힌 파일에 기록함으로써 데이터 세트를 일일배치로 나누는 것임
+~~~python
+fetch_events = BashOperator(
+    task_id="fetch_events",
+    bash_command=(
+        "mkdir -p /data && "
+        "curl -o /data/events/{{ds}}.json " # 반환된 값이 탬플릿 파일 이름에 기록됨
+        "http://localhost:5000/events?"
+        "start_date={{ds}}"      
+        "&end_date={{next_ds}}"  
+    ),
+    dag=dag,
+)
+~~~
+- 데이터 세트를 더 작고 관리하기 쉬운 조각으로 나누는 작업은 데이터 저장 및 처리 시스템에서 일반적인 전략임  
+  이러한 방법을 일반적으로 <b>파티셔닝(partitioning)</b>이라고 함
+- 파티셔닝 전략은 이후에 데이터 전처리 및 통계값 편성시에 전체 데이터를 로드하지 않아도 되는 이점을 가지고 있음
+~~~python
+def _calculate_stats(** context):
+    """Calculates event statistics"""
+    input_path=context["template_dict"]["input_path"]    # template_dict 에서 template 값 검색 
+    output_path=context["templates_dict"]["output_path"] 
+    Path(output_path).parent.mkdir(exist_ok=True)
+
+    events=pd.read_json(input_path)
+    stats=events.group_by(["date", "user"]).size().reset_index()
+    stats.to_csv(output_path, index=False)
+
+calculate_stats=PythonOperator(
+    task_id="calculate_stats",
+    python_callable=_calculate_stats
+    templates_dict={
+        "input_path": "/data/events/{{ds}}.json" 
+        "output_path": "/data/stats/{{ds}}.json"
+    },
+    dag=dag,
+)
+~~~
+- `templates_dict` 매개변수를 사용하여 탬플릿해야 하는 모든 인수를 전달해야하며, Airflow에 의해 `_calculate_stats` 함수에 전달된 콘텍스트 개체에서 함수 내부의 탬플릿 값을 확인할 수 있음
+- Airflow 1.10.x 버전에서는 PythonOperator 에 추가 인수 `provide_context=True`를 전달해야 함  
+  그렇지 않으면 `_calculate_stats` 함수가 콘텍스트 값을 수신하지 않음
+
+## Airflow의 실행 날짜(execution_date) 이해
+### 고정된 스케줄 간격으로 태스크 실행
+- `execution_date`는 DAG가 실제 실행되는 순간이 아니라, 예약 간격의 시작 날짜임을 잊지말자
