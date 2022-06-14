@@ -1,0 +1,7 @@
+,variety,TEST_MEAN,A,V,cause_rank,cause_yn
+0,Setosa,0.7220175478928331,0.00883893,0.65648189,"0    1
+Name: V, dtype: int64",['N']
+1,Versicolor,0.44867686611006274,0.04227327,0.73870376,"0    1
+Name: V, dtype: int64",['N']
+2,Virginica,0.35556443555911454,0.08082845,1.22919721,"0    1
+Name: V, dtype: int64",['N']
