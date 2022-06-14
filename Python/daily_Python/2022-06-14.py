@@ -53,3 +53,15 @@ for (var, df_group_by_id) in result_df.groupby(group_var):
         df_group_by_id["cause_yn"] = np.where(df_group_by_id['V'] >= 4, "Y", "N")
 
 
+
+def rank(df):
+    if len(df[df['TEST_MEAN'] <= 0.05].index) != 0:
+        return df.sort_values('TEST_MEAN')
+
+    elif len(df[df['A'] >= 1].index) != 0:
+        return df.sort_values('A', ascending=False)
+    else:
+        return df.sort_values('V', ascending=False)
+
+
+result_df.groupby('id').apply(rank)
