@@ -1,9 +1,46 @@
 """
 rank plot.
 """
+import pandas as pd
+from typing import List
 
 # 정적 PLOT.
 # seaborn
+
+class posGetHorizonBar:
+    """
+        정적, 동적 ranking plot(horizon bar plot)을 만드는 클래스
+        - 정적: seaborn
+        - 동적: plotly
+    """
+    def __init__(self, aggr_dt: str, d_df: pd.DataFrame, x_var: str,
+                 group_var: List, fac_var: str, good_label: str, bad_label: str):
+        self.aggr_dt = aggr_dt
+        self.d_df = d_df
+        self.x_var = x_var
+        self.group_var = group_var
+        self.fac_var = fac_var
+        self.good_label = good_label
+        self.bad_label = bad_label
+
+    def get_grouped_df(self, group_var:List = None):
+        if group_var is None:
+            result_df = self.d_df.groupby([self.group_var])
+        else:
+            result_df = self.d_df.groupby([group_var])
+        return result_df
+
+    def get_rank_plot(self):
+        if len(self.d_df) <= 1:
+            return
+
+        for (ctq_id, vf_id, df) in self.get_grouped_df():
+            pass
+
+
+
+
+
 import seaborn as sns
 import numpy as np
 

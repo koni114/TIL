@@ -28,5 +28,9 @@
         └── 2022-05-12.py
               - sqlAlchemy 와 cx_Oracle 성능 비교
         └── 2022-05-29.py
-              - connection pool 객체 클래스 제작     
+              - connection pool 객체 클래스 제작   
+        └── 2022-06-16.py
+              - 두 개의 dataFrame 이 있을 때,(df1, df2) df2[group_var] 에 존재하는 모든 CASE 의  
+                df1[group_var] 를 slicing 하는 예제  
+                
 ```
