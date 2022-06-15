@@ -56,12 +56,14 @@ for (var, df_group_by_id) in result_df.groupby(group_var):
 
 def rank(df):
     if len(df[df['TEST_MEAN'] <= 0.05].index) != 0:
-        return df.sort_values('TEST_MEAN')
+        return df['TEST_MEAN'].rank(method="min", ascending=True).astype(int)
 
     elif len(df[df['A'] >= 1].index) != 0:
-        return df.sort_values('A', ascending=False)
+        return df['A'].rank(method="min", ascending=False).astype(int)
     else:
-        return df.sort_values('V', ascending=False)
+        return df['V'].rank(method="min", ascending=False).astype(int)
 
-
+df = result_df
 result_df.groupby('id').apply(rank)
+
+result_df["cause_rank"] = [3, 2, 1, 3, 2, 1]
