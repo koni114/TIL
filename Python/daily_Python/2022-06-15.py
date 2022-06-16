@@ -34,8 +34,17 @@ class posGetHorizonBar:
         if len(self.d_df) <= 1:
             return
 
-        for (ctq_id, vf_id, df) in self.get_grouped_df():
-            pass
+        plot_tp, plot_tp2, ds_tp = "rank", "S", "N"
+
+        for (ctq_id, vf_id, d_df_group_id) in self.get_grouped_df():
+
+            plot_nm = ctq_id + "_" + vf_id + "_density"
+
+
+
+
+
+
 
 
 
