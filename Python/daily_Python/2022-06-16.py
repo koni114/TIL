@@ -6,6 +6,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
+import matplotlib.pyplot as plt
+plt.rcParams["font.family"] = 'AppleGothic'
+
 def df2_isin_df1(df1, df2, group_var):
     """
         두 개의 dataFrame 이 있을 때,(df1, df2)
