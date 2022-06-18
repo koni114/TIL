@@ -258,9 +258,83 @@ latest_only >> deploy_model
 - 트리거 규칙은 태스크의 의존성 기능과 같이 Airflow 가 태스크가 실행 준비가 되어 있는지 여부를 결정하기 위한 필수적인 조건
 - 기본 트리거 규칙은 `all_success`이며, 태스크를 실행하려면 모든 의존적인 태스크가 모두 성공적으로 완료되어야 함을 의미
 
+### 실패의 영향
+- 만약 실행 중에 태스크 중 하나가 오류를 발생시키면 어떻게 될까? 
+- 예를 들어 `fetch_sales` 태스크를 실패 시뮬레이션하면 Airflow 가 `fetch_sales` 태스크에 실패로 기록하게 되며,  
+  다운스트림 태스크를 더이상 실행시킬 수 없으며, `upstream_failed` 상태가 할당됨
+- 업스트림 태스크 결과가 다운스트림 태스크에도 영향을 미치는 동작 유형을 <b>전파(propagation)</b>라고 함
+- 이런 전파 유형은 모든 의존성이 성공적으로 완료되어야 하는 `all_success` 트리거 규칙 정의로 인한 결과
 
+### 기타 트리거 규칙
+- Airflow 는 여러 다른 트리거 규칙도 지원함. 예를 들기 위해 두 ERP 시스템 간의 브랜치 패턴을 다시 살펴보자
+- `none_failed` 트리거 규칙은 모든 업스트림 태스크 실패없이 완료되었는지 여부만 확인함
+- 즉 DAG를 계속 진행하기 전에 모든 업스트림 태스크가 성공 또는 스킵을 모두 허용하기 때문에 두 브랜치를 결합하기에 적합  
+  실패는 전파(propagation) 하지만, skip은 전파하지 않음. 즉, 수집/정제 태스크가 실패하면 다운스트림 태스크 실행이 중단됨
+- `all_done`을 사용하면 결과에 상관없이 의존성 실행이 완료되는 즉시 실행되는 태스크를 정의할 수 있음  
+  예를 들어 어떤 일이 발생하든 실행하고 싶은 청소 코드(Ex) 컴퓨터 종료 또는 리소스 정리)를 실행하는 데 사용 가능
+- `one_failed`, `one_success`는 모든 업스트림 태스크가 완료될 때까지 기다리지 않고 하나의 업스트림 태스크의 성공/실패 확인 조건만 필요로 함
+- 이러한 조건을 통해 조기 실패를 알리거나 태스크 그룹 중 하나의 태스크가 성공적으로 완료되는 즉시 대응할 수 있음
 
+#### Airflow 에서 지원하는 다양한 트리거 규칙에 대한 개요
+- `all_success`
+  - default. 모든 상위 태스크가 성공적으로 완료되면 트리거
+  - 일반적인 워크플로에 대한 기본 트리거 규칙
+- `all_failed`
+  - 모든 상위 태스크가 실패했거나 상위 태스크의 오류로 인해 실패했을 경우 트리거
+  - 태스크 그룹에서 하나 이상 실패가 예상되는 상황에서 오류 처리 코드를 트리거함
+- `all_done`
+  - 결과 상태에 관계없이 모든 부모가 실행을 완료하면 트리거
+  - 모든 태스크가 완료되었을 때 실행할 청소 코드를 실행(시스템 종료 또는 클러스터 중지)
+- `one_failed`
+  - 하나 이상의 상위 태스크가 실패하자마자 트리거되며 다른 상위 태스크의 실행 완료를 기다리지 않음
+  - 알림 또는 롤백과 같은 일부 오류 처리 코드를 빠르게 트리거
+- `one_success`
+  - 한 부모가 성공하자마자 트리거되며 다른 상위 태스크의 실행 완료를 기다리지 않음
+  - 하나의 결과를 사용할 수 있게 되는 즉시 다운스트림 연산/알림을 빠르게 트리거함         
+- `none_failed`
+  - 실패한 상위 태스크가 없지만, 태스크가 성공 또는 건너뛴 경우 트리거
+  - 조건부 브랜치와 결합하여 사용
+- `none_skipped`
+  - 건너뛴 상위 태스크가 없지만 태스크가 성공또는 실패한 경우 트리거됨
+  - 모든 업스트림 태스크가 실행된 경우, 해당 결과를 무시하고 트리거됨
+- `dummy`
+  - 업스트림 태스크의 상태와 관계없이 트리거됨
+  - 테스트 시 
 
+## 태스크 간 데이터 공유
+- Airflow는 XCom을 사용하여 태스크 간의 작은 데이터를 공유할 수 있음
+- XCom은 <b>태스크 간의 메세지를 교환하여 특정 상태를 공유할 수 있게 함</b>
 
+### XCom을 사용하여 데이터 공유하기
+- 예를 들어 훈련된 모델이 생성된 식별자(model_id)를 사용하여 모델 레지스트리에 등록한다고 가정
+- 훈련된 모델을 배포하려면 배포해야 하는 모델의 버전 식별자를 `deploy_model` 태스크에 전달해야 함
+- 이 문제를 해결할 수 있는 방법은 XCom 을 사용하여 train_model 및 deploy_model 작업 간에 모델 식별자를 공유하는 것
+- `xcom_push` 메서드를 사용하여 값을 게시할 수 있음
+~~~python
+def _train_model(**context):
+    model_id=str(uuid.uuid4())
+    context["task_instance"].xcom_push(key="model_id", value=model_id)
 
+train_model=PythonOperator(
+    task_id="train_model",
+    python_callable=_train_model
+)
+~~~
+- xcom_push에 대한 호출은 Airflow가 해당 태스크와 해당 DAG 및 실행 날짜에 대한 XCom의 값으로 model_id 값을 등록할 수 있도록 함
+- 웹 인터페이스에서 Admin > XCom 항목에서 게시된 XCom 값을 확인할 수 있음
+- `xcom_push` 와는 반대로 `xcom_pull` 메서드를 사용하여 다른 태스크에서 XCom 값을 확인할 수 있음
+~~~python
+def _deploy_model(** context):
+    model_id = context["task_instance"].xcom_pull(
+        task_id='train_model", key="model_id"
+    )
+    print(f"Deploying model {model_id}")
 
+deploy_model=PythonOperator(
+    task_id="deploy_model",
+    python_callable=_deploy_model
+)
+~~~
+- `xcom_pull`을 통해 XCom 값을 가져올 때 dag_id 및 실행 날짜를 정의할수도 있음
+- 이 매개변수는 디폴트로 현재 DAG와 실행 날짜로 설정됨
+- 따라서 xcom_pull 은 현재 DAG 실행을 통해 게시된 값만 가져옴

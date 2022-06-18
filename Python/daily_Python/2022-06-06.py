@@ -63,30 +63,6 @@ class posCalDerivedVar:
 
         return result_df
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import pandas as pd
 d_df = pd.read_csv("test_data/iris.csv")
 
