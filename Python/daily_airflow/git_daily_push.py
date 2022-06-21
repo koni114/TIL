@@ -1,4 +1,6 @@
 import datetime as dt
+import datetime
+
 import pathlib
 import os
 
@@ -26,4 +28,13 @@ def git_push(repo_dir: str, commit_message: str):
         print("Some Error occurred  while pushing the code")
         print(e)
 
-git_push(repo_dir="/Users/heojaehun/gitRepo/TIL", commit_message="test message!")
+
+git_push = PythonOperator(
+        task_id="git_push",
+        python_callable=git_push,
+        op_kwargs={"repo_dir": "/Users/heojaehun/gitRepo/TIL",
+                   "commit_message": f"git push {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"},
+        dag=dag
+)
+
+git_push
