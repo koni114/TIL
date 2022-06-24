@@ -88,4 +88,5 @@ wait_for_supermarket_1 = PythonSensor(
 
 ![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_22.png)
 
-- 기본저긍로 Sensor의 timeout은 7일로 설정되어 있음. 
+- 기본적으로 Sensor의 timeout은 7일로 설정되어 있음.
+- 
