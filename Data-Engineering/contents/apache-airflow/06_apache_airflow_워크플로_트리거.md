@@ -89,4 +89,190 @@ wait_for_supermarket_1 = PythonSensor(
 ![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_22.png)
 
 - 기본적으로 Sensor의 timeout은 7일로 설정되어 있음.
-- 
+- <b>만약 timeout이 7일로 설정되어 있는 상태에서 schedule_interval이 하루에 한 번 실행되도록 설정되어 있다면, 이는 문제를 발생시킴</b>
+- supermarket_2, 3, 4 는 timeout 이 지난 7일 후에 실패로 나타나게 될텐데, 이 전에는 매일 3개의 태스크가 계속 쌓여서 풀링(대기)하게됨
+- airflow는 이렇게 많은 태스크가 동시에 실행되는 것을 제한하기 위해 `DAG` 의 파라미터로 `Concurrency`라는 인자에 숫자 값을 지정하여 최대 태스크 실행 수를 제한할 수 있음
+- 다음은 DAG에서 최대 동시 태스크 수를 설정하는 예제
+~~~python
+dag = DAG(
+  dag_id="couponing_app",
+  start_date=datetime(2019, 1, 1),
+  schedule_interval="0 0 * * *",
+  concurrency=50,
+)
+~~~
+- 문제는 이렇게 7일 전까지 풀링되는 태스크 수가 증가하는 것을 <b>데드 락(deadlock)</b> 현상이라고 함
+- 다른 DAG의 태스크는 실행할 수 있지만, 슈퍼마켓 DAG는 실행할 수 있는 최대 태스크 수에 도달해 차단(block)됨
+- <b>Airflow 전역 설정의 최대 태스크 제한에 도달하면 전체 시스템이 정지 될 수 있음</b>
+- 센서 클래스는 `mode` 파라미터에 `poke` 또는 `reschedule` 값을 지정하여 설정할 수 있는데, 기본 default 값은 `poke`이며 이는 최대 태스크 제한에 도달하면 새로운 태스크가 차단됨
+- `reschedule` 는 포크 동작을 실행할 때만 슬롯을 차지하며, 대기 시간 동안은 슬롯을 차지하지 않음
+
+## 다른 DAG을 트리거하기
+- 이제는 슈퍼마켓들이 `create_metrics` 의 결괏값을 활용해 통찰력을 얻고자 함
+- 현재는 `supermarket_{1, 2, 3, 4}` 태스크의 성공 여부에 따라 `create_metrics` 단계가 끝나는 마지막 시점에 하루에 한번만 실행됨
+- 분석 팀은 모든 결괏값이 끝나고 난 뒤 결과값을 제공받는 것이 아니라, 각 슈퍼마켓의 데이터 처리 직후 계산된 통계 지표를 사용할 수 있기를 원함
+- 한가지 해결방안은 <b>모든 process_supermarket_*</b> 태스크 실행 후에 `create_metrics` 작업을 다운스트림 작업으로 설정할 수 있음(아래 그림)
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_23.png)
+
+- `create_metrics` 태스크가 여러 태스크로 확장되어 DAG의 구조가 더욱 복잡해짐. 결과적으로 더 많은 반복 태스크가 발생하게됨
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_24.png)
+
+- <b>비슷한 기능의 태스크 반복을 피하는 한가지 옵션은 DAG을 분리해 DAG1이 DAG2를 여러번 호출하게 하는 것</b>
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_25.png)
+
+- 이러한 방법의 장점은, 단일 DAG에서 중복된 태스크를 가지고 있지 않고, DAG1 이 DAG2를 여러 번 호출할 수 있다는 것
+- 이 방법의 사용은 여러 상황에서 사용될 수 있는데, 예를 들어 <b>스케줄 완료를 기다리지 않고 언제든지 수동으로 트리거할 수 있는 통계 지표를 생성하는 경우에 사용됨</b>
+- 이런 시나리오에서는 `TriggerDagRunOperator`를 이용하여 다른 DAG을 실행할 수 있음
+~~~python
+import airflow.utils.dates
+from airflow import DAG
+
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+
+dag1 = DAG(
+    dag_id="ingest_supermarket_data",
+    start_date=airflow.utils.dates.days_ago(3),
+    schedule_interval="0 16 * * *",
+)
+
+for supermarket_id in range(1, 5):
+    trigger_create_metrics_dag = TriggerDagRunOperator(
+        task_id=f"trigger_create_metrics_dag_supermarket_{supermarket_id}",
+        trigger_dag_id="create_metrics",
+        dag=dag1,
+    )
+
+    dag2 = DAG(
+        dag_id="create_metrics",
+        start_date=airflow.utils.dates.days_ago(3),
+        schedule_interval=None,
+    )
+~~~
+- <b>`TriggerDagRunOperator` 의 `trigger_dag_id` 인수에 제공되는 문자열은 트리거할 DAG의 `dag_id`와 일치해야 함</b>
+- 결과적으로 슈퍼마켓에서 데이터를 수집하기 위한 DAG와 데이터의 통계 지표를 계산하기 위한 DAG로 두 개가 됨
+- 트리 뷰의 두 가지 상세 내역을 통해 스케줄에 따라 실행/수동 실행 여부를 확인할 수 있음
+  - 태스크 인스턴스에 검은색 테두리는 스케줄된 실행 상태, 테두리가 없는 태스크는 트리거(수동)된 상태를 나타냄
+  - DAG 실행은 `run_id` 필드가 있으며, 다음 중 하나로 실행되기 때문에 해당 인자값을 확인할 수 있음
+    - `schedule__`: 스케줄되어 DAG 실행이 시작되었음을 나타냄
+    - `backfill__`: 백필 태스크에 의해 DAG 실행이 시작되었음을 나타냄
+    - `manual__`: 수동으로 DAG 실행이 시작되었음을 나타냄
+- 아래 그림처럼 원 위로 마우스를 가져가면 `run_id` 값의 툴팁이 표시됨
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_26.png)
+
+### TriggerDagRunOperator로 백필 작업
+- process_* 태스크의 일부 로직을 변경하고 변경된 부분부터 DAG를 다시 실행하려면 <b>단일 DAG</b>에서는 process_* 및 해당 다운스트림 태스크의 상태를 삭제하면 되지만 <b>또 다른 DAG 안에서 `TriggerDagRunOperator` 의 다운스트림 태스크는 지워지지 않음</b>
+- `TriggerDagRunOperator`를 포함한 DAG에서 태스크를 삭제하면 이전에 트리거된 해당 DAG 실행을 지우는 대신 <b>새 DAG 실행이 트리거됨</b>
+
+### 다른 DAG의 상태를 폴링하기
+- 앞선 예제(DAG1, DAG2가 있는 예제)와 달리, 아래 그림의 중간과 같이 <b>해당 DAG에 대해 각각 TriggerDagRunOperator 태스크를 수행하거나</b> 오른쪽 그림과 같이 <b>여러 다운스트림 DAG를 트리거</b>하는 TriggerDagRunOperator 사용 가능
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_27.png)
+
+- 그렇다면 다른 DAG가 실행되기 전에 여러 개의 트리거 DAG가 완료되어야 한다면 어떻게 해야할까?  
+  예를 들어 DAG 1, 2, 3이 각각 작업을 수행하고 세 개의 DAG가 모두 완료된 후에 집계된 지표의 데이터 세트를 계산하는 DAG 4를 실행하려면 어떻게 해야 할까?
+- <b>Airflow는 단일 DAG 내 태스크 간의 의존성을 관리하지만, DAG 간의 의존성을 관리하는 방법은 제공하지 않음</b>
+- 위의 상황에서는 `ExternalTaskSensor`를 사용해야하는데, 이 방법은 아래와 같이 `wait_for_etl_dag` 에서처럼 태스크가 마지막으로 report 태스크를 실행하기 전 세 개의 DAG가 모두 완료된 상태를 확인하는 프락시 역할을 수행
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_28.png)
+
+- `ExtractTaskSensor`의 작동 방식은 다른 DAG의 태스크를 지정하여 해당 태스크의 상태를 확인하는 것
+
+~~~python
+import airflow.utils.dates
+from airflow import DAG
+
+from airflow.operators.dummy import DummyOperator
+from airflow.sensors.external_task import ExternalTaskSensor
+
+dag1 = DAG(dag_id="ingest_supermarket_data", schedule_interval="0 16 * * *")
+dag2 = DAG(schedule_interval="0 16 * * *", ...)
+
+DummyOperator(task_id="copy_to_raw", dag=dag1) >> DummyOperator(task_id="process_supermarket", dag=dag1)
+
+wait = ExternalTaskSensor(
+    task_id="wait_for_process_supermarket",
+    external_dag_id="ingest_supermarket_data",  # 위의 ingest_supermarket_data dag_id 입력.
+    external_task_id="process_supermarket",     # 위의 process_supermarket task_id 입력.
+    dag=dag2,
+)
+
+report = DummyOperator(task_id="report", dag=dag2)
+wait >> report
+~~~
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_29.png)
+
+- 앞서 말한 것처럼, Airflow는 DAG가 다른 DAG를 고려하지 않음. 기술적으로 기본 메타데이터(ExternalTaskSensor가 수행하는 작업)를 쿼리하거나 디스크에서 DAG 스크립트를 읽어서 다른 워크플로의 실행 세부 정보를 추론할 수 있지만, Airflow와 직접적으로 결합되지는 않음
+- <b> `ExternalTaskSensor`를 사용하는 경우, `ExternalTaskSensor` 가 자신과 정확히 동일한 실행 날짜를 가진 태스크에 대한 성공만 확인하는 것을 반드시 기억하자</b>
+- 예를 들어, `ExternalTaskSensor`의 실행 날짜가 2019-10-12 18:00 인 경우, Airflow 메타스토어에 2019-10-12 18:00 인 태스크를 쿼리해 확인함
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_30.png)
+
+- 스케줄 간격이 맞지 않는 경우는 `ExternalTaskSensor` 가 다른 태스크를 검색할 수 있도록 offset 간격을 설정할 수 있음
+- 이 오프셋은 `ExternalTaskSensor`의 `execution_delta` 인수로 설정함
+- <b>timedelta 설정값 입력을 조심해야하는데, 양수로 입력했다면, 이는 execution_date 에서 뺌. 즉 hours=4를 입력했다면 4시간을 거슬러 올라가는 것을 의미함</b>
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_31.png)
+
+
+## REST/CLI를 이용해 워크플로 시작하기
+- <b>다른 DAG에서 DAG을 트리거하는 방법 외에도 REST API, CLI를 통해 트리거 할 수 있음</b>
+  - ex1) CI/CD 파이프라인의 일부로 airflow 외부에서 워크플로를 시작하려는 경우
+  - ex2) AWS S3 버킷에 임의 시간에 저장되는 데이터를 확인하기 위해 Airflow sensor대신 AWS Lambda 함수를 사용하여 DAG 트리거하는 경우
+- Airflow CLI를 사용하여 다음과 같이 DAG를 트리거할 수 있음
+~~~shell
+$ airflow dags trigger dag1
+~~~
+- 위처럼 실행하면, 실행 날짜가 현재 날짜 및 시간으로 설정된 dag1을 트리거함
+- DAG run id 에 수동 또는 Airflow 외부에서 트리거되었다는 것을 나타내기 위해 "manual__"이라는 접두사가 붙게 됨
+- CLI는 트리거된 DAG에 대한 추가 구성 설정이 가능함
+~~~shell
+airflow dags trigger -c '{"supermarket_id": 1}' dag1
+airflow dags trigger --conf '{"supermarket_id": 1}' dag1
+~~~
+- 위와 같은 방법은 task context 변수를 통해 실행된 DAG의 모든 태스크에서 사용 가능
+~~~Python
+import airflow.utils.dates
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+
+dag1=DAG(
+    dag_id="print_dag_run_conf",
+    start_date=airflow.utils.dates.days_ago(3),
+    schedule_interval=None,
+)
+
+
+def print_conf(**context):
+    print(context["dag_run"].conf)  # task context에서 트리거되는 DAG에 접근할 때 제공되는 구성 파일
+
+
+process = PythonOperator(
+    task_id="process",
+    python_callable=print_conf,
+    dag=dag1,
+)
+~~~
+- Airflow 인스턴스에 HTTP 접근으로 REST API를 사용해도 동일한 결과를 얻을 수 있음
+~~~
+# URL is /api/v1
+
+curl \
+-u admin:admin \ # 평문(paintext)으로 사용자 이름과 비밀번호를 보내는 것은 바람직하지 않음. 다른 인증 방법은 Airflow API 인증 문서 참고
+-X POST \
+"http://localhost:8080/api/v1/dags/print_dag_run_conf/dagRuns" \
+-d "{conf: {}}"  # 추가 구성 설정이 제공되지 않은 경우에도 엔드포인트에는 데이터가 필요
+~~~
+~~~
+curl \
+-u admin:admin \
+-X POST \
+"http://localhost:8080/api/v1/dags/print_dag_run_conf/dagRuns" \
+-H "Content-Type: application/json" \
+-d '{conf: {"supermarket": 1}}' 
+~~~

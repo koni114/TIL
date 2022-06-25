@@ -1,17 +1,21 @@
-from pathlib import Path
-from airflow.sensors.python import PythonSensor
+import airflow.utils.dates
+from airflow import DAG
+from airflow.operators.python import PythonOperator
 
-
-def wait_for_supermarket(supermarket_id):
-    supermarket_path = Path("/data/" + supermarket_id)
-    data_files = supermarket_path.glob("data-*.csv")
-    success_file = supermarket_path / "_SUCCESS"
-    return data_files and success_file.exists()
-
-
-wait_for_supermarket_1 = PythonSensor(
-    task_id="wait_for_supermarket_1",
-    python_callable=wait_for_supermarket,
-    op_kwargs={"supermarket_id": "supermarket1"},
-    dag=dag
+dag=DAG(
+    dag_id="print_dag_run_conf",
+    start_date=airflow.utils.dates.days_ago(3),
+    schedule_interval=None,
 )
+
+
+def print_conf(**context):
+    print(context["dag_run"].conf)
+
+
+process = PythonOperator(
+    task_id="process",
+    python_callable=print_conf,
+    dag=dag,
+)
+
