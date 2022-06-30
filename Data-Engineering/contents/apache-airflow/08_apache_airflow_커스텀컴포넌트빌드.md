@@ -520,6 +520,315 @@ with DAG(
     )
 ~~~
 
+## 커스텀 오퍼레이터 빌드하기
+- `MovielensFetchRatingsOperator` 처럼 커스텀 오퍼레이터를 빌드하여, 영화 평점 데이터를 가져오는 전용 오퍼레이터를 클래스로 사용할 수 있음
+
+### 커스텀 오퍼레이터 정의하기
+- Airflow 의 모든 오퍼레이터는 <b>`BaseOperator` 클래스의 서브 클래스로 만들어야 함</b>
+~~~python
+from airflow.models import BaseOperator
+from airflow.utils.decorators import apply_defaults
+
+class MovielensFetchRatingsOperator(BaseOperator):
+    @apply_defaults  # 기본 DAG 인수를 커스텀 오퍼레이터에게 전달하기 위한 데코레이터
+    def __init__(self, conn_id, **kwargs):  # BaseOperator 에게 추가 인수를 전달
+        super().__init__(self, **kwargs)
+        self._conn_id = conn_id
+        ...
+~~~ 
+- 커스텀 오퍼레이터에서만 사용되는 변수들을 `__init__` 에서 받아 사용할 수 있음  
+  어떤 변수를 받는지는 개발자마다 다르긴 하지만, 일반적으로 원격 접속 오퍼레이터인 경우 connection 객체(conn_id)와 오퍼레이터 작업에 필요한 세부정보가 있음
+- `BaseOperator` 에는 오퍼레이터의 일반적인 동작을 정의하는 제네릭(generic) 인수를 많이 포함하고 있음.  
+  예를 들어 오퍼레이터가 생성한 태스크`task_id`)나, 스케줄에 영향을 미치는 `retries`, `retry_delay` 등이 있음
+- 이러한 인수들을 나열해서 선언하지 않게 하도록 `**kwargs` 로 선언해서 사용
+- 앞선 DAG를 선언하여 사용했을 때, 기본적인 인수들은 `default_args` 의 인수에 선언해서 사용했었음
+~~~python
+default_args = {
+    "retries": 1,
+    "retry_delay": timedelta(minute=5),
+}
+
+with DAG(
+    ...
+    default_dags=default_args
+) as dag:
+    MyCustomOperator(
+        ...
+    )
+~~~
+- 커스텀 오퍼레이터의 기본 인수들이 정상적으로 반영되었는지 확인하기 위해 `apply_defaults` 라는 데코레이터를 사용할 수 있는데, 이 데코레이터는 반드시 사용해야함
+- 그렇지 않으면 이 커스텀 오퍼레이터에 대한 Airflow 동작이 의도치 않게 중단될 수 있음
+- <b>커스텀 오퍼레이터가 실제로 작업하는 부분은 `execute` 메소드에 선언하여 사용</b>
+- DAG 안에서 실행되는 오퍼레이터의 메인 메서드가 됨
+~~~Python
+class MovielensFetchRatingsOperator(BaseOperator):
+    def __init__(self, conn_id, **kwargs):
+        ...
+    
+    def execute(self, context):  # 커스텀 오퍼레이터를 실행할 때 호출되는 메서드
+        ...
+~~~
+- execute 메서드에서 `context` 변수는 dict 객체로서 Airflow의 모든 context 변수를 담고 있음
+
+### 평점 데이터를 가져오기 위한 오퍼레이터 빌드하기
+- 우리가 만들 오퍼레이터는 이전에 만든 DAG의 `_fetch_ratings` 와 유사하며,  
+  시작/종료 날짜 사이의 영화 평점 데이터를 MovieLens API에서 가져와 JSON 파일로 저장하는 오퍼레이터
+- 먼저 오퍼레이터에 필요한 시작/종료날짜, API에 대한 컨넥션, 평점 데이터를 저장할 경로 등이 포함됨
+- `execute` 메소드 구현
+  - `MovielensHook` 함수를 통한 hook 생성
+  - logger 사용을 `self.log` 속성을 사용(`BaseOperator` 내부) 
+  - `get_ratings`가 실패하더라도 정상적으로 종료하기 위하여 몇가지 예외 처리를 추가함
+~~~python
+import json
+import os
+
+from airflow.models import BaseOperator
+from airflow.utils.decorators import apply_defaults
+
+from custom.hooks import MovielensHook
+
+
+class MovielensFetchRatingsOperator(BaseOperator):
+
+    @apply_defaults
+    def __init__(
+        self,
+        conn_id,
+        output_path,
+        start_date,
+        end_date,
+        batch_size=1000,
+        **kwargs,
+    ):
+        super(MovielensFetchRatingsOperator, self).__init__(**kwargs)
+
+        self._conn_id = conn_id
+        self._output_path = output_path
+        self._start_date = start_date
+        self._end_date = end_date
+        self._batch_size = batch_size
+
+    # pylint: disable=unused-argument,missing-docstring
+    def execute(self, context):
+        hook = MovielensHook(self._conn_id)
+
+        try:
+            self.log.info(
+                f"Fetching ratings for {self._start_date} to {self._end_date}"
+            )
+            ratings = list(
+                hook.get_ratings(
+                    start_date=self._start_date,
+                    end_date=self._end_date,
+                    batch_size=self._batch_size,
+                )
+            )
+            self.log.info(f"Fetched {len(ratings)} ratings")
+        finally:
+            # Make sure we always close our hook's session.
+            hook.close()
+
+        self.log.info(f"Writing ratings to {self._output_path}")
+
+        # Make sure output directory exists.
+        output_dir = os.path.dirname(self._output_path)
+        os.makedirs(output_dir, exist_ok=True)
+
+        # Write output as JSON.
+        with open(self._output_path, "w") as file_:
+            json.dump(ratings, fp=file_)
+~~~
+- 해당 오퍼레이터의 사용방법은 기존 오퍼레이터와 유사하게 오퍼레이터의 인스턴스를 만들고, 이를 DAG에 포함시키면 됨
+~~~python
+fetch_ratings = MovielensFetchRatingsOperator(
+    task_id="fetch_ratings",
+    conn_id=movielens,
+    start_date="2020-01-01",
+    end_date="2021-01-02",
+    output_path="/data/2020-01-01.json"
+)
+~~~
+- 위 구현의 단점은 시작 날짜와 종료 날짜를 미리 지정해야한다는 점이며, <b>탬플릿 형태(ex) `{{ds}}`)를 사용하려면 `template_field` 클래스 변수에 해당 변수명을 지정하여 Airflow에 알려주어야 함</b>
+~~~python
+class MovielensFetchRatingsOperator(BaseOperator):
+    ...
+    
+    # 커스텀 오퍼레이터에서 탬플릿화할 인스턴스 변수들을 Airflow에게 알려줌 
+    template_fields = ("_start_date", "_end_date", "_output_path")
+
+    @apply_defaults
+    def __init__(
+        self,
+        conn_id,
+        output_path,
+        start_date="{{ds}}",
+        end_date="{{next_ds}}",
+        batch_size=1000,
+        **kwargs,
+    ):
+        super(MovielensFetchRatingsOperator, self).__init__(**kwargs)
+
+        self._conn_id = conn_id
+        self._output_path = output_path
+        self._start_date = start_date
+        self._end_date = end_date
+        self._batch_size = batch_size
+~~~
+- 위의 `__init__` 메소드에서 `start_date` 와 `end_date` 처럼 jinja 탬플릿을 사용하면 Airflow는 `execute` 메서드를 호출하기 전에 이 값들을 탬플릿화함
+- 그 결과 다음 리스트와 같이 탬플릿화된 인수를 사용하는 오퍼레이터를 사용가능
+~~~python
+from custom.operators import MovielensFetchRatingsOperator
+
+fetch_ratings = MovielensFetchRatingsOperator(
+    task_id="fetch_ratings",
+    conn_id="movielens",
+    start_date="{{ds}}",
+    end_date="{{next_ds}}",
+    output_path="/data/custom_operator/{{ds}}.json"
+)
+~~~
+
+## 커스텀 센서 빌드하기
+- 센서의 빌드는 오퍼레이터의 빌드와 매우 유사하며, `BaseOperator` 대신에 `BaseSensorOperator`를 상속받는 것만 다름
+- `BaseSensorOperator`는 센서에 대한 기본 기능을 제공하며, 오퍼레이터의 `execute` 메서드 대신 <b>`poke` 메서드를 구현해야 함</b>
+- `execute` 메서드와는 다르게 `poke` 메서드는 반환값이 bool값.(True/False)  
+  False 인 경우 대기상태로 들어가며, True 가 되거나 Timeout 될때까지 지속됨
+- Airflow에는 내장 센서가 많이 있지만, 특정 유형의 상태를 체크하는 별도의 센서가 필요할 수 있음
+- 앞선 예제의 경우 DAG를 계속 실행하기 전에 주어진 날짜의 평점 데이터를 사용 가능한지 체크하는 센서가 필요할 수 있음
+- 커스텀 센서인 `MovielensRatingsSensor`를 빌드하기 위해서는 먼저 커스텀 센서 클래스의 `__init__` 메서드를 정의해야 함
+~~~python
+class MovielensFetchRatingsSensor(BaseSensorOperator):
+
+    template_fields = ("_start_date", "_end_date")
+
+    @apply_defaults
+    def __init__(self, conn_id, start_date="{{ds}}", end_date="{{next_ds}}", **kwargs):
+        super().__init__(** kwargs)
+        self._conn_id = conn_id
+        self.start_date = start_date
+        self.end_date = end_date
+~~~
+- 생성자를 만든 후에는 `poke` 메소드를 구현하기만 하면 됨
+- 기존의 `MovielensHook`을 사용하여 next 함수를 실행시켰을 때, `StopIteration`이 발생하면 False, 아니면 True 를 반환하는 bool 함수를 선언
+~~~python
+def poke(self, context):
+        hook = MovielensHook(self._conn_id)
+
+        try:
+            next(
+                hook.get_ratings(
+                    start_date=self._start_date, end_date=self._end_date, batch_size=1
+                )
+            )
+
+            self.log.info(
+                f"Found ratings for {self._start_date} to {self._end_date}, continuing!"
+            )
+            return True
+        except StopIteration:
+            self.log.info(
+                f"Didn't find any ratings for {self._start_date} "
+                f"to {self._end_date}, waiting..."
+            )
+
+            return False
+        finally:
+
+            hook.close()
+~~~
+이제 이 센서 클래스를 사용하여 DAG의 나머지를 계속 실행하기 전에, 새로운 평점 데이터가 해당 기간에 있는지를 체크하고 새로운 데이터가 들어올 때까지 대기하도록 할 수 있음
+~~~python
+import datetime as dt
+
+from airflow import DAG
+
+from custom.operators import MovielensFetchRatingsOperator
+from custom.sensors import MovielensRatingsSensor
+
+with DAG(
+    dag_id="04_sensor",
+    description="Fetches ratings from the Movielens API, with a custom sensor.",
+    start_date=dt.datetime(2019, 1, 1),
+    end_date=dt.datetime(2019, 1, 10),
+    schedule_interval="@daily",
+) as dag:
+    wait_for_ratings = MovielensRatingsSensor(
+        task_id="wait_for_ratings",
+        conn_id="movielens",
+        start_date="{{ds}}",
+        end_date="{{next_ds}}",
+    )
+
+    fetch_ratings = MovielensFetchRatingsOperator(
+        task_id="fetch_ratings",
+        conn_id="movielens",
+        start_date="{{ds}}",
+        end_date="{{next_ds}}",
+        output_path="/data/custom_sensor/{{ds}}.json",
+    )
+
+    wait_for_ratings >> fetch_ratings
+~~~
+
+## 컴포넌트 패키징하기
+- 지금까지 DAG에 커스텀 컴포넌트를 DAG 디렉토리 내에 있는 서브 패키지까지 포함함
+- 하지만 이 방식은 컴포넌트를 다른 프로젝트에 사용하거나 다른 사람들에게 공유할 경우, 컴포넌트 테스트의 경우는 바람직한 방법이 아님
+- 컴포넌트를 배포하는 더 좋은 방법은 <b>파이썬 패키지에 코드를 넣는 것</b>  
+  이 방법을 사용하면 기존의 다른 패키지와 비슷한 방법으로 작업할 수 있다는 장점이 있음
+- 추가적으로 DAG과 별도로 소스코드를 유지함으로써, 커스텀 코드에 대한 CI/CD 프로세스를 구성할 수 있고 다른 사람과 이 코드를 더 쉽게 공유하고 협업할 수 있음
+
+### 파이썬 패키지 부트스트랩 작업하기
+- 파이썬 패키징은 여러가지 방법이 있지만, 여기서는 `setuptools` 를 사용하여 간단한 파이썬 패키지를 구현해보자
+- 예제의 목적은 앞서 구현한 훅, 오퍼레이터, 센서 클래스를 포함하는 `airflow_movielens`라는 패키지를 생성하는 것
+- 패키지 빌드를 위해 다음과 같이 구성
+```
+$ tree airflow-movielens
+airflow-movielens
+├── setup.py
+└── src
+    └── airflow_movielens
+        └── __init__.py
+        └── hooks.py
+        └── operators.py
+        └── sensors.py
+```
+- `src/airflow_movielens` 디렉터리 안에 `hooks.py`, `sensors.py`, `operators.py`를 생성하고 앞 절에서 구현한 훅, 센서, 오퍼레이터 클래스 소스를 각 파일에 복사해서 넣음
+- `setup.py` 파일은 다음 리스트와 같은 모양으로 만듬
+~~~python
+
+
+#!/usr/bin/env python
+
+import setuptools
+
+requirements = ["apache-airflow", "requests"]
+
+extra_requirements = {"dev": ["pytest"]}
+
+setuptools.setup(
+    name="airflow_movielens",
+    version="0.1.0",
+    description="Hooks, sensors and operators for the Movielens API.",
+    author="Anonymous",
+    author_email="anonymous@example.com",
+    install_requires=requirements,
+    extras_require=extra_requirements,
+    packages=setuptools.find_packages("src"),
+    package_dir={"": "src"},
+    url="https://github.com/example-repo/airflow_movielens",
+    license="MIT license",
+)
+~~~
+
+### 패키지 설치하기
+- 앞서 기본적인 패키지를 작성해 보았고, 패키지 `airflow-movielens`를 파이썬 환경에 설치해보자
+- `pip` 명령어를 통해 파이썬 패키지 설치
+~~~shell
+$ python -m pip install ./airflow-movielens
+~~~
+- Airflow 환경에 패키지를 배포하는 작업은 Airflow 의 파이썬 환경에 패캐지를 설치하는 것보다 특별히 더 어렵지는 않음  
+  <b>작업 환경에 따라 패키지와 종속 라이브러리가 Airflow가 사용하는 모든 환경(스케줄러, 웹서버, 워커의 환경)에 설치되어야 함</b>
+
 
 ## 용어 정리
 - MVP(Minimum Viable Product)
@@ -529,3 +838,4 @@ with DAG(
 - Hook(훅)
   - 엔드포인트에서 발생한 이벤트가 우리의 어플리케이션에 수신되는 형태 
   - web hook은 서버에서 특정 이벤트가 발생했을 때, 클라이언트를 호출하는 방식을 말함.
+- 
