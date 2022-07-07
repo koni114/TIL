@@ -30,6 +30,8 @@
           <option value="sqlalchemy.orm.scoping.scoped_session.query" />
           <option value="sqlalchemy.orm.scoping.scoped_session.new" />
           <option value="sqlalchemy.orm.scoping.scoped_session.rollback" />
+          <option value="_importlib_modulespec._Loader.exec_module" />
+          <option value="airflow.models.dag.DAG.test_cycle" />
         </list>
       </option>
     </inspection_tool>
