@@ -284,6 +284,11 @@ mock_get = mocker.patch.object(        # 목업 객체로 객체의 속성을 �
 assert mock_get.call_count == 1          # 한 번만 호출된 것인지 확인
 mock_get.assert_called_with("testconn")  # 예상되는 conn_id 로 호출된 것을 확인
 ~~~
+- `assert mock_get.call_count == 1` 는 실제 운영 환경에서 Airflow 메타스토어를 실수로 여러 번 호출하지 않았는지 확인 
+- `mock_get` 에는 동작을 검증하기 위해 사용할 수 있는 여러 속성이 포함되어 있음
+
+![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_34.png)
+
 
 
 ## 용어 정리
