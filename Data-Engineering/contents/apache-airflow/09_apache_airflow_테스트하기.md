@@ -289,6 +289,56 @@ mock_get.assert_called_with("testconn")  # 예상되는 conn_id 로 호출된 �
 
 ![img](https://github.com/koni114/TIL/blob/master/Data-Engineering/contents/apache-airflow/img/airflow_34.png)
 
+- 조심해야 할 것은 목업을 구현하는 곳은 선언부가 아닌 호출부  
+- `get_connection` 의 예로 BaseHook 에 정의되어 있고, MovielensHook 에서 호출되므로, MovielensHook.get_connection 을 호출해 야함
+
+### 디스크의 파일로 테스트하기
+- <b>파이썬에서는 임시 저장소와 관련된 작업을 위한 temfile 모듈이 있음</b>
+- pytest는 tmp_dir 및 tmp_path 라는 tempfile 모듈에 대한 편리한 사용 방법을 제공함  
+  tmp_path 를 사용하는 예를 살펴보자
+~~~python
+from pathlib import Path
+from airflowbook.operators.json_to_csv_operator import JsonToCsvOperator
+
+def test_json_to_csv_operator(tmp_path: Path):  # tmp_path 는 고정으로 사용
+  input_path = tmp_path / "input.json"          # 경로를 정의
+  output_path = tmp_path / "output.csv" 
+
+  input_data = [
+    {"name": "bob", "age": "41", "sex": "M"},
+    {"name": "alice", "age": "24", "sex": "F"},
+    {"name": "carol", "age": "60", "sex": "F"}, 
+  ]
+
+  with open(input_path, "w") as f:
+    f.write(json.dumps(input_data))
+
+  operator = JsonToCsvOperator(
+    task_id="test",
+    input_path=input_path,
+    output_path=output_path,
+  )
+
+  operator.execute(context={})  # JsonToCsvOperator 실행
+
+  # 출력 파일 읽기
+  with open(output_path, "r") as f:
+    reader = csv.DictReader(f)
+    result = [ dict(row) for row in reader ]
+  
+  # 테스트 후 tmp_path 와 콘텐츠는 제거
+  assert result == input_data  # 내용 확인을 위한 assert
+
+~~~
+- 테스트가 시작되면 임시 디렉토리가 생성되는데, 실제로 `tmp_path` 인수는 각 테스트 시 호출되는 함수를 나타냄  
+  `pytest` 에서는 이를 <b>픽스처(fixture)라고 함</b>
+- 픽스처는 기본적으로 모든 테스트 영역에서 적용 가능
+- 경로를 출력하며 서로 다른 테스트를 실행하거나, 동일한 테스트를 두 번 실행하면 이를 확인할 수 있음
+~~~python
+print(tmp_path.as_posix())
+~~~
+
+## 테스트에서 DAG 및 태스크 콘텍스트로 작업하기
 
 
 ## 용어 정리
@@ -296,3 +346,5 @@ mock_get.assert_called_with("testconn")  # 예상되는 conn_id 로 호출된 �
   - 재사용 가능한 작은 소스코드를 의미함
 - 몽키패치(monkey-patch)
   - 런타임 시에 기능을 대체하여 Airflow 메타스토어를 쿼리하는 대신 지정된 객체를 반환함 
+- 픽스처(Fixture)
+  - 테스트 수행을 위해 필요한 부분들을 혹은 조건들을 미리 준비해놓은 리소스 혹은 코드
