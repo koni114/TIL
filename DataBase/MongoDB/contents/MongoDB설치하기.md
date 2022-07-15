@@ -16,7 +16,7 @@ $ mongo -version
   - <b>OS: macOS x64</b>
   - <b>Package: TGZ</b>  
 
-![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongoDB_03.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongo_03.JPG)
 
 #### 설치하기
 - 터미널을 열어줍니다
@@ -57,7 +57,7 @@ $ ls -al
 ### 3. MongoDB 환경변수 Path 설정하기
 - 터미널을 열고 명령어를 사용하여 vi 편집기로 bash_profile을 열어 줍니다  
 
-![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongoDB_04.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongodb_04.JPG)
 - 여기에 맨 아래에 다음의 두줄을 입력해 줍니다
 - 위의 이미지에서는 제가 이미 입력했기 때문에 보입니다(^^)
 ~~~shell
@@ -79,7 +79,7 @@ $ mongo -version
 ~~~
 - 정상적이라면, 다음과 같은 화면이 나타날 것입니다
 
-![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongoDB_05.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongodb_05.JPG)
 
 ### 5. 서버 / 클라이언트 실행
 - 먼저 아래의 명령어를 사용하여 서버를 실행시킵니다
@@ -88,7 +88,7 @@ $ mongod
 ~~~
 - 다음과 같이 나오면 정상입니다.(shell이 자동으로 빠져나와진다면, 문제가 발생한 것입니다) 
 
-![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongoDB_06.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongodb_06.JPG)
 
 
 - 그 다음 새로운 터미널을 열어 아래의 명령어를 실행하여 클라이언트를 실행시켜 봅니다
@@ -101,7 +101,7 @@ $ mongo
 ~~~
 - 다음과 같이 뜨면 정상입니다  
 
-![img](https://github.com/koni114/TIL/blob/master/MongoDB/img/mongoDB_07.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongodb_07.JPG)
 
 
 ## 참고사항
