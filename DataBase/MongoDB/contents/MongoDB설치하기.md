@@ -16,7 +16,7 @@ $ mongo -version
   - <b>OS: macOS x64</b>
   - <b>Package: TGZ</b>  
 
-![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongo_03.JPG)
+![img](https://github.com/koni114/TIL/blob/master/DataBase/MongoDB/img/mongodb_03.JPG)
 
 #### 설치하기
 - 터미널을 열어줍니다
