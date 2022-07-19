@@ -50,5 +50,8 @@
         └── 2022-06-16.py
               - 두 개의 dataFrame 이 있을 때,(df1, df2) df2[group_var] 에 존재하는 모든 CASE 의  
                 df1[group_var] 를 slicing 하는 예제  
+        └── 2022-07-19.py
+              - python-dotenv 패키지 예제
+              - .env + .gitignore 활용 방안
                 
 ```
