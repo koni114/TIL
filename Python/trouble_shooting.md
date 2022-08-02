@@ -5,3 +5,5 @@
 ### intellij에서 python script에서 JDBC driver directory path 설정 방법
 -  `.config('spark.driver.extraClassPath', './lib/postgresql-9.4.1207.jar')`
   
+### private 망에서 pip install 안되는 경우 해결 방법(intellij)
+- 파이썬이 설치된 폴더에서 `session.py` python 파일을 찾아 `self.verify=False` 로 변경
