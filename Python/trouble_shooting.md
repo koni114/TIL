@@ -7,3 +7,6 @@
   
 ### private 망에서 pip install 안되는 경우 해결 방법(intellij)
 - 파이썬이 설치된 폴더에서 `session.py` python 파일을 찾아 `self.verify=False` 로 변경
+
+### intellij 에서 import module 경로 인식 문제가 있는 경우
+- File -> Project Structure -> Project Settings 에서 Modules -> Add Content Root 에서 변경
