@@ -1,11 +1,27 @@
-# 파생변수 생성.
-# - isMicro ? -- > True 면 rule21, False rule20
-# - ds_id     -- >
+"""
+다음과 같은 row wise 형태의 데이터가 존재한다고 할 때,
 
-import re
+     sepal.length  sepal.width  petal.length  petal.width    variety     aggr_dt ctq_id  index
+0             5.1          3.5           1.4          0.2     Setosa  2022-06-06  C3671      0
+1             4.9          3.0           1.4          0.2     Setosa  2022-06-06  C3671      1
+2             4.7          3.2           1.3          0.2     Setosa  2022-06-06  C3671      2
+3             4.6          3.1           1.5          0.2     Setosa  2022-06-06  C3671      3
+4             5.0          3.6           1.4          0.2     Setosa  2022-06-06  C3671      4
+
+다음과 같은 파생변수 생성 식 matrix 를 통해 파생변수를 추가해보자
+파생변수 생성 식 dataFrame 은 다음과 같음
+
+   ds_id out_var_id out_var_tp tr_tp col_kor_nm                expr
+0  C3671      D1074          N     E    new_col  Setosa + Virginica
+"""
 import pandas as pd
 import numpy as np
 from typing import List
+
+pd.set_option("display.max_columns", 50)
+desired_width = 320
+pd.set_option('display.width', desired_width)
+
 
 df = pd.read_csv("test_data/iris.csv")
 df["aggr_dt"] = "2022-06-06"
@@ -19,6 +35,37 @@ derived_rule_df = pd.DataFrame([["C3671", "D1074", "N", "E", "new_col",
 index_var_list = ["index", "aggr_dt", "ctq_id"]
 col_var_list = ["variety"]
 value_n_var = "petal.length"
+
+meta_col, derived_col = [], []
+meta_col.extend(index_var_list)
+meta_col.extend(col_var_list)
+meta_col.append(value_n_var)
+
+# step1. row-wise -> column-wise 형태로 변환
+pivoted_df = pd.pivot_table(df, index=index_var_list, columns=col_var_list, values=value_n_var).reset_index()
+
+# idx, row = 0, derived_rule_df.loc[0, :]
+for idx, row in derived_rule_df.iterrows():
+
+    expr_v = row.expr
+
+    for col in pivoted_df.columns[~np.in1d(pivoted_df.columns, meta_col)]:
+        if col in expr_v:
+            expr_v = expr_v.replace(col, "pivoted_df." + col)
+
+    derived_col.append(row.col_kor_nm.strip())
+    try:
+        pivoted_df[row.col_kor_nm.strip()] = eval(expr_v)
+    except Exception as e:
+        print(f"derived var expression is wrong! --> {expr_v}")
+        continue
+
+result_df = pd.melt(pivoted_df.loc[:, index_var_list + derived_col],
+                    id_vars=index_var_list,
+                    value_vars=derived_col,
+                    value_name=value_n_var,
+                    var_name=col_var_list)
+
 
 class posCalDerivedVar:
     def __init__(self, df: pd.DataFrame, derived_rule_df: pd.DataFrame,
