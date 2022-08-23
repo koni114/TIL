@@ -135,6 +135,7 @@
 ![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_15.png)
 
 - 사용예
+  - 웹서버나 파일서버는 데몬 형태로 구동되는 서비스 프로그램
   - 웹서버: httpd
   - 파일서버: ftpd
   - 웹프록시: squid
@@ -148,51 +149,61 @@
 - SystemV 명령어(`service` 를 통한 확인)
 - 사실상 우분투 16/18 에서는(기본적으로는) SysV 의 service 를 사용하지 않음
 - `service --status-all`, `service <daemon-name> status` 등을 통해 데몬을 확인할 수 있지만, 내부적으로는 모두 `systemctl`로 호출됨
+  - `service --status-all`
+  - `service <daemon-name> status`
+  - `service <daemon-name> start`
+  - `service <daemon-name> stop`
+  - `service <daemon-name> restart` 
 - <b>따라서 앞으로는 `systemctl` 명령어를 반드시 사용할 줄 알아야 함</b>
 - systemd 를 사용하는 우분투의 systemctl 을 통한 서비스 확인
   - `systemctl status`
   - `systemctl status|start|stop|restart <daemon-name>`  
     정확히는 `daemon-name.service` 이지만 `.service`는 생략 가능
+- sevice 명령어 사용법과는 다르게 systemctl 는 상태가 앞에 오고 service 명이 뒤에 옴
 
 ### Systemd 를 통한 서비스 관리
-- 데몬 시스템 관리는 우분투 16/18은 `systemd` 에서 관리하게 됨
-- systemd 는 `/sbin/init` 이라는 프로세스 이름으로 보이기는 하지만, 실제로는 `/lib/system/systemd` 를 호출하게 됨
+- 데몬 프로세스를 모두 관리하는 프로세스는 우분투 16, 18 같은 경우 모두 `systemd` 라는 데몬이 관리하게 됨
+- systemd 는 `/sbin/init` 이라는 프로세스 이름으로 보이기는 하지만, 실제로는 `/lib/system/systemd` 를 호출하게 되어 있음
+  - `/sbin/init -> /lib/system/systemd`
 - systemd 의 사용 이유
-  - 프로세스의 자동 시작
-  - 프로세스간의 의존성 관리
-  - 프로세스의 갑작스런 종료에 대응
-  - 부팅 옵션(런레벨)에 따른 다른 프로세스 구동 
+  - 프로세스를 자동으로 병렬로 시작시키면서 의존성 관리를 해줌
+  - 프로세스의 갑작스런 종료에 대응(자동으로 재시작해줌)
+  - 부팅 옵션(런레벨)에 따른 다른 프로세스 구동
+- systemd 를 관리하기 위해 `systemctl` 라는 명령어가 있으며, process 를 모니터링 하고 관리하기 위한 `journalctl` 명령어가 있음
 
 ![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_16.png)
-
-- systemd 프로세스는 systemctl 명령어를 통해 관리되며, 데몬 프로세스는 journalctl 명령어를 통해 관리됨
 
 ### Systemd 디렉토리 구조
 - 시스템 서비스 디렉토리
   - `/lib/systemd/system` 
-  - 해당 디렉토리에 다양한 서비스 목록과 규칙들이 들어가 있음
+  - 해당 디렉토리에 다양한 서비스 목록과 실행규칙들에 대한 설정 파일들이 들어가 있음
 - run-level에 따른 타겟 서비스 목록
   - `/lib/systemd/system/default.target`
   - `/lib/systemd/system/runlevel?.target` 
-- 실제 데몬의 구현체는 `/lib/systemd/system` 에 존재하며, 구동시에 링크가 자동으로 생성되면서 `/etc/systemd/system/*.service` 가 생기면서 부팅과정에서 생성됨
+- 실제 데몬의 구현체는 `/lib/systemd/system` 에 존재하며, 구동시에 링크가 자동으로 생성되면서 `/etc/systemd/system/*.service` 가 생기면서 부팅과정에서 호출됨
 
 ### Systemd 유닛 종류
 - 목적에 따라 (service를 실행할 것이냐, socket?, mount를 할 것이냐? 등) 다음과 같이 유닛의 종류가 다양함
   - `lib/systemd/system/*.service`
   - `lib/systemd/system/*.socket` 
-  - ...
+  - `lib/systemd/system/*.mount` 
+  - 모두 다 알필요는 없으므로, service 와 target 만 알아보자
 
-### 시스템 컨트롤 명령어
+
+### systemctl 명령어
+- Systemctl 을 통한 다양한 데몬/서비스 확인
 - `systemctl list-units` : 실행 중인 서비스 목록 확인
   - `systemctl list-units --type=service`
   - `systemctl list-units --type=service --state=running` (state: failed, active, running) 
   - `systemctl list-units --type=target`: 부팅시 선택 가능한 타겟 옵션 확인
+  - 여기서 target 은 그룹을 말하며, 하나 이상의 서비스를 묶어 target 이라고 부름
 - `systemctl get-default` : 부팅시 기본 옵션
 - `systemctl set-default` : 부팅시 기본 옵션 변경(runlevel 변경)
   - `systemctl set-default <target>`
   - `sudo systemctl set-default multi-user.target` : 부팅 시 GUI 로 로그인하지 않고 CLI로 사용 
 - Systemctl 을 통한 다양한 데몬/서비스 확인
   - `systemctl status|start|stop|restart|reload|enable|disable|mask|unmask <servicename>.service`
+    - reload: 서비스를 restart 시키지 않고, 설정파일만 리로드 하는 명령어임
     - enable: 부팅시 서비스 자동 시작
     - disable: 부팅시 서비스 자동 시작 삭제
     - mask: 서비스 숨기기(시작불가)
@@ -223,6 +234,7 @@
    - `sudo systemctl edit --full sshd.service`
   - 새로운 데몬 서비스가 생성된 경우 그 라이브러리 목록 재 갱신 
    - `systemctl daemon-reload`
+
 #### 프로세스 서비스 등록해보기(예제 -1)
 - 내가 만들고자 하는 서비스를 간단하게 shell 로 작성
   - usr/local/sbin/my-script.sh 를 다음과 같이 작성
@@ -232,7 +244,7 @@ echo "I'm in $(date + %Y%m%d-%H%M%S)" >> /tmp/mylog.log
 ~~~
 - service 파일을 다음과 같이 작성
 - /etc/systemd/system/my-startup.service
-~~~
+~~~shell
 [Unit]
 Description=My Startup
 
@@ -245,7 +257,11 @@ WantedBy=multi-user.target
 - 다음의 명령어 들을 통해 테스트를 해보면 됨!
   - `systemctl status my-startup.service`
   - `sudo systemctl enable my-startup.service` 
-  - ...
+  - `systemctl start my-startup.service`
+  - `chmod +x /usr/local/sbin/my-script.sh`
+  - `systemctl start my-startup.service`
+  - `systemctl status my-startup.service`
+- $ 으로 표시되는 것은 사용자 권한, # 으로 표시되는 것은 root 권한임을 기억하자 
 
 #### 프로세스 서비스 등록해보기(예제 -2)
 - 이번에는 반복 루프를 통해 데몬 형태로 돌아갈 수 있게끔 script 를 작성해보았음
@@ -274,8 +290,11 @@ RestartSec=5
 User=user1
 Group=user1
 ~~~
-
-
+- 다음의 명령어들을 통해 서비스 상태를 확인해보자
+  - `systemctl status my-daemon.service`
+  - `systemctl start my-daemon.service`
+  - `journalctl -u my-daemon -f`
+  - `systemctl kill my-daemon.service`
 
 ## 용어 정리
 - backporting 
