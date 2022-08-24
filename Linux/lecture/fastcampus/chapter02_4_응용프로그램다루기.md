@@ -237,10 +237,10 @@
 
 #### 프로세스 서비스 등록해보기(예제 -1)
 - 내가 만들고자 하는 서비스를 간단하게 shell 로 작성
-  - usr/local/sbin/my-script.sh 를 다음과 같이 작성
+  - /usr/local/sbin/my-script.sh 를 다음과 같이 작성
 ~~~shell
 #!/bin/bash
-echo "I'm in $(date + %Y%m%d-%H%M%S)" >> /tmp/mylog.log
+echo "I'm in $(date +%Y%m%d-%H%M%S)" >> /tmp/mylog.log
 ~~~
 - service 파일을 다음과 같이 작성
 - /etc/systemd/system/my-startup.service
@@ -272,7 +272,7 @@ WantedBy=multi-user.target
 # 필요하면 권한 부여 --> `chmod +x my-daemon.sh`
 while true
 do
-    echo "I'm still in ${date + %Y%m%d-%H%M%S}"
+    echo "I'm still in ${date +%Y%m%d-%H%M%S}"
     sleep 10
 done
 ~~~
@@ -295,6 +295,11 @@ Group=user1
   - `systemctl start my-daemon.service`
   - `journalctl -u my-daemon -f`
   - `systemctl kill my-daemon.service`
+- enable 명령어를 통해 service 를 등록하려고 했을 때 에러가 나는 것도 확인해보자ㄴ
+- .service 파일에서 install 부분이 없어서 enable 이 안됨
+
+
+
 
 ## 용어 정리
 - backporting 
