@@ -41,3 +41,5 @@
   - `systemctl stop apache2` : 서비스를 바로 중단(다음 부팅 시 영향을 주지는 않음)
   - `systemctl enable apache2` : 서비스를 시작하지는 않지만, 다음 부팅 시 아파치를 자동으로 실행
   - `systemctl start apache2` : 지금 바로 서비스를 시작
+
+
