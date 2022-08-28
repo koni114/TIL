@@ -18,7 +18,7 @@ test_df = test_df.loc[test_df["variety"] != "Setosa", :]
 
 color_hex = ["#2D9E71", "#663D80"]
 
-sns.displot(data=test_df,
+mpl_fig = sns.displot(data=test_df,
                       x='sepal.length',
                       hue='variety',
                       kind='kde',
