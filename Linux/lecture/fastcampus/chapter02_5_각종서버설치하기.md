@@ -27,9 +27,10 @@
   - apt 명령어를 통해 install 과정을 거치면, 매뉴얼, 각종 바이너리 실행 파일들이 여기저기 흩어져서 실행되게 됨
 - 웹 서비스 (기본) 설정 보기
   - `/etc/apache2/apache2.conf`
-- 웹 서비스 사이트별 설정 보기(내가 운영하고자 하는 사이트를 말함)
-  - `/etc/apache2/site-available/*`
-  - `/etc/apache2/site-enabled/*`
+- 웹 서비스 사이트별 설정 보기(내가 운영하고자 하는 사이트를 말함)  
+  sites-available 디렉토리 밑에 실행가능한 사이트 리스트들이 들어있고, sites-enabled 에는 활성화된 사이트 목록이 링크로 연결되어 있음
+  - `/etc/apache2/sites-available/*`
+  - `/etc/apache2/sites-enabled/*`
 
 ![img](https://github.com/koni114/TIL/blob/master/Linux/lecture/fastcampus/img/linux_17.png)
 - 위의 그림에서 보면, 다양한 site 들이 준비가 되어있는데, 서버 운영과 유지보수, 기능 추가로 인해 config 파일을 지우게 되면 굉장히 번거롭게 됨
@@ -61,8 +62,8 @@
   - 웹 서비스(기본) 설정 보기 
     - `/etc/nginx/nginx.conf`
   - 웹 서비스 사이트별 설정 보기
-    - `/etc/nginx/site-available/*`
-    - `/etc/nginx/site-enabled/*`
+    - `/etc/nginx/sites-available/*`
+    - `/etc/nginx/sites-enabled/*`
   - 웹 서비스 재실행하기
     - `sudo systemctl restart nginx.service`
     - `sudo systemctl restart nginx`
@@ -85,7 +86,7 @@
 - 바꾼 내용이 있다면 재시작(없음)
   - `systemctl restart php7.2-fpm`
 - nginx 설정파일 수정
-  - `vi /etc/nginx/site-available/default`
+  - `vi /etc/nginx/sites-available/default`
   - 위의 설정파일을 수정해서 웹 서비스가 index.php 파일을 읽도록 변경해주어야 함
   - 확장자가 php 파일인 경우에는 우리가 연동한 php fpm 으로 보내주어야 하기 때문에 아래와 같이 정규표현식을 통해서 설정을 변경해줌
   - 이 때 php FPM과 연동하는 방식이 linux domain socket 도 있으며, tcp 소켓 통신으로도 할 수 있게끔 설정 할 수 있음
