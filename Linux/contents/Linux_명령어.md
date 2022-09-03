@@ -344,3 +344,23 @@ $ cat /usr/share/doc/vim/copyright | sed 's/book/books/g' > mycopyright
 ~~~shell
 $ du --max-depth=1 -h 2>/dev/null
 ~~~
+
+## egrep 
+- grep 의 확장판. grep 이 하나의 문자열을 찾는 것과는 달리, 여러개의 문자열을 동시에 찾을 수 있음
+- grep 에서 활용할 수 있는 메타문자 이외에 추가 정규표현식 메타문자를 지원함
+
+### egrep 에서 사용하는 정규표현식 메타문자
+- `+`: 앞의 정규표현식이 1회 이상 나타남
+- `?`: 앞의 정규표현식이 0 또는 1회 나타남
+- `|`: 문자열 간의 OR 연산자
+- `()`: 정규 표현식을 둘러 쌈
+
+### egrep 예제
+- `egrep 'NW|EA' datafile` 
+  - NW나 EA가 포함된 행을 출력. NW와 EA 사이에 파이프
+- `egrep '3+' datafile`
+  - 숫자 3이 한 번 이상 등장하는 행을 출력
+- `egrep '2.?[0-9]' datafile`
+  - 숫자 2 다음에 마침표가 없거나 한 번 나오고, 다시 숫자가 오는 행을 출력
+- `egrep '(no)+' datafile`
+  - 패턴 no 가 한 번 이상 연속해서 나오는 행을 출력
