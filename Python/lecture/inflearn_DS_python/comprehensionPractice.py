@@ -76,7 +76,7 @@ def matrix_subtraction(*matrix_variables):
 
 # matrix_transpose	: matrix의 전치행렬을 구하여 결과를 반환함, 단 입력되는 matrix의 크기는 일정하지 않음
 # matrix_w = [[2, 5], [1, 1], [2, 2]]
-# matrix_transpose(matrix_w)
+# matrix_transpose(matrix_w) =  [[2, 1, 2], [5, 1, 2]]
 def matrix_transpose(matrix_variable):
     return None
 
