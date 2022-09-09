@@ -1,5 +1,3 @@
-from os import *
-os.getcwd()
 # vector_size_check
 # vector 간 덧셈 또는 뺄셈 연산을 할 때,
 # 연산이 가능한 사이즈인지를 확인하여 가능 여부를 True 또는 False로 반환함
