@@ -433,6 +433,10 @@ world
       (다른 커맨드 창에서)`nc localhost 1234`
 
 ## 네트워크 분석 도구 - tcpdump
+- tcpdump 설치
+~~~shell
+$ apt install tcpdump
+~~~
 - 네트워크 트래픽 패킷 덤프 및 분석
 ~~~shell
 $ tcpdump -i eth0
@@ -515,3 +519,9 @@ listening on eth0, link-type EN10MB (Ethernet), capture size 262144 bytes
   - `tcpdump dst 192.168.0.2 and src net and not icmp`
   - `tcpdump 'dst 8.8.8.8 and (src net 192.168.0.0/24 or 172.16.0.0/16)'`
   - `tcpdump 'src 8.8.8.8 and (dst port 3389 or 22)'`
+
+## 용어 정리
+- DHCP(Dynamic Host Configuration Protocol)
+  - IP 주소와 게이트웨어 또는 네임서버의 주소의 정보를 자동으로 할당해주는 프로토콜
+  - 일반적인 가정집이나 사무실에서 가장 많이 사용됨
+- 
