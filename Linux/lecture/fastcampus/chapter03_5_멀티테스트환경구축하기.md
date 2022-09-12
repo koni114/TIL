@@ -119,6 +119,10 @@ $ iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
 $ apt install iptables-persistent
 $ netfilter-persistent save  # ipv4, ipv6 가 save
 
+# 변경한 router 등록 정보 save and reload
+$ netfilter-persistent save
+$ netfilter-persistent reload
+
 # sysctl 도 재부팅 이후에 잘 불러오도록 하기 위하여 설정
 $ vi /etc/sysctl.conf 
 ~~~ 
