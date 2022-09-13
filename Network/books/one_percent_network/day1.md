@@ -1,5 +1,5 @@
 ## day - 1 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_01.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_01.jpeg)
 ![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_02.jpeg)
 
 - 웹 브라우저
