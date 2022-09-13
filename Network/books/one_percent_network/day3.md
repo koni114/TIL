@@ -18,7 +18,7 @@
 ### 소켓을 작성한다
 #### 프로토콜 스택의 내부 구성
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_06.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_06.png)
 
 - 애플리케이션 
   - 맨 위에 있는 것은 <b>네트워크 애플리케이션</b>이며, 브라우저, 메일러, 웹 서버, 메일 서버 등의 프로그램이 여기에 해당
@@ -47,7 +47,7 @@ ex) 통신 상대의 IP주소는 무엇인가, 포트 번호는 무엇인가, �
 #### 소켓의 내용 직접 확인하기
 - `netstat` 명령어를 통해 실제 소켓의 내용을 화면으로 확인 가능
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_07.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_07.png)
 
 - `Proto`: 프로토콜의 종류. TCP/IP 프로토콜을 사용하여 데이터를 송.수신할 경우에는 TCP와 UDP 중 하나
 - `Local Address` : netstat 명령을 실행한 기계 자체 예(로컬측)의 IP 주소와 port 번호  
@@ -63,7 +63,7 @@ ex) 통신 상대의 IP주소는 무엇인가, 포트 번호는 무엇인가, �
 #### Socket을 호출했을 때의 동작
 - 브라우저가 socket이나 connect라는 Socket 라이브러리의 프로그램 부품을 호출했을 때 프로토콜 스택의 내부가 어떻게 움직이는지 살펴보자
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_08.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_08.png)
 
 - 준비
   - 소켓을 만드는 단계
@@ -151,7 +151,7 @@ ex) 통신 상대의 IP주소는 무엇인가, 포트 번호는 무엇인가, �
 - 프로토콜 스택에만 맡긴다면 좋지 않은 일이 생길 수도 있으므로, 애플리케이션측에서 송신의 타이밍을 제어하는 여지도 남겨둠  
 예를 들어, 버퍼에 머물지 말고 바로 송신하라고 보내면 프로토콜 스택은 버퍼에 머물지 않고 송신 동작 실행  
 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_09.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_09.png)
 
 - MTU : 패킷 한 개로 운반할 수 있는 디지털 데이터의 최대 길이. 이더넷에서는 보통 1,500바이트
 - MSS : 헤더를 제외하고 한 개의 패킷으로 운반할 수 있는 TCP의 데이터의 최대 길이

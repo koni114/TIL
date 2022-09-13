@@ -20,7 +20,7 @@
   - IP 헤더(수신처는 목적지의 서버)
 
 #### IP 패킷을 운반하는 원리
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_10.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_10.png)
 
 - 송신처에서 패킷의 목적지가 되는 대상 서버의 IP 주소를 IP 헤더의 수신처에 기록
 - IP는 수신처가 어느 방향에 있는지 조사하여 그 방향에 있는 다음 라우터를 조사
@@ -37,7 +37,7 @@
 - 이더넷과 같은 거대한 네트워크를 구축하려면 이러한 유연성이 필요한데, 이것이 역할을 분담하는 이유
 
 #### 패킷 송.수신 동작의 개요 
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_11.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_11.png)
 
 - 다음은 IP 담당 부분의 패킷 송.수신 동작
 - IP 담당 부분은 패킷을 상대에게 송출만 하고, 그 뒤에 상대가 있는 곳까지 패킷을 운반하는 것은 허브나 라우터가 수행
@@ -103,7 +103,7 @@
 - 수신한 패킷을 그대로 IP 담당 부분에 건네주면 단순이 수신만 하면 되므로 IP 이외의 특수한 패킷에도 대응할 수 있음
 
 #### 이더넷의 기본
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_12.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_12.png)
 - <b>이더넷</b>은 다수의 컴퓨터가 여러 상대와 자유롭게 적은 비용으로 통신하기 위해 고안된 통신 기술
 - 네트워크의 실체는 케이블만 있으며, 트랜시버도 결국 신호를 흐르게하는 케이블임
 - 한 대가 신호를 보내면 전원에게 신호가 도착함  
@@ -122,11 +122,11 @@
 - LAN 어댑터에 기록된 MAC 주소는 LAN 드라이버가 MAC 회로에 설정
 
 #### LAN 어댑터 내부 구조
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_13.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_13.png)
 
 
 #### 패킷에 3개의 제어용 데이터를 추가한다
-![img](https://github.com/koni114/TIL/blob/master/Network/lecture/one_percent_network/img/network_14.png)
+![img](https://github.com/koni114/TIL/blob/master/Network/books/one_percent_network/img/network_14.png)
 
 - 패킷을 전기 신호로 변환하여 실제로 케이블에 송출하는 MAC 회로 작업이 수행됨
 - LAN 드라이버는 IP 담당 부분에서 패킷을 받으면 이를 LAN 어댑터의 버퍼 메모리에 복사 후, 이를 패킷을 송신하도록 MAC 회로에 명령을 보냄
