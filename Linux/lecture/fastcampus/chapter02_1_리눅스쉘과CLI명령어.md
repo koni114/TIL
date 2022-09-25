@@ -57,7 +57,7 @@ $ sudo cat /etc/sudoers
 - 사용방법
   - `su user2`  
     user2의 id로 로그인 한다(user2의 pw 필요)
-  - `su -user2`  
+  - `su - user2`  
     user2의 id로 로그인 한다(user2의 home 디렉토리 사용)
   - `su`, `su root`  
     root의 id로 로그인한다. (root의 pw 필요. 하지만 우분투는 root 암호 비활성화 -> 접속할 수는 없음) 

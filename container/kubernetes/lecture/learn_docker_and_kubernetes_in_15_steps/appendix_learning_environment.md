@@ -33,6 +33,11 @@ minikube version: v1.25.2
 ## Vagrant의 리눅스에서 미니쿠베 사용하기
 - 여기서는 Vagrant 와 Ansible 이라는 자동화 도구를 사용
 - 사용된 코드는 https://github.com/Jpub/15_DandK/tree/master/vagrant-minikube
+- 주의사항(** 중요)
+  - `minikube.yaml` 파일에서 `minikube` 설치시 version 지정해야 함  
+  - As-Is : `https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64`
+  - To-Be : `https://storage.googleapis.com/minikube/releases/v1.25.2/minikube-linux-amd64`
+
 
 ### 설치 순서
 - minikube가 부팅되기까지 3~5분 정도의 시간이 걸림
