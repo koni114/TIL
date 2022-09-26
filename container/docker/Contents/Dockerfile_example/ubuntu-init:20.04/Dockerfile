@@ -11,6 +11,8 @@ RUN apt update \
   && apt install -qq -y build-essential \
   && apt install -qq -y tzdata \
   && apt install -qq -y vim curl \
+  && apt install -qq -y man-db whois \
+  && apt install -qq -y net-tools \
   && apt-get clean autoclean \
   && apt-get autoremove -y \
   && rm -rf /var/lib/{apt,dpkg,cache,log}
