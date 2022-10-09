@@ -420,6 +420,7 @@ ls라고 하는 실행파일의 위치를 찾아줌
 ~~~
 * whereis 메뉴얼에서, whereis locates the binary, source and manual files for the specified command names. 라고 되어 있음
 * 이 때 파일 전체를 뒤지는게 아니라, $path, $manpath 를 뒤짐
+
 ##### PATH
 * 우리가 ls라는 명령어를 실행할 때, 해당 프로그램을 실행하는 것인데, 해당 디렉토리에 ls라는 프로그램이 없어도 실행되는 이유는 PATH라고 하는 변수 때문
 * PATH는 변수고, 변수에는 데이터가 들어가 있는데, echo $PATH 라고 치면 데이터가 보인다.

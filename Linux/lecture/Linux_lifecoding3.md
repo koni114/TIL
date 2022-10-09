@@ -1,6 +1,5 @@
 ### 강의 44
 #### Linux - Web server 1 (apache) : intro
-![img](https://github.com/koni114/TIL/blob/master/Linux/img/client_server.JPG)
 * 인터넷은 크게 client, server로 이루어져 있음
 * client는 server에게 요청(request)하고, server는 다시 client에게 response 함
 * client로 사용하기 위해서는 web browser가 깔려 있어야 함
@@ -128,7 +127,6 @@ ssh egoing@192.168.0.65
 
 ### 강의 50
 #### Linux - 포트(port) 1 - 포트란 무엇인가?
-![img](https://github.com/koni114/TIL/blob/master/Linux/img/port.JPG)
 * 보통 domain name을 입력할 때 뒤에 :를 붙이고 숫자를 입력하는데, 이를 <b/>PORT</b> 라고 함
 * 일반적으로 0 ~ 1024까지가 알려진 포트 번호
 * 22 : SSH, 80 : web 의 고정된 PORT 번호

@@ -88,6 +88,7 @@ ls -alR / 1> result.txt 2> error.log &
 #### Linux - service와 자동 실행
 * daemon 중 하나로써 web server를 설치해보자
 * 가장 대표적인 web server로는 <b/>apache tomcat</b> 이 있음
+
 ##### web server 설치 예제
 ~~~
 sudo apt-get install apache
@@ -173,6 +174,7 @@ $ alias l='ls -al'
 
 ~~~
 * l 이라고 입력하면 ls -al 명령어가 수행됨
+
 ##### shell 실행 시, 특정 명령어 수행 방법
 - bash는 사용자가 bash 를 처음 실행했을 때, 어떤 특정한 이름의 파일을 실행하도록 되어있음
 - 해당 파일을 확인하는 방법
