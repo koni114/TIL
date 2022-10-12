@@ -5,7 +5,7 @@
 - 도커 컨테이너에 API가 있다면 컨테이너 내부 프로그램에 대해 잘 알지 못해도 간단하게 재이용 하는 것이 가능함
 
 ## 컨테이너 API의 종류와 개요
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_13.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_13.jpeg)
 
 ### 컨테이너 기동
 - 컨테이너 내의 애플리케이션은 기동 시에 환경 변수나 실행 인자를 읽어서 그에 맞게 동작하게 만들 수 있음

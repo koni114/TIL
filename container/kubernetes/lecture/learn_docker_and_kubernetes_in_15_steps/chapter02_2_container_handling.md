@@ -80,7 +80,7 @@ $ docker inspect ubuntu -f="{{ range.NetworkSettings.Networks }}{{.IPAddress}}{{
 - 터미널1에서는 옵션 `--name` 으로 이름을 지정하여 컨테이너를 기동하며 셸을 실행함
 - 터미널2에서는 `docker exec -it 컨테이너명 bash`를 실행하여 같은 컨테이너에 접속
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_09.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_09.jpeg)
 
 ### 대화형 컨테이너로 셀 기동
 ~~~shell

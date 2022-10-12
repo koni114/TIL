@@ -68,7 +68,7 @@
 - 가동률이 적은 서버의 애플리케이션을 한곳에 모을 수 있음. 그래서 서버의 CPU 가동률을 높게 유지하면서도 안정적으로 서비스 제공 가능
 
 ## 쿠버네티스의 아키텍처 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_01.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_01.png)
 
 - <b>클러스터의 관리를 담당하는 마스터</b>와 <b>컨테이너화된 애플리케이션을 실제 실행하는 노드</b> 두 종류로 구성
 - 마스터는 kubectl 과 같은 API client로부터 요청을 받아 애플리케이션의 배포, 스케일업/다운, 컨테이너의 버전 업 등의 요구를 처리

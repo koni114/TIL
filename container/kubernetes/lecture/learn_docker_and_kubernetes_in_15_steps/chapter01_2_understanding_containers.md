@@ -29,7 +29,7 @@
 - 컨테이너는 하나의 리눅스 프로세스가 마치 전용 서버에서 동작하고 있는 것 같은 분리 상태를 만들어냄
 - 리눅스 커널의 네임스페이스와 컨트롤 그룹(control group)이라는 기술을 기반으로 함
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_02.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_02.png)
 
 ### 컨테이너와 가상 서버 비교
 | 특징  | 가상 서버 | 컨테이너 |
@@ -44,13 +44,13 @@
 - Linuxkit은 컨테이너를 실행하기 위한 경량의 리눅스 서브 시스템
 - 컨테이너는 하이퍼바이저 가상 서버에서도 사용할 수 있음. 퍼블릭 클라우드의 가상 서버나 온프레미스의 Openstack 위에서 활용됨 
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_03.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_03.png)
 
 ## docker의 아키텍처
 - 도커는 소프트웨어 개발자가 컨테이너를 이용해 개발 생산성을 높일 수 있도록 컨테이너를 build(작성), ship(이동), run(실행) 할 수 있는 기능을 지원
 - 도커는 <b>도커 데몬 서버, 클라이언트인 도커 커맨드, 이미지의 보관소인 레지스트리로 구성</b>
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_04.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_04.png)
 
 ### 도커 데몬
 - 클라이언트인 도커 커맨드의 명령을 받아드려 도커 오브젝트인 이미지, 컨테이너, 볼륨, 이미지 등을 관리
@@ -72,7 +72,7 @@
 - 대부분의 이미지는 다른 이미지에 기반하여 만들어짐
 
 ### Nginx 이미지 만들기
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_05.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_05.png)
 
 - 이미지를 만들 때는 기반 이미지와 설치 스크립트 등을 Dockerfile에 기재해서 빌드
 - ① `docker build` 명령어를 통해 dockerfile이 읽혀짐
@@ -103,7 +103,7 @@
 - 쿠버네티스에서도 레지스트리에서 이미지를 다운로드 받아 컨테이너를 실행
 - 레지스트리는 쿠버네티스를 사용할 때 반드시 필요한 서비스
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_06.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_06.png)
 
 - ① `docker build` 로 이미지 빌드
 - ② `docker push`로 이미지를 레지스트리에 등록
@@ -115,7 +115,7 @@
 - 쿠버네티스는 도커를 컨테이너의 런타임 환경으로 사용. 즉 쿠버네티스를 설치할 때 제일 먼저 도커를 설치해야 함
 
 ### 도커와 쿠버네티스 연동 프로세스
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_07.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_07.png)
 
 - 도커 데몬 프로세스인 `dockerd` 와 연동하여 동작하는 `containerd` 는 다양한 플랫폼 위에서 동작하는 업계 표준 코어 컨테이너 런타임으로 간결하고 높은 이식성을 목표로 개발
 - 이를 통해 이미지 보관 및 전송, 컨테이너 실행, 볼륨과 네트워크 연결과 같은 컨테이너의 라이프 사이클을 호스트에서 완전히 관리할 수 있게 됨

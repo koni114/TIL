@@ -143,7 +143,7 @@ nginx     1/1     Running   0          11m    172.17.0.3   minikube   <none>    
 ~~~
 - 파드 간의 통신을 그림으로 표현하면 그림 1과 같음. 터미널에서 busybox 의 파드에 접속하여 wget 커맨드를 실행하여 nginx 파드의 HTTP TCP/80에 접속하고 있음
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_21.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_21.png)
 
 - 정리하자면, 파드는 클러스터 네트워크 상의 IP 주소를 가지며 이 주소를 바탕으로 파드와 파드가 서로 통신할 수 있음
 - 여기서 이용한 BusyBox는 도커 허브에 등록된 공식 이미지 중 하나
@@ -157,7 +157,7 @@ nginx     1/1     Running   0          11m    172.17.0.3   minikube   <none>    
 - 이렇게 하여 서버 장애가 유저에 미치는 영향을 줄임
 - 한편, 쿠버네티스에서는 노드에 상주하는 <b>kubelet</b>이 컨테이너의 헬스 체크를 담당
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_22.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_22.png)
 
 - kubelet의 헬스 체크는 다음 두 종류의 프로브를 사용하여 실행 중인 파드의 컨테이너를 검사함
   - 활성 프로브(Liveness Probe)
@@ -486,7 +486,7 @@ drwxr-xr-x 2 www-data www-data 4096 Mar 27 12:38 html
 - 다음의 그림에서는 웹 서버 컨테이너와 최신 콘텐츠를 깃헙에서 다운받는 컨테이너가 하나의 파드에 묶여 있음  
   이러한 조합 패넡을 사이드카라고 함 
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_23.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_23.png)
 
 - <b>사이드카 패턴의 장점은 여러 개의 컨테이너를 조합하여 사용함으로써 컨테이너의 재사용성이 높아지고, 생산성이 높아짐</b>
 - 매번 필요에 맞는 컨테이너를 만드는 것이 아니라, 전에 만든 컨테이너를 재활용할 수 있어 단기간에 커다란 성과를 얻을 수 있음

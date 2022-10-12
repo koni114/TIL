@@ -1,13 +1,13 @@
 # chapter03 쿠버네티스의 기본
 ## 아키텍처
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_15.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_15.png)
 
 - 다음은 쿠버네티스 업스트림의 기본 구성. 퍼블릭 클라우드의 쿠버네티스 관리 서비스에는 이외에 추가적인 컴포넌트들이 있지만, 업스트림의 핵심 기능이 가장 중점이 됨
 - 다음은 멀티 노드 K8s에서 마스터를 포함한 모든 노드에서 동작하는 파드의 목록을 출력한 결과
 ~~~shell
 $ kubectl get pods --all-namespaces --sort-by=.spec.nodeName -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name,IMAGE:.spec.containers[0].image
 ~~~
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_10.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_10.png)
 
 - `NODE`: 각 노드의 역할을 의미 제어를 담당하는 master와 실행을 담당하는 node1, node2가 존재
 - `NAME`: 컨테이너의 실행 단위인 파드의 이름. 네임스페이스(Namespace) 내에서 유일한 이름이 되도록 해시 문자열이 추가로 붙기도 함
@@ -39,7 +39,7 @@ $ kubectl get pods --all-namespaces --sort-by=.spec.nodeName -o=custom-columns=N
 | metric-server | K8s 클러스터 전체로부터 매트릭을 수집 |
 
 ## 쿠버네티스 계층 구조
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_16.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_16.png)
 
 - 마스터 노드의 역할
   - 쿠버네티스의 API 서버로서 클라이언트로부터의 명령을 받아드리고 실행
@@ -186,7 +186,7 @@ $ kubectl get pods --all-namespaces --sort-by=.spec.nodeName -o=custom-columns=N
 - 쿠버네티스의 서비스는 클라이언트의 요청을 파드에 전달하는 역할을 담당
 - 이러한 서비스가 필요한 이유는 파드의 IP 주소가 기동할 때마다 바뀌기 때문. 그래서 파드에 접속해야하는 클라이언트는 서비스가 가지는 대표 IP를 사용해서 접속해야 함
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_17.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_17.png)
 
 - '1. 서비스는 로드벨런서의 역할을 가지며, 클라이언트의 요청을 받기 위한 대표 IP 주소를 획득
 - '2. 서비스의 이름은 내부 DNS에 등록되기 때문에 클라이언트는 서비스의 이름만으로 서비스의 IP 주소를 획득할 수 있음
@@ -228,7 +228,7 @@ $ kubectl get pods --all-namespaces --sort-by=.spec.nodeName -o=custom-columns=N
 ## 컨트롤러의 기본
 - 컨트롤러는 파드를 제어. 파드에게 부여할 워크로드의 타입. 즉 처리에 따라서 적절한 컨트롤러를 선택해야 함  
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_18.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_18.png)
 
 ### 워크로드 타입
 #### 프론트엔드 처리
@@ -307,7 +307,7 @@ $ kubectl get pods --all-namespaces --sort-by=.spec.nodeName -o=custom-columns=N
 - 가상 환경 구축은 `Vagrant`, `Ansible` 사용. 이번 절에서 사용할 코드들은 github 저장소에 저장되어 있음
 - 다음 그림은 구성할 환경의 소프트웨어 스택. 자동화 도구(Vagrant, Ansible)에 의해 음영 부분에 해당되는 소프트웨어들이 자동으로 설치됨
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_09.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_09.png)
 
 - 다음은 표 1에 PC 환경, 표 2에 설치할 소프트웨어, 표 3에 도커와 쿠버네티스의 버전, 표 4에는 가상 NFS 서버를 설치하기 위해 필요한 스펙 정리. 
 

@@ -16,7 +16,7 @@
 - **레지스트리** : 도커에서는 리포지터리 집합체로서 리포지터리를 제공하는 서버를 말함
 
 ## 컨테이너의 생명 주기와 도커 커맨드
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_08.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_08.jpeg)
     
 ### 이미지 다운로드)(`docker pull`)
 - 원격 리포지터리로부터 이미지를 다운로드함

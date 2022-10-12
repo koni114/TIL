@@ -3,7 +3,7 @@
 - 이미지 빌드를 위해 `docker build`라는 명령어 사용
 
 ## 이미지 빌드 개요 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_10.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_10.jpeg)
 
 ### (1) 베이스 이미지 선택
 - 이미지를 만들 때 바탕이 되는 이미지를 <b>베이스 이미지</b>라고 함
@@ -119,7 +119,7 @@ $ docker run hello:1.0
 - Dockerfile 에서 사용할 수 있는 키워드는 이 책에서 소개하는 것 외에도 많음
 - 아래 표 3에 비교적 자주 사용하는 커맨드와 그 의미를 정리함
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_11.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_11.jpeg)
 
 ## Dockerfile 작성 모범 사례
 - dockerfile 작성에 관한 모범 사례를 

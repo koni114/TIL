@@ -1,5 +1,5 @@
 # 컨테이너와 네트워크
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_12.jpeg)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_12.jpeg)
 
 - 실행 중인 컨테이너는 IP 주소를 할당받아 컨테이너 간 통신이 가능
 - 왼쪽과 같이 호스트 내에서 접근 가능한 전용 네트워크를 통해 애플리케이션과 데이터베이스를 연결하는 것이 가능
@@ -133,7 +133,7 @@ $ curl http://192.168.1.25:8080/
 ## AP 컨테이너와 DB 컨테이너의 연동 예
 - 이번 예제에서는 MySQL 컨테이너(DB 컨테이너)와 PHP 컨테이너(AP 컨테이너)를 컨테이너 네트워크로 연결한 모습
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_19.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_19.png)
 
 ### 컨테이너 네트워크 작성
 - 컨테이너 간 통신을 위한 전용 네트워크 `apl-get`을 만들자.
@@ -196,7 +196,7 @@ $ docker run -d --name php --network apl-net -p 8081:80 -e MYSQL_USER=root -e MY
 ~~~
 - 기동 후에 실습 중인 컴퓨터의 웹 브라우저에서 `http://localhost:8081`으로 접속하면 접속 됨
 
-![img](https://github.com/koni114/TIL/blob/master/docker/img/docker_20.png)
+![img](https://github.com/koni114/TIL/blob/master/container/docker/img/docker_20.png)
 
 - 웹 서버의 접속 로그는 `docker logs 컨테이너 명 | 컨테이너ID`를 통해 출력 가능
 ~~~shell
