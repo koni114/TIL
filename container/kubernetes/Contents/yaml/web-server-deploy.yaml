@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-server-rs
+spec:
+  replicas: 5
+
+  selector:
+    matchLabels:
+      app: webapp
+      tier: app
+  template:
+    metadata:
+      labels:
+        app: webapp
+        tier: app
+    spec:
+      containers:
+        - name: web-server
+          image: reallinux/web-server:1
+          ports:
+            - containerPort: 80
+              protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-server
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      targetPort: 80
+      protocol: TCP
+      nodePort: 31000
+  selector:
+    app: webapp
+    tier: app
