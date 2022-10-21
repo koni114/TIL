@@ -13,7 +13,7 @@ git config --global user.email koni114@gmail.com
 ~~~
 git commit
 ~~~
-- 커밋 후에 vim이 실행됨
+- 커밋 후에 vim이 실행됨 
 - 이 때 commit에 대한 메세지를 작성(commit 내용에 대한 메세지 입력)
 - 수정 방법(순서)
   - i 를 눌러서 insert 
