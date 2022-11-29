@@ -12,9 +12,9 @@ spec:
   
   template:
     metadata:
-    labels:
-      app: webapp
-      tier: app
+      labels:
+        app: webapp
+        tier: app
     spec:
       containers:
         - name: web-server
