@@ -15,11 +15,9 @@ FROM ${AIRFLOW_BASE_IMAGE}
 # change the root password
 USER root
 RUN echo "root:root!23" | chpasswd
-RUN echo "airflow:airflow!23" | chpasswd
 
 ########### Install OS dependencies ##########
 RUN apt-get update
-RUN apt-get install ca-certificates -y
 RUN apt-get install openssh-server -y
 RUN apt-get install vim -y
 RUN apt-get install net-tools -y
@@ -28,8 +26,7 @@ RUN apt-get install python3 pip -y
 RUN apt-get install libaio1 -y
 RUN apt-get install wget -y
 RUN apt-get install unzip -y
-RUN apt-get install npm -y
-
+RUN apt-get install ca-certificates -y
 
 ############ Configure Container Environment ############
 
@@ -42,6 +39,17 @@ ENV TZ=Asia/Seoul
 
 ADD . /tmp
 
+# Install Jupyterhub
+RUN pip install --no-cache-dir sudospawner jupyterhub && \
+    apt-get install -y nodejs && \
+    jupyter-notebook --generate-config && \
+    mkdir -p /etc/jupyterhub && mv /tmp/jupyterhub_config.py /etc/jupyterhub/ && \
+    mkdir -p /etc/pki/jupyterhub && mv /tmp/jupyter.* /etc/pki/jupyterhub/ && \
+    apt-get update -y && \
+    apt-get clean all && apt-get cache clean --force &&  \
+    rm -fr /root/.cache /root/.npm /tmp/* /var/cache/yum/*
+
+
 # Install oracle-client
 WORKDIR /opt/oracle
 RUN wget --no-check-certificate https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip && \
@@ -49,35 +57,19 @@ RUN wget --no-check-certificate https://download.oracle.com/otn_software/linux/i
     cd /opt/oracle/instantclient* && rm -f *jdbc* *occi* *mysql* *README *jar uidrvci genezi adrci && \
     echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf && ldconfig
 
-
 # install python dependencies 
 WORKDIR /opt/airflow
 USER airflow
-
 COPY requirements.txt /tmp/requirements.txt
 
 RUN python -m pip install --upgrade pip
 RUN pip install -r /tmp/requirements.txt
 
-USER root
-RUN groupadd -g 983 docker && \
-    useradd -u 10009 -g docker -m -d /home/testuer -s /bin/bash testuser && echo "testuser:testuser!23" | chpasswd
-
-########### install jupyterhub ################
-
-RUN mkdir -p /opt/jupyter
-COPY jupyterhub-install.sh /opt/jupyter/jupyterhub-install.sh
-
-COPY jupyterhub_config.py /opt/jupyter/jupyterhub_config.py
-
-WORKDIR /opt/jupyter
-RUN sh jupyterhub-install.sh
-CMD jupyterhub /opt/jupyter/jupyterhub_config.py &
-
+# Install jupyterhub
 
 EXPOSE 8080 8888 22
 
 USER airflow
-RUN airflow db init
-RUN airflow users create --username airflow --password airflow!23  --firstname Anonymous --lastname Admin  --role Admin --email admin@example.org
-CMD airflow webserver & airflow scheduler && jupyterhub /opt/jupyter/jupyterhub_config.py &
+RUN airflow db init 
+RUN airflow users create --username airflow --password airflow  --firstname Anonymous --lastname Admin  --role Admin --email admin@example.org
+CMD airflow webserver & airflow scheduler
