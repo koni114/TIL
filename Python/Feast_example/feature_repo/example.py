@@ -39,3 +39,5 @@ driver_hourly_stats_view = FeatureView(
 driver_stats_fs = FeatureService(
     name="driver_activity", features=[driver_hourly_stats_view]
 )
+
+print(driver_stats_fs)
