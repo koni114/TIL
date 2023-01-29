@@ -1,0 +1,14 @@
+# training management
+mlflow:
+  tracking_uri: http://192.168.31.81:5000
+  registry_uri: http://192.168.31.81:9000
+  experiment_name: e2e-pipeline-iris
+  register_model: e2e-pipeline-iris
+  target_metric: accuracy_score
+  target_metric_threshold: 0.9
+
+minIO:
+  aws_bucket_name: mlflow
+  aws_access_key_id: posml
+  aws_secret_access_key: posml123
+  mlflow_s3_endpoint_url: http://192.168.31.81:9000/

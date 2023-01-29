@@ -1,0 +1,22 @@
+# common
+proj_name: e2e-pipeline-iris
+model_name: e2e-pipeline-iris
+model_version: v0.1
+
+# Data Management
+mart_id: dm_f_20085_2212_142
+
+# workflow management
+time_zone: Asia/Seoul
+date_format: "%Y-%m-%d %H:%M:%S"
+
+train_start_date: "2023-01-09 00:00:00"
+train_schedule_interval: "@daily"
+
+train_trigger_start_date: "2023-01-09 00:00:00"
+train_trigger_schedule_interval: "@daily"
+
+# training management
+mlflow:
+  target_metric: accuracy_score
+  target_metric_threshold: 0.9
