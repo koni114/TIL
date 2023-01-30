@@ -36,25 +36,14 @@ with DAG(
         dag=dag,
     )
 
-    cloner = k8s.V1Container(
-        name="clone-repo",
-        image="k8s.gcr.io/git-sync/git-sync:v3.4.0",
-        env=[
-            # Problem: No templating occurs on this line.
-            k8s.V1EnvVar(name="GIT_SYNC_REPO", value="{{ dag_run.conf['repo_url'] }}"),
-            k8s.V1EnvVar(name="GIT_SYNC_SSH", value="true"),
-        ],
-    )
-
-    build_container = KubernetesPodOperator(
-        name="train-k8s",
-        task_id="train-k8s",
+    k = KubernetesPodOperator(
+        name="hello-dry-run",
         namespace="airflow",
-        image="koni114/airflow:2.3.3-python3.8-12",
-        init_containers=[cloner],
-        is_delete_operator_pod=False,
-        dag=dag,
-        service_account_name="airflow-worker",
+        image="debian",
+        cmds=["bash", "-cx"],
+        arguments=["echo", "10"],
+        labels={"foo": "bar"},
+        task_id="dry_run_demo",
     )
 
-    train_operator >> build_container
+    train_operator >> k
