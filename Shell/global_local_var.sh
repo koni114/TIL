@@ -12,3 +12,4 @@ echo ${string}
 
 # 변수 초기화
 unset string
+
