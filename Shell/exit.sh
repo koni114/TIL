@@ -6,3 +6,4 @@ if [ $? -eq 0 ]; then
 else
     echo "File is not exist : $fileToRemove"
 fi
+
