@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: multiple-command-v1
+  name: multiple-command-v1
+spec:
+  containers:
+  - name: net-tools
+    image: sysnet4admin/net-tools
+    command: ["/bin/sh", "-c", "echo multiple-command-v1 && sleep 3600"]
