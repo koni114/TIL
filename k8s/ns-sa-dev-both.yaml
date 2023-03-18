@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev1
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dev1-hoon-token
+  namespace: dev1
+  annotations:
+    kubernetes.io/service-acount.name: "dev-hoon"
+type: kubernetes.io/service-acount-token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev1-hoon
+  namespace: dev1
+secrets:
+  - name: dev1-hoon-token
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dev2-moon-token
+  namespace: dev2
+  annotations:
+    kubernetes.io/service-acount.name: "dev-moon"
+type: kubernetes.io/service-acount-token
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev2-moon
+  namespace: dev2
+secrets:
+  - name: dev2-moon-token

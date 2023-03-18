@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: deploy-topologyspreadconstraints
+  name: deploy-topologyspreadconstraints
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: deploy-topologyspreadconstraints
+  template:
+    metadata:
+      labels:
+        app: deploy-topologyspreadconstraints
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/region
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: deploy-topologyspreadconstraints
+      - maxSkew: 1
+        topologyKey:  topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: deploy-topologyspreadconstraints
