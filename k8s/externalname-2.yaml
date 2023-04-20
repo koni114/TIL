@@ -8,3 +8,4 @@ spec:
   type: ExternalName
   externalName: k8s-edu.github.com
 
+
