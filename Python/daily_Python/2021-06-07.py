@@ -187,6 +187,3 @@ plt.plot(series.iloc[-25:], label='Price')
 plt.plot(predictions.iloc[-25:], color='red', label='Prediction')
 plt.legend()
 plt.show()
-
-
-
