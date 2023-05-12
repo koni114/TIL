@@ -99,3 +99,4 @@ corrplot::corrplot(correlations, order = 'hclust')
 highCor <- findCorrelation(correlations, cutoff = 0.7)
 length(highCor)
 filteredSegData <- segData[,-highCor]
+
