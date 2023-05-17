@@ -157,7 +157,7 @@ println("Pi, using 355/113, is about" + approx + '.')
 ~~~
 val item = "apple"
 println(s"How do you like them ${item}s?")
-println(s"Fish n chips n vineger, ${"pepper "*3}salt")
+println(s"Fish n chips n vinegar, ${"pepper "*3}salt")
 ~~~
 
 ##### 정규표현식
