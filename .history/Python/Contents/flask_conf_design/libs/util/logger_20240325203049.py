@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import logging.handlers
+import datetime
 
 from logging import root, INFO, WARNING, ERROR, DEBUG
 
@@ -45,14 +46,14 @@ def get_caller(step=1, fullname=True):
     호출한 함수명을 return.
     """
     step += 1
-    caller = sys._getframe(step).f_locals.get('self') # step 번째 depth 의 함수 명을 가져옴. 
+    caller = sys._getframe(step).f_locals.get('self') # 현재 depth 의 함수 명을 가져옴
     if isinstance(caller, type(None)):
         return sys._getframe(step).f_code.co_name
     elif fullname:
         return str(sys._getframe(step).f_locals.get('self')).split(" ")[0][1:] + "." + \
                sys._getframe(step).f_code.co_name
     else:
-        return sys._getframe(step).f_code.co_name
+        return sys._getframe(step).f_code_co_name
 
 
 def caller_id():
@@ -73,7 +74,7 @@ def set_logging_level(logger_name=None, logging_level=None):
         c_logger.setLevel(logging_level)
 
 
-_stream_handler_enabled = []  # logger 의 스트림 여부
+_stream_handler_enabled = [] # logger 의 스트림 여부
 _file_handlers = []           # logger 의 파일 로깅 여부
 _default_format = '%(asctime)s %(levelname)s %(message)s'
 
@@ -155,6 +156,9 @@ def create_sms_logger(log_file, logger_name="sms", stream_enabled=True, format=s
     """
     return create_logger(log_file, logger_name=logger_name, stream_enabled=stream_enabled,
                          propagate=False, format=format)
+
+
+
 
 
 

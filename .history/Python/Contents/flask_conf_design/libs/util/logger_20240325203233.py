@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import logging.handlers
+import datetime
 
 from logging import root, INFO, WARNING, ERROR, DEBUG
 
@@ -73,7 +74,7 @@ def set_logging_level(logger_name=None, logging_level=None):
         c_logger.setLevel(logging_level)
 
 
-_stream_handler_enabled = []  # logger 의 스트림 여부
+_stream_handler_enabled = [] # logger 의 스트림 여부
 _file_handlers = []           # logger 의 파일 로깅 여부
 _default_format = '%(asctime)s %(levelname)s %(message)s'
 
@@ -155,6 +156,9 @@ def create_sms_logger(log_file, logger_name="sms", stream_enabled=True, format=s
     """
     return create_logger(log_file, logger_name=logger_name, stream_enabled=stream_enabled,
                          propagate=False, format=format)
+
+
+
 
 
 
