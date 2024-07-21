@@ -45,7 +45,7 @@ sample_data = {"userId": "jaehun.hur",
                        "createAt": "2024-05-16 10:15:18",
                        "updatedAt": "2024-05-16 10:30:39",
                        },
-                    ]
+               ]
                }
 
 collection.insert_one(sample_data)
