@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<title>BigDataAssistant</title>
+<style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      /* overflow:auto; */
+      line-height: normal;
+    }
+
+    body,
+    table,
+    th,
+    td,
+    div,
+    dl,
+    dt,
+    dd,
+    ul,
+    ol,
+    li,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    pre,
+    form,
+    fieldset,
+    textarea,
+    blockquote,
+    span,
+    * {
+      margin: 0;
+      padding: 0
+    }
+
+    form {
+      border: 0;
+      vertical-align: top
+    }
+
+    ul,
+    ol,
+    li {
+      list-style: none;
+    }
+
+    a {
+      sel: expression(this.hideFocus=true);
+      cursor: pointer;
+      border: 0px;
+    }
+
+    a:link,
+    a:visited {
+      text-decoration: none;
+    }
+
+    a:active,
+    a:hover {
+      text-decoration: none;
+    }
+
+    img,
+    fieldset {
+      border: 0;
+    }
+
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .breakAgree {
+      width: 900px;
+      margin: 20px auto 20px auto;
+      text-align: center;
+    }
+
+    .breakAgree .breakAgree_title {
+      position: relative;
+      width: 900px;
+      height: 150px;
+      font-weight: 800;
+      font-size: 30px;
+      border-radius: 8px 8px 0 0;
+      overflow: hidden;
+    }
+
+    .breakAgree .breakAgree_contents {
+      position: relative;
+      width: calc(100% - 82px);
+      padding: 40px;
+      background: url(../images/modal_bg.png) no-repeat 0 0, #fafafb;
+      border: 1px solid #e7e9ed;
+      border-top: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .breakAgree .breakAgree01 {
+      width: 100%;
+      margin: 20px 0 0 0;
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: center;
+      font-weight: 800;
+      font-size: 32px;
+      color: #5115a2;
+      letter-spacing: -.06em;
+    }
+
+    .breakAgree .breakAgree02 {
+      width: 100%;
+      margin: 40px 0 0 0;
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: left;
+      font-weight: 500;
+      font-size: 18px;
+      color: #04080f;
+      letter-spacing: -.05em;
+      line-height: 2.5;
+    }
+
+    .breakAgree .breakAgree02 .user {
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: left;
+      font-weight: 700;
+      font-size: 19px;
+      color: #04080f;
+      letter-spacing: .01em;
+      line-height: 2.5;
+    }
+
+    .breakAgree .breakAgree02 .day {
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: left;
+      font-weight: 600;
+      font-size: 18px;
+      color: #04080f;
+      letter-spacing: -.05em;
+      line-height: 2.5;
+    }
+
+    .breakAgree .breakAgree03 {
+      width: 100%;
+      margin: 50px 0 0 0;
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: left;
+      font-weight: 600;
+      font-size: 17px;
+      color: #04080f;
+      letter-spacing: -.05em;
+    }
+
+
+    /* 테이블 */
+    .breakAgree .aTable {
+      width: calc(100% - 0px);
+      margin: 15px 0 20px 0px;
+      border-radius: 2px;
+      box-shadow: .12em .12em .0em .12em rgba(0, 0, 0, .02);
+      overflow: hidden;
+    }
+
+    .breakAgree .aTable tbody th {
+      padding: 10px 15px;
+      text-align: center;
+      font-weight: 300;
+      font-size: 15px;
+      color: #393a3e;
+      background: #fcfaff;
+      border: 1px solid #dcdfe6;
+      /* background:#fdfaff; border:1px solid #dcdfe6; */
+    }
+
+    .breakAgree .aTable tbody tr {
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #e8dbf6;
+    }
+
+    .breakAgree .aTable tbody tr:last-child {
+      /* border-bottom:none !important; */
+    }
+
+    .breakAgree .aTable tbody td {
+      height: 50px;
+      padding: 15px 15px;
+      vertical-align: middle;
+      text-align: left;
+      font-weight: 500;
+      font-size: 16px;
+      color: #1c2126;
+      letter-spacing: -.01em;
+      line-height: 1.7;
+      background: #ffffff;
+      border: 1px solid #dcdfe6;
+      box-sizing: border-box;
+    }
+
+    .breakAgree .aTable tbody td:first-child {
+      text-align: left;
+      padding: 0 25px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap !important;
+    }
+
+    .breakAgree .bdA_go {
+      width: 100%;
+      margin: 50px 0 0 0;
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      text-align: left;
+      font-weight: 500;
+      font-size: 18px;
+      color: #04080f;
+      letter-spacing: -.05em;
+      line-height: 2.5;
+    }
+
+    /* BTN */
+    .btnWrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin: 45px 0 5px 0;
+    }
+
+    .btn2 {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 150px;
+      height: 45px;
+      margin: 0px 0 0 20px;
+      padding: 0 25px;
+      font-family: '맑은 고딕', 'Malgun Gothic', sans-serif, serif;
+      font-weight: 600;
+      font-size: 16px;
+      color: #ffffff;
+      letter-spacing: -.005em;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.4s;
+      background: #7c37c5;
+      background: -moz-linear-gradient(180deg, #7c37c5 50%, #752cc2 50%);
+      background: -webkit-linear-gradient(180deg, #7c37c5 50%, #752cc2 50%);
+      background: linear-gradient(180deg, #7c37c5 50%, #752cc2 50%);
+      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff", endColorstr="#f5f6fa", GradientType=1);
+      border: 0px solid #dcdfe6;
+    }
+
+    .btn2:hover {
+      font-weight: 800;
+      font-size: 16px;
+      color: #ffffff;
+      letter-spacing: -.005em;
+      box-shadow: .01em .01em .3em .0em rgba(0, 0, 0, .2);
+      border-radius: 3px;
+      cursor: pointer;
+      background: #894ccb;
+      background: -moz-linear-gradient(180deg, #894ccb 50%, #8342c8 50%);
+      background: -webkit-linear-gradient(180deg, #894ccb 50%, #8342c8 50%);
+      background: linear-gradient(180deg, #894ccb 50%, #8342c8 50%);
+      filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#0286e6", endColorstr="#078aea", GradientType=1);
+      border: 0px solid #b885f2;
+    }
+
+    .btn2:last-child {
+      margin: 0px 0px 0 0;
+    }
+  </style>
+<body>
+<!-- 파기예정 안내 메일 [Start] -->
+<div class="breakAgree">
+<div class="breakAgree_title">
+<!-- <div>Big Data Assistant <span>Your Personal AI Assistant</span></div> -->
+</div>
+<div class="breakAgree_contents">
+<div class="breakAgree01">데이터 파기 예정일 안내 (D-7)</div>
+<div class="breakAgree02">
+<span class="user">허재훈</span> 님 , 
+        Data Assistant를 통해 요청하신 아래 내역은 개인정보를 포함하고 있어
+        데이터를 제공받은 후 30 일 이내에 데이터를 파기하고 파기 확인서를 제출하셔야 합니다.  <br/>
+        파기예정일은 <span class="day">2024년 10월 1일</span> 입니다. <br/>
+        예정일 내에 파기하신 후 아래 링크를 통해 서비스에 접속하시어 파기 확인서를 제출해 주시기 바랍니다.
+      </div>
+<div class="breakAgree03">
+<span>내용</span>
+<table class="aTable">
+<colgroup>
+<col style="width:18%;"/>
+<col style="width:*;"/>
+</colgroup>
+<tbody>
+<tr>
+<th>요청 ID</th>
+<td>허재훈</td>
+</tr>
+<tr>
+<th>요청명</th>
+<td>query_example_1</td>
+</tr>
+<tr>
+<th>이관 일자</th>
+<td>2024년 10월 1일</td>
+</tr>
+<tr>
+<th>파기 일자</th>
+<td>2024년 10월 1일</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="btnWrap">
+<div class="btn2" onclick="location.href='#'">서비스 바로가기</div>
+</div>
+</div>
+</div>
+<!-- 파기예정 안내 메일 [End] -->
+</body>
+</head></html>
