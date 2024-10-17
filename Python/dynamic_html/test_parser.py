@@ -31,6 +31,24 @@ if tbody:
             td.string = td.string.replace(td.string, 
                                           cs_info_dict.get(td.string))
 
+# 4. 새로운 <tr>을 생성하여 <th>와 <td>를 추가합니다.
+if tbody:
+    # 새로운 <tr> 태그 생성
+    new_tr = soup.new_tag('tr')
+    
+    # <th> 태그 생성 및 내용 추가
+    new_th = soup.new_tag('th')
+    new_th.string = 'operator'
+    new_tr.append(new_th)
+    
+    # <td> 태그 생성 및 내용 추가
+    new_td = soup.new_tag('td')
+    new_td.string = 'Union'
+    new_tr.append(new_td)
+    
+    # <tbody>에 새로운 <tr> 추가
+    tbody.append(new_tr)
+
 # 변경된 HTML을 새로운 파일에 저장합니다.
 with open('modify_text.html', 'w', encoding='utf-8') as f:
     f.write(str(soup))
